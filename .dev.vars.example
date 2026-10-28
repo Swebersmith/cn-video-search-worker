@@ -1,0 +1,5 @@
+# 可选：生产环境建议设置访问密钥。留空时接口公开可访问。
+API_KEY=""
+# 可选：Brave Search API 密钥。原生入口失败或无结果时尝试搜索引擎。
+# 需要开通 Web Search API：https://api-dashboard.search.brave.com/
+BRAVE_SEARCH_API_KEY=""

@@ -1,0 +1,54 @@
+{
+  "checked_at": "2026-10-28T15:55:30.094Z",
+  "providers": [
+    {
+      "platform": "tencent",
+      "http_status": 200,
+      "status": "ok",
+      "count": 2,
+      "warnings": [],
+      "example": "https://v.qq.com/x/cover/mzc002007knmh3g/d0045caapwc.html"
+    },
+    {
+      "platform": "iqiyi",
+      "http_status": 200,
+      "status": "ok",
+      "count": 2,
+      "warnings": [],
+      "example": "https://www.iqiyi.com/v_xkt6z3z798.html"
+    },
+    {
+      "platform": "youku",
+      "http_status": 503,
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "native:SCHEMA_OR_CHALLENGE",
+        "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+      ],
+      "example": null
+    },
+    {
+      "platform": "mango",
+      "http_status": 503,
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "native:HTTP_401",
+        "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+      ],
+      "example": null
+    },
+    {
+      "platform": "bilibili",
+      "http_status": 200,
+      "status": "degraded",
+      "count": 2,
+      "warnings": [
+        "native:PARTIAL_HTTP_412",
+        "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+      ],
+      "example": "https://www.bilibili.com/bangumi/play/ss45975"
+    }
+  ]
+}

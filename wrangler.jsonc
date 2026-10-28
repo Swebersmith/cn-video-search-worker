@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cn-video-search",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-28",
+  "workers_dev": true,
+  "vars": {
+    "CORS_ORIGIN": "*",
+    "CACHE_TTL_SECONDS": "300",
+    "STALE_TTL_SECONDS": "86400",
+    "UPSTREAM_TIMEOUT_MS": "6000"
+  },
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 }
+}

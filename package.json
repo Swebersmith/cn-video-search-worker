@@ -1,0 +1,25 @@
+{
+  "name": "cn-video-search-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "国内五大影视平台官方播放页 URL 模糊搜索 API，运行于 Cloudflare Workers",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "test:runtime": "npm run build && tsx --test test/runtime/*.test.ts",
+    "smoke": "tsx scripts/smoke.ts",
+    "docs": "tsx scripts/openapi.ts",
+    "build": "wrangler deploy --dry-run --outdir dist"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261028.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.0.0",
+    "miniflare": "5.20261023.1-beta",
+    "@types/node": "^24.0.0"
+  }
+}
