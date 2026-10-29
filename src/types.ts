@@ -8,6 +8,8 @@ export const PLATFORMS = {
 export type Platform = keyof typeof PLATFORMS;
 export interface Env {
   API_KEY?: string;
+  BILIBILI_GATEWAY_URL?: string;
+  BILIBILI_GATEWAY_TOKEN?: string;
   CORS_ORIGIN?: string;
   CACHE_TTL_SECONDS?: string;
   STALE_TTL_SECONDS?: string;

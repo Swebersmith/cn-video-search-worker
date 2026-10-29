@@ -1,2 +1,5 @@
 # 可选访问密钥；留空则公开。所有站点只调用该站官网，不需要第三方搜索密钥。
 API_KEY=""
+# 可选：自己的本机官方出口。生产 Secret 单独配置，切勿提交真实凭据。
+BILIBILI_GATEWAY_URL=""
+BILIBILI_GATEWAY_TOKEN=""

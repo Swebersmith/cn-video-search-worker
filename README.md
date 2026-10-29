@@ -63,6 +63,16 @@ GET /v1/youku/search?q=嫁金钗&view=series&limit=5
 
 ## 运行、测试与生产部署
 
+### 本机官方出口（哔哩哔哩）
+
+Cloudflare 出口可能被 B站官网返回 412。可在自己的电脑运行 scripts/local-gateway.mjs，通过自己的 Cloudflare Tunnel 连接到 Worker。这个自建程序只转发到固定的 B站官网搜索、目录及匿名会话路径，不提供搜索数据，不调用第三方聚合接口。
+
+本机服务仅监听 127.0.0.1，公网通道必须携带独立认证密钥；拒绝其他域名、非 HTTPS 目标、任意路径和重定向。Worker 的 BILIBILI_GATEWAY_URL 指向自己的通道，BILIBILI_GATEWAY_TOKEN 使用 Secret 保存。密钥及连接器凭据位于被 Git 忽略的 .local-gateway/，不会进入仓库。
+
+Windows 上用 scripts/start-local-origin.ps1 启动隐藏后台进程，用 scripts/stop-local-origin.ps1 停止。电脑重启后需重新运行启动脚本。该电脑必须保持开机、联网，连接器也需持续运行；本机离线会明确报错，不用第三方结果补齐。若浏览器已启用本地 HTTP 代理，启动脚本让本机官网请求使用同一代理。
+
+响应 providers[].execution=self_hosted_local_origin 表示使用自己的本机出口，source_url 仍是实际 B站官网 URL。其他四站继续由 Worker 直接查询各自官网。
+
 需要 Node.js 24：
 
 ~~~bash
