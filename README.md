@@ -81,7 +81,7 @@ npm run smoke           # 筛选目录模式真实实测
 
 API_KEY 为可选访问密钥，配置后使用 Authorization: Bearer <key> 或 X-API-Key。密钥不接受 URL 参数，说明页、OpenAPI、能力清单和健康检查公开。不再需要任何第三方搜索密钥。
 
-运行变量包括 API_KEY、CORS_ORIGIN、UPSTREAM_TIMEOUT_MS，以及兼容/目录视图使用的 CACHE_TTL_SECONDS、STALE_TTL_SECONDS。官网综合模式不使用搜索缓存。
+运行变量包括 API_KEY、CORS_ORIGIN、UPSTREAM_TIMEOUT_MS，以及兼容/目录视图使用的 CACHE_TTL_SECONDS、STALE_TTL_SECONDS。生产每次官网请求超时上限配置为 10 秒，以容纳较慢的综合搜索分页；实际超时仍如实显示。官网综合模式不使用搜索缓存。
 
 生产 Worker 已连接 GitHub main 的 Cloudflare Workers Builds。合并后自动执行类型检查、回归测试和真实 workerd 测试，通过后部署到 cn-video-search，保留现有域名与运行变量。CI 通过不等于生产验收，仍需检查构建结果并从正式域名实测。
 

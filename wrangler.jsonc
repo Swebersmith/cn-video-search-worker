@@ -12,7 +12,7 @@
     "CORS_ORIGIN": "*",
     "CACHE_TTL_SECONDS": "300",
     "STALE_TTL_SECONDS": "86400",
-    "UPSTREAM_TIMEOUT_MS": "6000"
+    "UPSTREAM_TIMEOUT_MS": "10000"
   },
   "observability": { "enabled": true, "head_sampling_rate": 0.1 }
 }
