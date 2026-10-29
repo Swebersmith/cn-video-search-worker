@@ -4,6 +4,7 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-10-28",
   "workers_dev": true,
+  "preview_urls": false,
   "routes": [
     { "pattern": "videosearch.webber.qzz.io", "custom_domain": true }
   ],

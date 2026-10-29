@@ -10,8 +10,18 @@
   "deploy_command": "npm run deploy -- --keep-vars",
   "build_caching_enabled": true,
   "preview_builds_enabled": false,
+  "version_preview_urls_enabled": false,
   "path_includes": ["*"],
   "path_excludes": [],
   "production_url": "https://videosearch.webber.qzz.io",
-  "configured_at": "2026-10-29T04:25:52.612Z"
+  "configured_at": "2026-10-29T04:25:52.612Z",
+  "push_event_verification": {
+    "build_uuid": "86cf0208-254d-4614-b917-82eeabd331fb",
+    "commit": "c8c49545f74345e5f95789acc3a8fe677ce11881",
+    "trigger_source": "push_event",
+    "outcome": "success",
+    "unit_tests_passed": 40,
+    "runtime_tests_passed": 1,
+    "deployed_version_id": "3890ea0d-fd2f-4940-844a-6017604aa3fe"
+  }
 }

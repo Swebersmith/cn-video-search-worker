@@ -28,7 +28,7 @@ npm run deploy -- --keep-vars
 
 ## 分支、变量与凭据
 
-- 生产分支为 `main`，监听全部路径；其他分支不会部署到生产，预览构建当前关闭。
+- 生产分支为 `main`，监听全部路径；其他分支不会部署到生产，预览构建当前关闭。`wrangler.jsonc` 同时设置 `preview_urls=false`，关闭版本预览 URL。
 - 构建缓存已开启，用于复用依赖与构建产物。
 - 构建系统使用同一 Cloudflare 账户内已有的构建凭据，不在本仓库或 GitHub Secrets 中保存凭据值。
 - 构建变量 `NODE_VERSION=24` 只用于构建环境；运行时 Secret 仍在 Worker 的 Variables & Secrets 中管理。
@@ -40,3 +40,9 @@ npm run deploy -- --keep-vars
 GitHub Actions 的 CI 继续执行检查。Cloudflare Workers Builds 自行完成生产构建与部署，不依赖 GitHub Actions 的 Cloudflare Token。仓库内 **Deploy Worker** 是手动备用流程，没有开启 push 自动发布，以免两个系统同时发布同一提交。
 
 CI 成功不等于 Cloudflare 部署成功；以 Cloudflare Builds 的部署步骤和 Worker 当前版本为准。若构建因 GitHub App 授权或部署凭据权限失效而失败，在 Cloudflare 的 Builds 设置里修复连接/凭据后重试。
+
+## 已完成的推送验证
+
+2026-10-29，将说明更新提交 `c8c49545f74345e5f95789acc3a8fe677ce11881` 推送到 `main` 后，Cloudflare 收到 `push_event`，自动生成构建 `86cf0208-254d-4614-b917-82eeabd331fb`。该构建自动安装 Node.js 24 及锁定依赖，通过类型检查、40 项回归测试和 1 项 workerd 运行时测试，并成功执行部署；生成 Worker 版本 `3890ea0d-fd2f-4940-844a-6017604aa3fe`，原自定义域名保留。
+
+这次构建由 GitHub 推送直接触发，没有手动调用构建或部署 API。
