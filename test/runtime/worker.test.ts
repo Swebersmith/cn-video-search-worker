@@ -11,8 +11,11 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     bindings: { API_KEY: 'runtime-test-secret' },
     outboundService: async (request: Request) => {
       outboundCalls++;
-      assert.ok(request.url.startsWith('https://mesh.if.iqiyi.com/'));
-      return new Response(JSON.stringify({ data: { templates: [{ albumInfo: { title: '狂飙', pageUrl: 'https://www.iqiyi.com/v_xkt6z3z798.html' } }] } }), { headers: { 'Content-Type': 'application/json' } });
+      assert.ok(request.url.startsWith('https://mesh.if.iqiyi.com/') || request.url.startsWith('https://pcw-api.iqiyi.com/'));
+      const data = request.url.includes('pcw-api')
+        ? { code: 'A00000', data: { albumId: '12345', total: 24, epsodelist: Array.from({ length: 24 }, (_, i) => ({ order: i + 1, name: `狂飙第${i + 1}集`, playUrl: `https://www.iqiyi.com/v_ep${i + 1}.html`, contentType: 1 })) } }
+        : { data: { templates: [{ albumInfo: { title: '狂飙', pageUrl: 'https://www.iqiyi.com/v_xkt6z3z798.html', channel: '电视剧,2', qipuId: '12345', totalNumber: 24 } }] } };
+      return new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } });
     },
   }));
   try {
@@ -29,5 +32,12 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     const second = await mf.dispatchFetch(url + '&limit=1', { headers });
     assert.equal((await second.json() as any).providers[0].cached, true);
     assert.equal(outboundCalls, 1);
+    const episodeUrl = 'https://example.test/v1/episodes?q=%E7%8B%82%E9%A3%99';
+    assert.equal((await mf.dispatchFetch(episodeUrl)).status, 401);
+    const episodes = await (await mf.dispatchFetch(episodeUrl, { headers })).json() as any;
+    assert.equal(episodes.total, 24); assert.equal(episodes.complete, true);
+    assert.deepEqual(episodes.results.map((e: any) => e.episode_number), Array.from({ length: 24 }, (_, i) => i + 1));
+    assert.equal((await (await mf.dispatchFetch(episodeUrl, { headers })).json() as any).cached, true);
+    assert.equal(outboundCalls, 3);
   } finally { await mf.dispose(); }
 });

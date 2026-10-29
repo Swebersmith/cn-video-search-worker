@@ -7,6 +7,7 @@
 - 接口地址：`https://videosearch.webber.qzz.io`
 - [搜索示例](https://videosearch.webber.qzz.io/v1/search?q=%E4%B8%89%E4%BD%93&platforms=tencent,iqiyi&limit=5)
 - [OpenAPI 文档](https://videosearch.webber.qzz.io/openapi.json) · [健康检查](https://videosearch.webber.qzz.io/health)
+- [爱奇艺电视剧分集目录示例：海市蜃楼](https://videosearch.webber.qzz.io/v1/episodes?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC)
 - 原 `workers.dev` 地址继续可用：`https://cn-video-search.382990094xwb.workers.dev`
 
 当前部署未设置访问密钥，可直接调用；备用搜索密钥尚未配置。Cloudflare 出口实测腾讯视频、爱奇艺返回结果，优酷、芒果 TV、哔哩哔哩受到上游限制；请检查响应的 `providers` 状态。
@@ -97,6 +98,7 @@ npm run deploy
 | 方法与路径 | 用途 |
 | --- | --- |
 | `GET /v1/search` | 模糊搜索播放页 |
+| `GET /v1/episodes` | 爱奇艺电视剧专辑的有序分集目录，不受搜索默认 5 条限制 |
 | `GET /v1/platforms` | 平台名称与标识 |
 | `GET /health` | Worker 进程健康检查，不检查外部平台 |
 | `GET /openapi.json` | OpenAPI 3.1，支持导入 Apifox / Postman 等工具；仓库内也有 [静态文件](openapi.json) |
@@ -108,6 +110,24 @@ npm run deploy
 | `q` | 是 | 1–80 字符的片名或标题片段，自动统一全角和空格 |
 | `platforms` | 否 | 默认 `all`，或逗号分隔的平台标识 |
 | `limit` | 否 | 每站最多返回 1–20 条，默认 5 条；最多合计 100 条 |
+
+**搜索条数不等于电视剧集数。** 例如默认搜索返回爱奇艺 5 条、腾讯 1 条时，`total=6` 只表示本次输出 6 个链接。`providers[].available_count` 是当前搜索快照的候选数，`truncated=true` 表示按 `limit` 截断；该数量也可能包含同名影片、花絮等。搜索结果按相关度排序，不按集数排序。
+
+### 爱奇艺电视剧分集目录
+
+```text
+https://videosearch.webber.qzz.io/v1/episodes?q=海市蜃楼
+```
+
+`q` 必填；`platform` 目前仅支持 `iqiyi`，可省略。接口先匹配电视剧专辑，再从官方专辑目录读取正片分集，排除同名电影、预告和花絮，按 `episode_number` 升序返回 `results[].url`。不使用搜索的 `limit` 参数。
+
+- `series`：所选专辑，包含标题、年份、`album_id` 和总集数。
+- `series_candidates`：匹配的电视剧专辑；同名剧可添加 `album_id` 精确选择。
+- `total`：实际返回的分集数；`expected_total`：上游声明的总集数。
+- `complete`：仅当官方目录读取成功、总数一致且编号齐全时为 `true`；`missing_episode_numbers` 列出缺失编号。
+- `partial` / `warnings`：目录缺失、分页失败、超过最多 500 集的读取上限或降级使用搜索预览时，会明确标记不完整。未知总集数时不声称完整。
+
+分集目录独立缓存 5 分钟，仅缓存完整结果。`complete=true` 仅代表目录取齐，仍不代表链接无需会员或此刻必然可以播放。其他四个平台尚未提供完整分集目录接口。
 
 认证：配置 `API_KEY` 后，使用 `Authorization: Bearer <key>` 或 `X-API-Key: <key>`。密钥不接受 URL 参数。健康检查、平台列表和 OpenAPI 无需认证。
 
