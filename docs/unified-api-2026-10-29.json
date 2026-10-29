@@ -1,0 +1,1254 @@
+{
+  "checked_at": "2026-10-29T04:17:42.069Z",
+  "base_url": "https://videosearch.webber.qzz.io",
+  "checks": [
+    {
+      "path": "/",
+      "http": 200,
+      "content_type": "text/html; charset=utf-8",
+      "documentation": true
+    },
+    {
+      "path": "/assets/docs.css",
+      "http": 200,
+      "content_type": "text/css; charset=utf-8"
+    },
+    {
+      "path": "/assets/docs.js",
+      "http": 200,
+      "content_type": "application/javascript; charset=utf-8"
+    },
+    {
+      "path": "/health",
+      "http": 200,
+      "content_type": "application/json; charset=utf-8",
+      "version": "1.2.0"
+    },
+    {
+      "path": "/openapi.json",
+      "http": 200,
+      "content_type": "application/json; charset=utf-8",
+      "version": "1.2.0"
+    },
+    {
+      "path": "/v1/platforms",
+      "http": 200,
+      "content_type": "application/json; charset=utf-8",
+      "platform_count": 5
+    },
+    {
+      "path": "/v1/search?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC",
+      "http": 200,
+      "mode": "all",
+      "total": 25,
+      "partial": true,
+      "platforms": [
+        "tencent",
+        "iqiyi"
+      ],
+      "providers": [
+        {
+          "platform": "tencent",
+          "status": "ok",
+          "count": 1,
+          "operations": {
+            "search": {
+              "status": "ok",
+              "count": 1,
+              "warnings": [],
+              "cached": false,
+              "fetched_at": "2026-10-29T04:17:44.951Z"
+            },
+            "episodes": {
+              "status": "unsupported",
+              "count": 0,
+              "warnings": [
+                "EPISODE_CATALOG_NOT_SUPPORTED"
+              ]
+            }
+          }
+        },
+        {
+          "platform": "iqiyi",
+          "status": "ok",
+          "count": 24,
+          "catalog": {
+            "total": 24,
+            "complete": true
+          },
+          "operations": {
+            "search": {
+              "status": "ok",
+              "count": 5,
+              "warnings": [],
+              "cached": false,
+              "fetched_at": "2026-10-29T04:17:44.407Z"
+            },
+            "episodes": {
+              "status": "ok",
+              "count": 24,
+              "warnings": [],
+              "cached": false,
+              "fetched_at": "2026-10-29T04:17:45.597Z"
+            }
+          }
+        },
+        {
+          "platform": "youku",
+          "status": "unavailable",
+          "count": 0,
+          "operations": {
+            "search": {
+              "status": "unavailable",
+              "count": 0,
+              "warnings": [
+                "native:SCHEMA_OR_CHALLENGE",
+                "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+              ],
+              "cached": false,
+              "fetched_at": "2026-10-29T04:17:44.525Z"
+            },
+            "episodes": {
+              "status": "unsupported",
+              "count": 0,
+              "warnings": [
+                "EPISODE_CATALOG_NOT_SUPPORTED"
+              ]
+            }
+          }
+        },
+        {
+          "platform": "mango",
+          "status": "unavailable",
+          "count": 0,
+          "operations": {
+            "search": {
+              "status": "unavailable",
+              "count": 0,
+              "warnings": [
+                "native:HTTP_401",
+                "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+              ],
+              "cached": false,
+              "fetched_at": "2026-10-29T04:17:44.411Z"
+            },
+            "episodes": {
+              "status": "unsupported",
+              "count": 0,
+              "warnings": [
+                "EPISODE_CATALOG_NOT_SUPPORTED"
+              ]
+            }
+          }
+        },
+        {
+          "platform": "bilibili",
+          "status": "unavailable",
+          "count": 0,
+          "operations": {
+            "search": {
+              "status": "unavailable",
+              "count": 0,
+              "warnings": [
+                "native:HTTP_412",
+                "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+              ],
+              "cached": false,
+              "fetched_at": "2026-10-29T04:17:44.043Z"
+            },
+            "episodes": {
+              "status": "unsupported",
+              "count": 0,
+              "warnings": [
+                "EPISODE_CATALOG_NOT_SUPPORTED"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "path": "/v1/iqiyi/search?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC",
+      "http": 200,
+      "mode": "all",
+      "total": 24,
+      "partial": false,
+      "platforms": [
+        "iqiyi"
+      ],
+      "providers": [
+        {
+          "platform": "iqiyi",
+          "status": "ok",
+          "count": 24,
+          "catalog": {
+            "total": 24,
+            "complete": true
+          },
+          "operations": {
+            "search": {
+              "status": "ok",
+              "count": 5,
+              "warnings": [],
+              "cached": true,
+              "fetched_at": "2026-10-29T04:17:44.407Z"
+            },
+            "episodes": {
+              "status": "ok",
+              "count": 24,
+              "warnings": [],
+              "cached": true,
+              "fetched_at": "2026-10-29T04:17:45.597Z"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "path": "/v1/tencent/search?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC",
+      "http": 200,
+      "mode": "all",
+      "total": 1,
+      "partial": false,
+      "platforms": [
+        "tencent"
+      ],
+      "providers": [
+        {
+          "platform": "tencent",
+          "status": "ok",
+          "count": 1,
+          "operations": {
+            "search": {
+              "status": "ok",
+              "count": 1,
+              "warnings": [],
+              "cached": true,
+              "fetched_at": "2026-10-29T04:17:44.951Z"
+            },
+            "episodes": {
+              "status": "unsupported",
+              "count": 0,
+              "warnings": [
+                "EPISODE_CATALOG_NOT_SUPPORTED"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "path": "/v1/youku/search?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC&mode=search",
+      "http": 503,
+      "mode": "search",
+      "total": 0,
+      "partial": true,
+      "platforms": [],
+      "providers": [
+        {
+          "platform": "youku",
+          "status": "unavailable",
+          "count": 0,
+          "operations": {
+            "search": {
+              "status": "unavailable",
+              "count": 0,
+              "warnings": [
+                "native:SCHEMA_OR_CHALLENGE",
+                "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+              ],
+              "cached": false,
+              "fetched_at": "2026-10-29T04:17:46.125Z"
+            },
+            "episodes": {
+              "status": "skipped",
+              "count": 0,
+              "warnings": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "path": "/v1/mango/search?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC&mode=search",
+      "http": 503,
+      "mode": "search",
+      "total": 0,
+      "partial": true,
+      "platforms": [],
+      "providers": [
+        {
+          "platform": "mango",
+          "status": "unavailable",
+          "count": 0,
+          "operations": {
+            "search": {
+              "status": "unavailable",
+              "count": 0,
+              "warnings": [
+                "native:HTTP_401",
+                "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+              ],
+              "cached": false,
+              "fetched_at": "2026-10-29T04:17:47.360Z"
+            },
+            "episodes": {
+              "status": "skipped",
+              "count": 0,
+              "warnings": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "path": "/v1/bilibili/search?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC&mode=search",
+      "http": 503,
+      "mode": "search",
+      "total": 0,
+      "partial": true,
+      "platforms": [],
+      "providers": [
+        {
+          "platform": "bilibili",
+          "status": "unavailable",
+          "count": 0,
+          "operations": {
+            "search": {
+              "status": "unavailable",
+              "count": 0,
+              "warnings": [
+                "native:HTTP_412",
+                "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+              ],
+              "cached": false,
+              "fetched_at": "2026-10-29T04:17:47.633Z"
+            },
+            "episodes": {
+              "status": "skipped",
+              "count": 0,
+              "warnings": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "path": "/v1/tencent/search?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC&mode=episodes",
+      "http": 422,
+      "mode": "episodes",
+      "total": 0,
+      "partial": true,
+      "platforms": [],
+      "providers": [
+        {
+          "platform": "tencent",
+          "status": "unsupported",
+          "count": 0,
+          "operations": {
+            "search": {
+              "status": "skipped",
+              "count": 0,
+              "warnings": []
+            },
+            "episodes": {
+              "status": "unsupported",
+              "count": 0,
+              "warnings": [
+                "EPISODE_CATALOG_NOT_SUPPORTED"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "aggregate_response": {
+    "ok": true,
+    "query": "海市蜃楼",
+    "mode": "all",
+    "partial": true,
+    "total": 25,
+    "limit": 5,
+    "took_ms": 2132,
+    "results": [
+      {
+        "platform": "tencent",
+        "platform_name": "腾讯视频",
+        "title": "海市蜃楼 立即播放",
+        "url": "https://v.qq.com/x/cover/1902rza0d5zclyt/n0030nvkc8m.html",
+        "kind": "video",
+        "score": 0.895,
+        "source": "native",
+        "content_type": "search"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 1,
+        "title": "海市蜃楼第1集",
+        "url": "https://www.iqiyi.com/v_27puk4z5uko.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 2,
+        "title": "海市蜃楼第2集",
+        "url": "https://www.iqiyi.com/v_2d6x3xiebhg.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 3,
+        "title": "海市蜃楼第3集",
+        "url": "https://www.iqiyi.com/v_12qtaxsjayw.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 4,
+        "title": "海市蜃楼第4集",
+        "url": "https://www.iqiyi.com/v_1higiumc6x0.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 5,
+        "title": "海市蜃楼第5集",
+        "url": "https://www.iqiyi.com/v_2autwntch60.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 6,
+        "title": "海市蜃楼第6集",
+        "url": "https://www.iqiyi.com/v_lz3vp8ybho.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 7,
+        "title": "海市蜃楼第7集",
+        "url": "https://www.iqiyi.com/v_1toe1h9lmk4.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 8,
+        "title": "海市蜃楼第8集",
+        "url": "https://www.iqiyi.com/v_2erlg6v9ql4.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 9,
+        "title": "海市蜃楼第9集",
+        "url": "https://www.iqiyi.com/v_1niazpvlhbs.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 10,
+        "title": "海市蜃楼第10集",
+        "url": "https://www.iqiyi.com/v_1ktpscertyk.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 11,
+        "title": "海市蜃楼第11集",
+        "url": "https://www.iqiyi.com/v_1tvy8yclu0g.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 12,
+        "title": "海市蜃楼第12集",
+        "url": "https://www.iqiyi.com/v_1feqidundp4.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 13,
+        "title": "海市蜃楼第13集",
+        "url": "https://www.iqiyi.com/v_1udb7uu3ks8.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 14,
+        "title": "海市蜃楼第14集",
+        "url": "https://www.iqiyi.com/v_1vcoydk3dt8.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 15,
+        "title": "海市蜃楼第15集",
+        "url": "https://www.iqiyi.com/v_nz4pxxkris.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 16,
+        "title": "海市蜃楼第16集",
+        "url": "https://www.iqiyi.com/v_tkbglnb4gk.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 17,
+        "title": "海市蜃楼第17集",
+        "url": "https://www.iqiyi.com/v_iykqn77bvo.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 18,
+        "title": "海市蜃楼第18集",
+        "url": "https://www.iqiyi.com/v_kyiwopx7b0.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 19,
+        "title": "海市蜃楼第19集",
+        "url": "https://www.iqiyi.com/v_viirov4z7g.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 20,
+        "title": "海市蜃楼第20集",
+        "url": "https://www.iqiyi.com/v_1ggzg4b2pc8.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 21,
+        "title": "海市蜃楼第21集",
+        "url": "https://www.iqiyi.com/v_243daniwzs8.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 22,
+        "title": "海市蜃楼第22集",
+        "url": "https://www.iqiyi.com/v_143aygl8ht0.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 23,
+        "title": "海市蜃楼第23集",
+        "url": "https://www.iqiyi.com/v_gtuthzs5n4.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 24,
+        "title": "海市蜃楼第24集",
+        "url": "https://www.iqiyi.com/v_wrzrjad2qo.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      }
+    ],
+    "providers": [
+      {
+        "platform": "tencent",
+        "status": "ok",
+        "count": 1,
+        "available_count": 1,
+        "truncated": false,
+        "cached": false,
+        "fetched_at": "2026-10-29T04:17:44.951Z",
+        "search_url": "https://v.qq.com/x/search/?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC",
+        "warnings": [],
+        "operations": {
+          "search": {
+            "status": "ok",
+            "count": 1,
+            "warnings": [],
+            "cached": false,
+            "fetched_at": "2026-10-29T04:17:44.951Z"
+          },
+          "episodes": {
+            "status": "unsupported",
+            "count": 0,
+            "warnings": [
+              "EPISODE_CATALOG_NOT_SUPPORTED"
+            ]
+          }
+        }
+      },
+      {
+        "platform": "iqiyi",
+        "status": "ok",
+        "count": 24,
+        "available_count": 41,
+        "truncated": true,
+        "cached": false,
+        "fetched_at": "2026-10-29T04:17:44.407Z",
+        "search_url": "https://so.iqiyi.com/so/q_%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC",
+        "warnings": [],
+        "operations": {
+          "search": {
+            "status": "ok",
+            "count": 5,
+            "warnings": [],
+            "cached": false,
+            "fetched_at": "2026-10-29T04:17:44.407Z"
+          },
+          "episodes": {
+            "status": "ok",
+            "count": 24,
+            "warnings": [],
+            "cached": false,
+            "fetched_at": "2026-10-29T04:17:45.597Z"
+          }
+        },
+        "catalog": {
+          "series": {
+            "album_id": "6244560312265801",
+            "title": "海市蜃楼",
+            "year": "2025",
+            "total_episodes": 24
+          },
+          "series_candidates": [
+            {
+              "album_id": "6244560312265801",
+              "title": "海市蜃楼",
+              "year": "2025",
+              "total_episodes": 24
+            }
+          ],
+          "total": 24,
+          "expected_total": 24,
+          "complete": true,
+          "partial": false,
+          "missing_episode_numbers": [],
+          "warnings": [],
+          "cached": false,
+          "fetched_at": "2026-10-29T04:17:45.597Z"
+        }
+      },
+      {
+        "platform": "youku",
+        "status": "unavailable",
+        "count": 0,
+        "available_count": 0,
+        "truncated": false,
+        "cached": false,
+        "fetched_at": "2026-10-29T04:17:44.525Z",
+        "search_url": "https://so.youku.com/search_video/q_%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC",
+        "warnings": [
+          "native:SCHEMA_OR_CHALLENGE",
+          "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+        ],
+        "operations": {
+          "search": {
+            "status": "unavailable",
+            "count": 0,
+            "warnings": [
+              "native:SCHEMA_OR_CHALLENGE",
+              "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+            ],
+            "cached": false,
+            "fetched_at": "2026-10-29T04:17:44.525Z"
+          },
+          "episodes": {
+            "status": "unsupported",
+            "count": 0,
+            "warnings": [
+              "EPISODE_CATALOG_NOT_SUPPORTED"
+            ]
+          }
+        }
+      },
+      {
+        "platform": "mango",
+        "status": "unavailable",
+        "count": 0,
+        "available_count": 0,
+        "truncated": false,
+        "cached": false,
+        "fetched_at": "2026-10-29T04:17:44.411Z",
+        "search_url": "https://so.mgtv.com/so?k=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC",
+        "warnings": [
+          "native:HTTP_401",
+          "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+        ],
+        "operations": {
+          "search": {
+            "status": "unavailable",
+            "count": 0,
+            "warnings": [
+              "native:HTTP_401",
+              "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+            ],
+            "cached": false,
+            "fetched_at": "2026-10-29T04:17:44.411Z"
+          },
+          "episodes": {
+            "status": "unsupported",
+            "count": 0,
+            "warnings": [
+              "EPISODE_CATALOG_NOT_SUPPORTED"
+            ]
+          }
+        }
+      },
+      {
+        "platform": "bilibili",
+        "status": "unavailable",
+        "count": 0,
+        "available_count": 0,
+        "truncated": false,
+        "cached": false,
+        "fetched_at": "2026-10-29T04:17:44.043Z",
+        "search_url": "https://search.bilibili.com/bangumi?keyword=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC",
+        "warnings": [
+          "native:HTTP_412",
+          "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+        ],
+        "operations": {
+          "search": {
+            "status": "unavailable",
+            "count": 0,
+            "warnings": [
+              "native:HTTP_412",
+              "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+            ],
+            "cached": false,
+            "fetched_at": "2026-10-29T04:17:44.043Z"
+          },
+          "episodes": {
+            "status": "unsupported",
+            "count": 0,
+            "warnings": [
+              "EPISODE_CATALOG_NOT_SUPPORTED"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "iqiyi_response": {
+    "ok": true,
+    "query": "海市蜃楼",
+    "mode": "all",
+    "partial": false,
+    "total": 24,
+    "limit": 5,
+    "took_ms": 33,
+    "results": [
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 1,
+        "title": "海市蜃楼第1集",
+        "url": "https://www.iqiyi.com/v_27puk4z5uko.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 2,
+        "title": "海市蜃楼第2集",
+        "url": "https://www.iqiyi.com/v_2d6x3xiebhg.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 3,
+        "title": "海市蜃楼第3集",
+        "url": "https://www.iqiyi.com/v_12qtaxsjayw.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 4,
+        "title": "海市蜃楼第4集",
+        "url": "https://www.iqiyi.com/v_1higiumc6x0.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 5,
+        "title": "海市蜃楼第5集",
+        "url": "https://www.iqiyi.com/v_2autwntch60.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 6,
+        "title": "海市蜃楼第6集",
+        "url": "https://www.iqiyi.com/v_lz3vp8ybho.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 7,
+        "title": "海市蜃楼第7集",
+        "url": "https://www.iqiyi.com/v_1toe1h9lmk4.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 8,
+        "title": "海市蜃楼第8集",
+        "url": "https://www.iqiyi.com/v_2erlg6v9ql4.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 9,
+        "title": "海市蜃楼第9集",
+        "url": "https://www.iqiyi.com/v_1niazpvlhbs.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 10,
+        "title": "海市蜃楼第10集",
+        "url": "https://www.iqiyi.com/v_1ktpscertyk.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 11,
+        "title": "海市蜃楼第11集",
+        "url": "https://www.iqiyi.com/v_1tvy8yclu0g.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 12,
+        "title": "海市蜃楼第12集",
+        "url": "https://www.iqiyi.com/v_1feqidundp4.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 13,
+        "title": "海市蜃楼第13集",
+        "url": "https://www.iqiyi.com/v_1udb7uu3ks8.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 14,
+        "title": "海市蜃楼第14集",
+        "url": "https://www.iqiyi.com/v_1vcoydk3dt8.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 15,
+        "title": "海市蜃楼第15集",
+        "url": "https://www.iqiyi.com/v_nz4pxxkris.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 16,
+        "title": "海市蜃楼第16集",
+        "url": "https://www.iqiyi.com/v_tkbglnb4gk.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 17,
+        "title": "海市蜃楼第17集",
+        "url": "https://www.iqiyi.com/v_iykqn77bvo.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 18,
+        "title": "海市蜃楼第18集",
+        "url": "https://www.iqiyi.com/v_kyiwopx7b0.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 19,
+        "title": "海市蜃楼第19集",
+        "url": "https://www.iqiyi.com/v_viirov4z7g.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 20,
+        "title": "海市蜃楼第20集",
+        "url": "https://www.iqiyi.com/v_1ggzg4b2pc8.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 21,
+        "title": "海市蜃楼第21集",
+        "url": "https://www.iqiyi.com/v_243daniwzs8.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 22,
+        "title": "海市蜃楼第22集",
+        "url": "https://www.iqiyi.com/v_143aygl8ht0.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 23,
+        "title": "海市蜃楼第23集",
+        "url": "https://www.iqiyi.com/v_gtuthzs5n4.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 24,
+        "title": "海市蜃楼第24集",
+        "url": "https://www.iqiyi.com/v_wrzrjad2qo.html",
+        "kind": "video",
+        "source": "native",
+        "score": 1,
+        "content_type": "episode",
+        "album_id": "6244560312265801",
+        "series_title": "海市蜃楼"
+      }
+    ],
+    "providers": [
+      {
+        "platform": "iqiyi",
+        "status": "ok",
+        "count": 24,
+        "available_count": 41,
+        "truncated": true,
+        "cached": true,
+        "fetched_at": "2026-10-29T04:17:44.407Z",
+        "search_url": "https://so.iqiyi.com/so/q_%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC",
+        "warnings": [],
+        "operations": {
+          "search": {
+            "status": "ok",
+            "count": 5,
+            "warnings": [],
+            "cached": true,
+            "fetched_at": "2026-10-29T04:17:44.407Z"
+          },
+          "episodes": {
+            "status": "ok",
+            "count": 24,
+            "warnings": [],
+            "cached": true,
+            "fetched_at": "2026-10-29T04:17:45.597Z"
+          }
+        },
+        "catalog": {
+          "series": {
+            "album_id": "6244560312265801",
+            "title": "海市蜃楼",
+            "year": "2025",
+            "total_episodes": 24
+          },
+          "series_candidates": [
+            {
+              "album_id": "6244560312265801",
+              "title": "海市蜃楼",
+              "year": "2025",
+              "total_episodes": 24
+            }
+          ],
+          "total": 24,
+          "expected_total": 24,
+          "complete": true,
+          "partial": false,
+          "missing_episode_numbers": [],
+          "warnings": [],
+          "cached": true,
+          "fetched_at": "2026-10-29T04:17:45.597Z"
+        }
+      }
+    ]
+  }
+}
