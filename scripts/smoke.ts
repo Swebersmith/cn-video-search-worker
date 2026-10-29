@@ -11,7 +11,7 @@ const probes = { tencent: '三体', iqiyi: '狂飙', youku: '甄嬛传', mango: 
 const report = [];
 for (const platform of Object.keys(PLATFORMS) as (keyof typeof PLATFORMS)[]) {
   const url = new URL('/v1/search', process.env.API_BASE_URL || 'https://local.test');
-  url.searchParams.set('q', probes[platform]); url.searchParams.set('platforms', platform); url.searchParams.set('limit', '2');
+  url.searchParams.set('q', probes[platform]); url.searchParams.set('platforms', platform); url.searchParams.set('mode', 'search'); url.searchParams.set('limit', '2');
   const req = new Request(url, { headers: process.env.API_KEY ? { Authorization: `Bearer ${process.env.API_KEY}` } : {} });
   try {
     const r = process.env.API_BASE_URL ? await fetch(req, { signal: AbortSignal.timeout(25000) }) : await createHandler()(req, env);

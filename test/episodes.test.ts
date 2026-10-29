@@ -76,7 +76,7 @@ test('complete catalogs use an independent cache and preserve all episode number
   assert.equal(calls, 2); assert.equal(d.cached, true); assert.equal(d.total, 24);
 });
 test('search responses disclose the default per-platform cap instead of implying five total episodes', async () => {
-  const r = await createHandler(async () => search([{ ...series, videos: Array.from({ length: 24 }, (_, i) => ({ title: `海市蜃楼第${i + 1}集`, pageUrl: `https://www.iqiyi.com/v_ep${i + 1}.html` })) }]))(new Request('https://example.test/v1/search?q=海市蜃楼&platforms=iqiyi'));
+  const r = await createHandler(async () => search([{ ...series, videos: Array.from({ length: 24 }, (_, i) => ({ title: `海市蜃楼第${i + 1}集`, pageUrl: `https://www.iqiyi.com/v_ep${i + 1}.html` })) }]))(new Request('https://example.test/v1/search?q=海市蜃楼&platforms=iqiyi&mode=search'));
   const d = await r.json() as any;
   assert.equal(d.total, 5); assert.equal(d.limit, 5); assert.equal(d.providers[0].available_count, 24); assert.equal(d.providers[0].truncated, true);
 });

@@ -1,5 +1,5 @@
 import { canonical, score, text } from './normalize';
-import { json, request, UpstreamError } from './providers';
+import { json, request, UpstreamError, iqiyiSearchData, type IqiyiSearchLoader } from './providers';
 import { bounded, type CacheStore, type Env, type Fetcher } from './types';
 
 type Obj = Record<string, unknown>;
@@ -41,7 +41,7 @@ export interface EpisodesResult {
   fetched_at: string;
 }
 
-export async function iqiyiEpisodes(query: string, albumId: string | undefined, env: Env, fetcher: Fetcher, cache?: CacheStore): Promise<EpisodesResult> {
+export async function iqiyiEpisodes(query: string, albumId: string | undefined, env: Env, fetcher: Fetcher, cache?: CacheStore, loadIqiyi?: IqiyiSearchLoader): Promise<EpisodesResult> {
   const key = new Request(`https://cn-video-search.internal/episodes/v1?q=${encodeURIComponent(query)}&album=${albumId || ''}`);
   const ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache) {
@@ -54,7 +54,7 @@ export async function iqiyiEpisodes(query: string, albumId: string | undefined, 
       }
     } catch { /* Cache is optional. */ }
   }
-  const data = object(json(await request(`https://mesh.if.iqiyi.com/portal/lw/search/homePageV3?key=${encodeURIComponent(query)}&version=14.9.0&size=20&pageNum=1&source=pcw`, env, fetcher)));
+  const data = object(await (loadIqiyi ? loadIqiyi() : iqiyiSearchData(query, env, fetcher)));
   const templates = object(data.data).templates;
   if (!Array.isArray(templates)) throw new UpstreamError('SCHEMA_CHANGED');
   const candidates: { series: Series; preview: unknown[] }[] = [];

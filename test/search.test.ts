@@ -14,7 +14,7 @@ const native: Fetcher = async url => {
   if (url.includes('mgtv')) return response({ code: 200, data: { contents: [{ title: '三体', url: 'https://www.mgtv.com/b/123/456.html' }] } });
   return response({ code: 0, data: { result: [{ title: '我的<em>三体</em>', url: 'https://www.bilibili.com/bangumi/play/ss45975' }] } });
 };
-const req = (query = 'q=三体') => new Request(`https://example.test/v1/search?${query}`);
+const req = (query = 'q=三体') => new Request(`https://example.test/v1/search?${query}&mode=search`);
 const failing: Fetcher = async () => new Response('denied', { status: 403 });
 class MemoryCache implements CacheStore {
   values = new Map<string, Response>();

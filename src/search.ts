@@ -1,10 +1,10 @@
 import { PLATFORMS, bounded, type CacheStore, type Env, type Fetcher, type Platform, type ProviderResult } from './types';
-import { braveSearch, nativeSearch, UpstreamError, PartialUpstreamError } from './providers';
+import { braveSearch, nativeSearch, UpstreamError, PartialUpstreamError, type IqiyiSearchLoader } from './providers';
 import { ranked } from './normalize';
 
 const errorCode = (e: unknown) => e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR';
 
-export async function searchPlatform(platform: Platform, query: string, env: Env, fetcher: Fetcher, cache?: CacheStore): Promise<ProviderResult> {
+export async function searchPlatform(platform: Platform, query: string, env: Env, fetcher: Fetcher, cache?: CacheStore, loadIqiyi?: IqiyiSearchLoader): Promise<ProviderResult> {
   const fresh = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   const staleTtl = Math.max(fresh, bounded(env.STALE_TTL_SECONDS, 86400, 30, 604800));
   // Include backend configuration but never credentials in cache keys. This origin is internal to Cache API.
@@ -24,7 +24,7 @@ export async function searchPlatform(platform: Platform, query: string, env: Env
   const warnings: string[] = [];
   let nativeOk = false, fallbackOk = false;
   let results: ProviderResult['results'] = [];
-  try { results = await nativeSearch(platform, query, env, fetcher); nativeOk = true; }
+  try { results = await nativeSearch(platform, query, env, fetcher, loadIqiyi); nativeOk = true; }
   catch (e) {
     warnings.push(`native:${errorCode(e)}`);
     if (e instanceof PartialUpstreamError) results = e.results;

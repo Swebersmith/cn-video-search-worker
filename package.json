@@ -1,6 +1,6 @@
 {
   "name": "cn-video-search-worker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "国内五大影视平台官方播放页 URL 模糊搜索 API，运行于 Cloudflare Workers",
@@ -16,10 +16,11 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261028.1",
+    "@types/node": "^24.0.0",
+    "linkedom": "^0.18.14",
+    "miniflare": "5.20261023.1-beta",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
-    "wrangler": "^4.0.0",
-    "miniflare": "5.20261023.1-beta",
-    "@types/node": "^24.0.0"
+    "wrangler": "^4.0.0"
   }
 }

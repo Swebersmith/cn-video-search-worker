@@ -1,226 +1,134 @@
-# 国内五大影视平台播放页搜索 API
+# VideoSearch · 五站统一查询接口
 
-运行于 **Cloudflare Workers** 的统一 JSON 搜索接口，通过不完整片名、关键词搜索腾讯视频、爱奇艺、优酷、芒果 TV、哔哩哔哩的**官方网页播放地址**。
+Cloudflare Workers 上的影视官方播放页发现服务。**一个聚合接口、五个单站接口，同一套参数与返回结构。** 默认综合模式合并搜索结果与已接入的分集目录，按 URL 去重，保留集数编号。
 
-仓库包含 Worker 源码、OpenAPI 3.1 文档、自动测试、手动部署工作流和每周实测工作流。已部署到 Cloudflare Workers：
+- [接口说明与在线调试](https://videosearch.webber.qzz.io/)
+- [OpenAPI 3.1](https://videosearch.webber.qzz.io/openapi.json) · [平台能力清单](https://videosearch.webber.qzz.io/v1/platforms)
+- [服务健康检查](https://videosearch.webber.qzz.io/health)，只检查 Worker，不检查上游。
 
-- 接口地址：`https://videosearch.webber.qzz.io`
-- [搜索示例](https://videosearch.webber.qzz.io/v1/search?q=%E4%B8%89%E4%BD%93&platforms=tencent,iqiyi&limit=5)
-- [OpenAPI 文档](https://videosearch.webber.qzz.io/openapi.json) · [健康检查](https://videosearch.webber.qzz.io/health)
-- [爱奇艺电视剧分集目录示例：海市蜃楼](https://videosearch.webber.qzz.io/v1/episodes?q=%E6%B5%B7%E5%B8%82%E8%9C%83%E6%A5%BC)
-- 原 `workers.dev` 地址继续可用：`https://cn-video-search.382990094xwb.workers.dev`
+## 接口结构
 
-当前部署未设置访问密钥，可直接调用；备用搜索密钥尚未配置。Cloudflare 出口实测腾讯视频、爱奇艺返回结果，优酷、芒果 TV、哔哩哔哩受到上游限制；请检查响应的 `providers` 状态。
+统一请求路径中的 `q` 为必填关键词，以下示例均默认 `mode=all`。
 
-## 可用性说明
-
-这些平台没有向本项目提供有 SLA 的五站统一搜索 API。原生入口属于公开网页或网页使用的接口，会改版、限流、验证和限制地区；本项目不能承诺“永久稳定”或每站都有结果。
-
-采用以下方式提高可维护性：
-
-- 五站独立适配和超时，单站失败不阻塞其他站点。
-- 原生搜索优先；原生失败、分类不完整或无结果时，可使用 **Brave Web Search API** 备用源。它需要你自己的密钥和可用配额。
-- 每站查询默认缓存 5 分钟；上游故障时，可回退到最近 24 小时缓存，并明确标记 `stale`。
-- 严格校验官方域名和播放路径，排除搜索页、详情页、外站跳转、流媒体直链。
-- 中文标题片段匹配、字符和双字片段相似度排序、URL 去重。不是语义检索，不保证所有错别字、同义词或跨语种名称都能匹配。
-- 返回各站状态、来源、抓取时间和错误码；接口不把上游故障伪装成正常无结果。
-
-最近一次 Cloudflare 出口实测见 [docs/validation.md](docs/validation.md)。实测只是该环境和时间的快照，不能代表未来可用性。**无备用密钥时，当前不能保证五站全可用。** 备用源也会受索引覆盖、配额和服务状态影响；索引到的播放页可能已经下架。
-
-仅做播放页链接发现，不解析 m3u8/mp4，不绕过付费或登录限制。访问链接时仍遵循平台的会员、版权和地区规则。结果可能包含预告、花絮、解说及不同版本，不保证均为正片。
-
-## 平台标识
-
-| 标识 | 平台 | 可返回的播放路径示例 |
+| 接口 | 路径 | 行为 |
 | --- | --- | --- |
-| `tencent` | 腾讯视频 | `v.qq.com/x/cover/...html`、`/x/page/...html` |
-| `iqiyi` | 爱奇艺 | `www.iqiyi.com/v_...html` |
-| `youku` | 优酷 | `v.youku.com/v_show/id_...html`、`/video?s=...` |
-| `mango` | 芒果 TV | `www.mgtv.com/b/.../...html` |
-| `bilibili` | 哔哩哔哩 | `/bangumi/play/ss...`、`/bangumi/play/ep...`、`/video/BV...` |
+| 聚合总接口 | `/v1/search?q=海市蜃楼` | 并行查询五站，聚合结果 |
+| 腾讯视频 | `/v1/tencent/search?q=海市蜃楼` | 仅腾讯视频内容 |
+| 爱奇艺 | `/v1/iqiyi/search?q=海市蜃楼` | 仅爱奇艺内容，支持电视剧分集目录 |
+| 优酷 | `/v1/youku/search?q=海市蜃楼` | 仅优酷内容 |
+| 芒果 TV | `/v1/mango/search?q=海市蜃楼` | 仅芒果 TV 内容 |
+| 哔哩哔哩 | `/v1/bilibili/search?q=海市蜃楼` | 仅哔哩哔哩内容 |
 
-哔哩哔哩原生检索覆盖番剧和影视分类，搜索引擎备用源也可能返回普通视频。`kind=series` 表示整部或整季播放入口，`kind=video` 表示单个视频/分集页。
+聚合接口与单站接口调用同一份平台查询逻辑，不通过外部 HTTP 请求再调用自己的接口。单站接口不接受 `platforms`，保证不会查询或返回其他网站。
 
-## 本地运行
+### 三种功能模式
+
+| mode | 行为 |
+| --- | --- |
+| `all` | 默认：合并普通搜索和已接入的分集目录。相同 URL 只返回一次，分集信息优先。 |
+| `search` | 只做普通模糊搜索，不请求分集目录。 |
+| `episodes` | 只请求已接入的分集目录；暂未接入的站点返回 `unsupported`。 |
+
+当前五站都接入普通搜索；**完整分集目录当前仅接入爱奇艺电视剧**。其他站点没有完整目录适配器，不会拿搜索片段冒充全集。平台风控、地区限制和改版仍会影响实际可用性；不承诺五站始终可用。
+
+原 `/v1/episodes` 保留历史返回格式并添加 `Deprecation` 响应头，只用于旧接入兼容。新接入请使用上述统一接口的 `mode` 参数。
+
+## 参数
+
+| 参数 | 默认值 / 范围 | 说明 |
+| --- | --- | --- |
+| `q` | 必填，1—80 字符 | 片名或标题片段；自动统一全角和空格。 |
+| `mode` | `all` | `all`、`search`、`episodes`，总接口和单站接口一致。 |
+| `platforms` | `all` | **仅聚合接口**：逗号分隔的标识子集，例如 `tencent,iqiyi`。 |
+| `limit` | `5`，1—20 | 每站普通搜索上限；**不会截断分集目录**。 |
+| `album_id` | 可选，数字 | 爱奇艺同名电视剧专辑选择；要求 `mode=all/episodes` 且查询范围包含爱奇艺。 |
+
+```text
+https://videosearch.webber.qzz.io/v1/search?q=海市蜃楼
+https://videosearch.webber.qzz.io/v1/iqiyi/search?q=海市蜃楼
+https://videosearch.webber.qzz.io/v1/iqiyi/search?q=海市蜃楼&mode=episodes
+https://videosearch.webber.qzz.io/v1/search?q=三体&platforms=tencent,iqiyi&mode=search&limit=10
+```
+
+`limit=5` 并不表示一部剧只有 5 集。综合查询里爱奇艺正片目录可返回 24 集，加上其他站搜索结果；`total` 是最终去重结果数，不是电视剧总集数。
+
+## 返回结构
+
+- `results[].url`：官方播放页地址；不包含流媒体直链。
+- `platform`：内容来源；`content_type` 为 `search` 或 `episode`。
+- 分集结果包含 `episode_number`、`album_id`、`series_title`，每站内部按集数排序。
+- `providers[]`：各站整体状态、去重后条数，以及 `operations.search`、`operations.episodes` 两个功能各自的状态、条数、缓存时间和警告。
+- `providers[].catalog`：所选专辑和候选专辑、`expected_total`、`complete`、`missing_episode_numbers`。仅目录存在时返回；具体链接统一在顶层 `results`。
+- `available_count` / `truncated` 仅描述普通搜索候选及搜索上限，不表示目录完整性。
+- `partial=true` 表示至少一站降级、不可用或所选功能未接入，应查看分站状态，不要丢弃其他站成功的结果。
+
+`complete=true` 仅在官方目录读取成功、声明的总集数一致、编号和链接校验齐全时出现。目录最多读取 500 集；超出上限、缺集或使用搜索预览降级时明确标为不完整。目录完整不代表免会员或每个页面此刻都能播放。
+
+### 状态与认证
+
+| HTTP 状态 | 含义 |
+| --- | --- |
+| 200 | 查询完成，包括正常无结果或部分降级。 |
+| 400 | 参数错误。 |
+| 401 | 配置了访问密钥，但请求未通过认证。 |
+| 422 | 所选站点均未接入请求的功能。 |
+| 503 | 所选站点本次全部不可用，无可用结果。 |
+
+当前部署未配置 `API_KEY`，可直接调用。设置后，查询接口必须使用 `Authorization: Bearer <key>` 或 `X-API-Key: <key>`；不接受 URL 密钥。说明页面、OpenAPI、能力清单和健康检查保持公开。
+
+在线调试在当前域名发送请求，密钥仅在页面内使用，不写入 URL、存储或复制的命令。复制 cURL 使用密钥占位符。对外服务建议在自己的后端保管共享密钥。
+
+## 本地运行和部署
 
 需要 Node.js 24。
 
 ```bash
 npm ci
 cp .dev.vars.example .dev.vars
-# 按需编辑 .dev.vars，填入 API_KEY 和 BRAVE_SEARCH_API_KEY
 npm run dev
 ```
 
-接口默认地址：`http://localhost:8787`。`.dev.vars` 已加入忽略列表，不要提交密钥。
+本地地址 `http://localhost:8787` 包含说明页及所有 API。`.dev.vars` 已忽略，按需填入访问密钥和备用搜索密钥。
 
 ```bash
-curl --get 'http://localhost:8787/v1/search' \
-  --data-urlencode 'q=三体' \
-  --data-urlencode 'platforms=tencent,iqiyi,bilibili' \
-  --data-urlencode 'limit=5' \
-  -H "Authorization: Bearer $VIDEO_SEARCH_API_KEY"
-```
-
-未配置 `API_KEY` 时不需要认证头。
-
-## 部署到 Cloudflare Workers
-
-### 命令行
-
-```bash
-npm ci
 npx wrangler login
 npx wrangler secret put API_KEY
 npx wrangler secret put BRAVE_SEARCH_API_KEY
 npm run deploy
 ```
 
-两个 Worker Secret 均可选；生产接入建议设置访问密钥和备用搜索密钥。Brave 密钥在 [Brave Search API 控制台](https://api-dashboard.search.brave.com/) 申请，需选择可访问 Web Search API 的方案。
+两个 Secret 均可选。Brave Web Search API 备用源在原生搜索失败、不完整或无结果时使用，需要自己的有效密钥及配额。它不会作为完整分集目录的依据。
 
-无浏览器的部署环境可以配置 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`。Token 需具有目标账户的 `Workers Scripts: Edit` 和 `Account Settings: Read` 权限。不要将 Token 写入配置文件或源码。Worker 默认名称是 `cn-video-search`，如账户内已有同名服务，请先修改 [wrangler.jsonc](wrangler.jsonc)。
+当前域名通过 `wrangler.jsonc` 的 `routes` 保持绑定；复制项目到其他账户时，请换成自己的域名或移除 `routes` 使用部署返回的 `workers.dev` 地址。原地址 `https://cn-video-search.382990094xwb.workers.dev` 仍可用。
 
-自定义域名已写入 `wrangler.jsonc` 的 `routes`，Cloudflare 自动管理其 DNS 和 HTTPS 证书。复制部署到你自己的账户时，请将域名改为自己账户下托管的域名，或移除 `routes` 使用部署命令返回的 `workers.dev` 地址。
+GitHub 仓库包含 CI、手动部署和每周实测工作流。当前部署使用 Cloudflare 已授权连接；GitHub Actions 的部署 Secrets 和实测变量尚需仓库管理员配置：
 
-### GitHub Actions
+1. 设置 `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID` Secrets，然后手动运行 **Deploy Worker**。Token 使用目标账户的 Workers Scripts: Edit 和 Account Settings: Read 权限。
+2. 将 Repository Variable `API_BASE_URL` 设为正式域名，按需设置 `API_KEY` Secret，启用每周真实搜索实测。未设置地址时跳过。
 
-当前实例通过已授权的 Cloudflare 连接完成部署；GitHub Actions 的部署密钥和 `API_BASE_URL` 变量未自动配置，按以下步骤设置后可使用仓库内的工作流。
+## 缓存、维护和验证
 
-1. 在仓库 **Settings → Secrets and variables → Actions** 配置 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID` 两个 Secrets。
-2. 在 **Actions → Deploy Worker → Run workflow** 手动运行部署。工作流先执行类型检查、测试和构建。
-3. 在 Cloudflare Worker 的 **Settings → Variables and Secrets** 配置 `API_KEY`、`BRAVE_SEARCH_API_KEY`，保存并应用到部署。
-4. 将真实域名设为 GitHub Repository Variable `API_BASE_URL`，并将访问密钥设为 GitHub Secret `API_KEY`，即可启用每周一的线上搜索实测。未设置域名时该工作流跳过。
+Worker 无需 KV 或 D1，使用按数据中心存储的 Cache API。普通搜索默认缓存 5 分钟，上游故障时可回退到最近 24 小时缓存并标记旧数据；分集目录只缓存完整结果。综合查询会共享同一请求中的爱奇艺搜索数据，避免搜索和目录重复拉取。
 
-部署工作流不会自动同步运行时密钥，也不会因提交代码自动上线。推送只运行 CI；发布由你手动触发。
-
-## API
-
-| 方法与路径 | 用途 |
-| --- | --- |
-| `GET /v1/search` | 模糊搜索播放页 |
-| `GET /v1/episodes` | 爱奇艺电视剧专辑的有序分集目录，不受搜索默认 5 条限制 |
-| `GET /v1/platforms` | 平台名称与标识 |
-| `GET /health` | Worker 进程健康检查，不检查外部平台 |
-| `GET /openapi.json` | OpenAPI 3.1，支持导入 Apifox / Postman 等工具；仓库内也有 [静态文件](openapi.json) |
-
-搜索参数：
-
-| 参数 | 必填 | 说明 |
+| 环境变量 | 默认值 | 用途 |
 | --- | --- | --- |
-| `q` | 是 | 1–80 字符的片名或标题片段，自动统一全角和空格 |
-| `platforms` | 否 | 默认 `all`，或逗号分隔的平台标识 |
-| `limit` | 否 | 每站最多返回 1–20 条，默认 5 条；最多合计 100 条 |
-
-**搜索条数不等于电视剧集数。** 例如默认搜索返回爱奇艺 5 条、腾讯 1 条时，`total=6` 只表示本次输出 6 个链接。`providers[].available_count` 是当前搜索快照的候选数，`truncated=true` 表示按 `limit` 截断；该数量也可能包含同名影片、花絮等。搜索结果按相关度排序，不按集数排序。
-
-### 爱奇艺电视剧分集目录
-
-```text
-https://videosearch.webber.qzz.io/v1/episodes?q=海市蜃楼
-```
-
-`q` 必填；`platform` 目前仅支持 `iqiyi`，可省略。接口先匹配电视剧专辑，再从官方专辑目录读取正片分集，排除同名电影、预告和花絮，按 `episode_number` 升序返回 `results[].url`。不使用搜索的 `limit` 参数。
-
-- `series`：所选专辑，包含标题、年份、`album_id` 和总集数。
-- `series_candidates`：匹配的电视剧专辑；同名剧可添加 `album_id` 精确选择。
-- `total`：实际返回的分集数；`expected_total`：上游声明的总集数。
-- `complete`：仅当官方目录读取成功、总数一致且编号齐全时为 `true`；`missing_episode_numbers` 列出缺失编号。
-- `partial` / `warnings`：目录缺失、分页失败、超过最多 500 集的读取上限或降级使用搜索预览时，会明确标记不完整。未知总集数时不声称完整。
-
-分集目录独立缓存 5 分钟，仅缓存完整结果。`complete=true` 仅代表目录取齐，仍不代表链接无需会员或此刻必然可以播放。其他四个平台尚未提供完整分集目录接口。
-
-认证：配置 `API_KEY` 后，使用 `Authorization: Bearer <key>` 或 `X-API-Key: <key>`。密钥不接受 URL 参数。健康检查、平台列表和 OpenAPI 无需认证。
-
-下面是单站查询的**结构示例**，并非线上响应或可用性证明：
-
-```json
-{
-  "ok": true,
-  "query": "三体",
-  "partial": false,
-  "total": 1,
-  "took_ms": 260,
-  "results": [
-    {
-      "platform": "tencent",
-      "platform_name": "腾讯视频",
-      "title": "三体 1",
-      "url": "https://v.qq.com/x/cover/mzc002007knmh3g/i0045u918s5.html",
-      "kind": "video",
-      "score": 0.9267,
-      "source": "native"
-    }
-  ],
-  "providers": [
-    {
-      "platform": "tencent",
-      "status": "ok",
-      "count": 1,
-      "warnings": [],
-      "cached": false,
-      "fetched_at": "2026-10-28T00:00:00.000Z",
-      "search_url": "https://v.qq.com/x/search/?q=%E4%B8%89%E4%BD%93"
-    }
-  ]
-}
-```
-
-`results[].url` 是接入使用的官方播放页地址。`providers[].search_url` 是给用户手动继续搜索的地址，不应当作播放链接。
-
-`score` 是本地标题相关度分数，不是官方评分或置信概率。不会逐个访问结果验证此刻能否播放，否则会明显增加延迟、子请求数和被限流概率。
-
-| 分站状态 | 含义 |
-| --- | --- |
-| `ok` | 原生搜索正常，或原生正常但为空时备用源找到结果 |
-| `empty` | 原生搜索正常，但未找到符合播放路径与相关度要求的结果 |
-| `degraded` | 原生入口或部分分类故障，已尝试备用源或保留可用分类结果；仍可能为空 |
-| `unavailable` | 搜索不可用，没有可用结果或缓存 |
-| `stale` | 上游异常，返回旧结果；检查 `fetched_at` |
-
-`partial=true` 表示至少一站降级、不可用或使用旧缓存；接入方应展示可用结果，并按需提示。`HTTP 503` 仅在所有所选站都 `unavailable` 时返回，附 `Retry-After: 30`。正常无结果返回 `HTTP 200`。不要无限重试 `400`、`401`；上游异常建议使用退避重试。
-
-## JavaScript 接入
-
-```js
-// 含密钥的请求建议由你的后端发起；不要在公开前端代码中写入共享密钥。
-const base = 'https://videosearch.webber.qzz.io';
-const params = new URLSearchParams({ q: '三体', platforms: 'all', limit: '5' });
-const response = await fetch(`${base}/v1/search?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.VIDEO_SEARCH_API_KEY}` },
-  signal: AbortSignal.timeout(25000)
-});
-const data = await response.json();
-if (!response.ok) throw new Error(data.error?.message || `搜索暂不可用：${response.status}`);
-for (const result of data.results) console.log(result.title, result.url);
-if (data.partial) console.log('部分站点降级：', data.providers);
-```
-
-## 配置与维护
-
-| 配置 | 默认值 | 作用 |
-| --- | --- | --- |
-| `API_KEY` | 无 | 可选访问认证，使用 Worker Secret |
-| `BRAVE_SEARCH_API_KEY` | 无 | 可选备用搜索认证，使用 Worker Secret |
-| `CORS_ORIGIN` | `*` | 允许的单一来源或 `*` |
-| `CACHE_TTL_SECONDS` | `300` | 正常缓存时长，30–3600 秒 |
-| `STALE_TTL_SECONDS` | `86400` | 故障回退窗口，最长 7 天，实际不小于正常缓存时长 |
-| `UPSTREAM_TIMEOUT_MS` | `6000` | 每次上游请求超时，1000–10000 毫秒 |
-
-Worker 无需 KV、D1 或 Node.js 兼容模式。使用 Cloudflare Cache API，缓存按数据中心存储，不保证常驻，也不会跨区域强一致；未命中时无法提供故障回退。当前没有内置跨请求全局限流，面向公众提供服务时，可通过 Cloudflare 的入口限流控制负载；备用搜索的配额也需要按流量配置。五站并行搜索可能并行触发备用请求；低 QPS 配额的 Brave 方案可能返回 `HTTP_429`。
+| `API_KEY` | 无 | 可选访问认证，使用 Worker Secret。 |
+| `BRAVE_SEARCH_API_KEY` | 无 | 可选备用搜索密钥，使用 Worker Secret。 |
+| `CORS_ORIGIN` | `*` | 允许的来源。 |
+| `CACHE_TTL_SECONDS` | `300` | 正常缓存时长，30—3600 秒。 |
+| `STALE_TTL_SECONDS` | `86400` | 普通搜索故障回退窗口，最长 7 天。 |
+| `UPSTREAM_TIMEOUT_MS` | `6000` | 每次上游请求超时，1000—10000 毫秒。 |
 
 ```bash
-npm run check       # TypeScript
-npm test            # 不依赖外网的回归测试
-npm run test:runtime # 真实 workerd 运行时：模拟上游，验证 fetch、缓存和认证
-npm run build       # Worker 打包检查，不发布
-npm run smoke       # 真实上游实测，生成 smoke-results.json；任一站无结果/失败则非零退出
-npm run docs        # 根据源码重新生成静态 openapi.json
+npm run check
+npm test              # 单站隔离、聚合、目录及页面交互等回归测试
+npm run test:runtime  # 真实 workerd，使用受控模拟上游
+npm run docs          # 重新生成 OpenAPI 静态文件
+npm run smoke         # 原生搜索实测，任一站无结果/失败则非零退出
 ```
 
-实测已部署的服务时设置 `API_BASE_URL` 和可选 `API_KEY`。受控代理环境运行 Node 实测时，可使用 `NODE_USE_ENV_PROXY=1 npm run smoke`；正常网络无需设置。
+通过 `API_BASE_URL=https://videosearch.webber.qzz.io npm run smoke` 实测线上；受控代理环境可加 `NODE_USE_ENV_PROXY=1`。完整验证记录见 [docs/validation.md](docs/validation.md)。
 
-常见错误码：`HTTP_403` / `HTTP_401` 表示上游拒绝访问；`HTTP_412` 常见于风控；`HTTP_429` 表示配额或限流；`TIMEOUT` 表示超时；`SCHEMA_CHANGED` / `SCHEMA_OR_CHALLENGE` 表示响应结构变化或验证页。适配器位于 [src/providers.ts](src/providers.ts)，修改后应执行回归测试和真实实测。缓存中的旧 URL 不代表上游已恢复。
-
-若调用整个接口时收到 `403` 且正文为 `error code: 1010`，可能是 `workers.dev` 对客户端默认 User-Agent 的检查，尚未进入本接口。Python `urllib` 等客户端请设置可识别应用的请求头，例如 `User-Agent: CNVideoSearchClient/1.0`。参见 [Cloudflare 1010 官方说明](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/)。
+上游可能出现 `HTTP_401/403/412/429`、`TIMEOUT`、`SCHEMA_OR_CHALLENGE` 等错误。当前没有跨请求全局限流，请按服务流量配置入口限流和备用源配额。默认 Python `urllib` 访问 `workers.dev` 若遇 Cloudflare 1010，请设置描述性 User-Agent，参见 [官方说明](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/)。
 
 MIT License.

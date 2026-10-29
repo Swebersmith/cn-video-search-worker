@@ -66,10 +66,14 @@ export function extractHtml(body: string, platform: Platform, query: string): Vi
   return ranked(found);
 }
 
-export async function nativeSearch(platform: Platform, query: string, env: Env, fetcher: Fetcher): Promise<Video[]> {
+export type IqiyiSearchLoader = () => Promise<unknown>;
+export async function iqiyiSearchData(query: string, env: Env, fetcher: Fetcher): Promise<unknown> {
+  return json(await request(`https://mesh.if.iqiyi.com/portal/lw/search/homePageV3?key=${encodeURIComponent(query)}&version=14.9.0&size=20&pageNum=1&source=pcw`, env, fetcher));
+}
+export async function nativeSearch(platform: Platform, query: string, env: Env, fetcher: Fetcher, loadIqiyi?: IqiyiSearchLoader): Promise<Video[]> {
   const q = encodeURIComponent(query);
   if (platform === 'iqiyi') {
-    const d = json(await request(`https://mesh.if.iqiyi.com/portal/lw/search/homePageV3?key=${q}&version=14.9.0&size=20&pageNum=1&source=pcw`, env, fetcher));
+    const d = await (loadIqiyi ? loadIqiyi() : iqiyiSearchData(query, env, fetcher)) as { data?: { templates?: unknown } };
     if (!Array.isArray(d?.data?.templates)) throw new UpstreamError('SCHEMA_CHANGED');
     return extractJson(d.data.templates, platform, query);
   }

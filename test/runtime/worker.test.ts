@@ -20,7 +20,7 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
   }));
   try {
     assert.equal((await mf.dispatchFetch('https://example.test/health')).status, 200);
-    const url = 'https://example.test/v1/search?q=%E7%8B%82%E9%A3%99&platforms=iqiyi';
+    const url = 'https://example.test/v1/search?q=%E7%8B%82%E9%A3%99&platforms=iqiyi&mode=search';
     assert.equal((await mf.dispatchFetch(url)).status, 401);
     assert.equal(outboundCalls, 0);
     const headers = { Authorization: 'Bearer runtime-test-secret' };
@@ -39,5 +39,12 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     assert.deepEqual(episodes.results.map((e: any) => e.episode_number), Array.from({ length: 24 }, (_, i) => i + 1));
     assert.equal((await (await mf.dispatchFetch(episodeUrl, { headers })).json() as any).cached, true);
     assert.equal(outboundCalls, 3);
+    const unified = await (await mf.dispatchFetch('https://example.test/v1/iqiyi/search?q=%E7%8B%82%E9%A3%99', { headers })).json() as any;
+    assert.equal(unified.mode, 'all'); assert.equal(unified.providers.length, 1);
+    assert.equal(unified.results.filter((e: any) => e.content_type === 'episode').length, 24);
+    assert.equal(unified.providers[0].catalog.complete, true); assert.equal(outboundCalls, 3);
+    const docs = await mf.dispatchFetch('https://example.test/');
+    assert.equal(docs.status, 200); assert.match(await docs.text(), /总接口与单站接口/);
+    assert.equal((await mf.dispatchFetch('https://example.test/assets/docs.js')).status, 200);
   } finally { await mf.dispose(); }
 });
