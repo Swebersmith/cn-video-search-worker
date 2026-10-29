@@ -7,11 +7,21 @@
     {
       "videoId": "XNjU3MzkyOTA0NA==",
       "orderId": 1,
+      "orderStage": 1,
+      "displayName": "1",
       "title": "嫁金钗 01",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "2888",
+      "iconCorner": {
+        "tagText": null,
+        "tagType": null,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3MzkyOTA0NA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -19,11 +29,21 @@
     {
       "videoId": "XNjU3MzkzMjAwOA==",
       "orderId": 2,
+      "orderStage": 2,
+      "displayName": "2",
       "title": "嫁金钗 02",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "2981",
+      "iconCorner": {
+        "tagText": null,
+        "tagType": null,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3MzkzMjAwOA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -31,11 +51,21 @@
     {
       "videoId": "XNjU3Mzk1MzQ4OA==",
       "orderId": 3,
+      "orderStage": 3,
+      "displayName": "3",
       "title": "嫁金钗 03",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3218",
+      "iconCorner": {
+        "tagText": null,
+        "tagType": null,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3Mzk1MzQ4OA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -43,11 +73,21 @@
     {
       "videoId": "XNjU2NDc1NzQxMg==",
       "orderId": 4,
+      "orderStage": 4,
+      "displayName": "4",
       "title": "嫁金钗 04",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3150",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2NDc1NzQxMg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -55,11 +95,21 @@
     {
       "videoId": "XNjU2NTIyMTIyMA==",
       "orderId": 5,
+      "orderStage": 5,
+      "displayName": "5",
       "title": "嫁金钗 05",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3091",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2NTIyMTIyMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -67,11 +117,21 @@
     {
       "videoId": "XNjU3NDY1MjAyNA==",
       "orderId": 6,
+      "orderStage": 6,
+      "displayName": "6",
       "title": "嫁金钗 06",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3093",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3NDY1MjAyNA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -79,11 +139,21 @@
     {
       "videoId": "XNjU2NTQ2OTE3Mg==",
       "orderId": 7,
+      "orderStage": 7,
+      "displayName": "7",
       "title": "嫁金钗 07",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "2952",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2NTQ2OTE3Mg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -91,11 +161,21 @@
     {
       "videoId": "XNjU2NTQ4MzM4NA==",
       "orderId": 8,
+      "orderStage": 8,
+      "displayName": "8",
       "title": "嫁金钗 08",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3318",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2NTQ4MzM4NA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -103,11 +183,21 @@
     {
       "videoId": "XNjU2NTUzMzEwNA==",
       "orderId": 9,
+      "orderStage": 9,
+      "displayName": "9",
       "title": "嫁金钗 09",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3040",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2NTUzMzEwNA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -115,11 +205,21 @@
     {
       "videoId": "XNjU2NjcyMzc0MA==",
       "orderId": 10,
+      "orderStage": 10,
+      "displayName": "10",
       "title": "嫁金钗 10",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "2997",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2NjcyMzc0MA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -127,11 +227,21 @@
     {
       "videoId": "XNjU2NTY3MjI3Mg==",
       "orderId": 11,
+      "orderStage": 11,
+      "displayName": "11",
       "title": "嫁金钗 11",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3061",
+      "iconCorner": {
+        "tagText": "限免",
+        "tagType": 1,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2NTY3MjI3Mg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -139,11 +249,21 @@
     {
       "videoId": "XNjU2NjYxNjU5Mg==",
       "orderId": 12,
+      "orderStage": 12,
+      "displayName": "12",
       "title": "嫁金钗 12",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "2913",
+      "iconCorner": {
+        "tagText": "限免",
+        "tagType": 1,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2NjYxNjU5Mg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -151,11 +271,21 @@
     {
       "videoId": "XNjU2NjA3Mzk5Ng==",
       "orderId": 13,
+      "orderStage": 13,
+      "displayName": "13",
       "title": "嫁金钗 13",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3200",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2NjA3Mzk5Ng==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -163,11 +293,21 @@
     {
       "videoId": "XNjU3NTgxODgwMA==",
       "orderId": 14,
+      "orderStage": 14,
+      "displayName": "14",
       "title": "嫁金钗 14",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "2963",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3NTgxODgwMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -175,11 +315,21 @@
     {
       "videoId": "XNjU3NTU2NjA1Ng==",
       "orderId": 15,
+      "orderStage": 15,
+      "displayName": "15",
       "title": "嫁金钗 15",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "2933",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3NTU2NjA1Ng==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -187,11 +337,21 @@
     {
       "videoId": "XNjU3NzU3OTE2NA==",
       "orderId": 16,
+      "orderStage": 16,
+      "displayName": "16",
       "title": "嫁金钗 16",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3440",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3NzU3OTE2NA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -199,11 +359,21 @@
     {
       "videoId": "XNjU3NjgxNTU1Mg==",
       "orderId": 17,
+      "orderStage": 17,
+      "displayName": "17",
       "title": "嫁金钗 17",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3057",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3NjgxNTU1Mg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -211,11 +381,21 @@
     {
       "videoId": "XNjU2ODIwOTgyNA==",
       "orderId": 18,
+      "orderStage": 18,
+      "displayName": "18",
       "title": "嫁金钗 18",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3085",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2ODIwOTgyNA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -223,11 +403,21 @@
     {
       "videoId": "XNjU3Njk4MDE4NA==",
       "orderId": 19,
+      "orderStage": 19,
+      "displayName": "19",
       "title": "嫁金钗 19",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "2936",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3Njk4MDE4NA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -235,11 +425,21 @@
     {
       "videoId": "XNjU3NzAwMzAwMA==",
       "orderId": 20,
+      "orderStage": 20,
+      "displayName": "20",
       "title": "嫁金钗 20",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3175",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3NzAwMzAwMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -247,11 +447,21 @@
     {
       "videoId": "XNjU2Nzg0NDkyMA==",
       "orderId": 21,
+      "orderStage": 21,
+      "displayName": "21",
       "title": "嫁金钗 21",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": "3297",
+      "iconCorner": {
+        "tagText": "VIP",
+        "tagType": 3,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2Nzg0NDkyMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -259,11 +469,21 @@
     {
       "videoId": "XNjU2ODk3OTY0OA==",
       "orderId": null,
+      "orderStage": 22,
+      "displayName": "22",
       "title": "红线姑娘遇险，魏娆不顾阻挠离席施救",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": null,
+      "iconCorner": {
+        "tagText": "预告",
+        "tagType": 1,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU2ODk3OTY0OA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }
@@ -271,11 +491,21 @@
     {
       "videoId": "XNjU3ODQwNjQwMA==",
       "orderId": null,
+      "orderStage": 23,
+      "displayName": "23",
       "title": "红线姑娘危在旦夕，魏娆对峙太子妃请求放人",
       "chapterName": null,
       "showId": null,
       "type": 0,
       "peripheryVideoType": 0,
+      "seconds": null,
+      "iconCorner": {
+        "tagText": "预告",
+        "tagType": 1,
+        "iconfont": null,
+        "color": null,
+        "tagUrl": null
+      },
       "action": {
         "value": "youku://play?source=search&vid=XNjU3ODQwNjQwMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
       }

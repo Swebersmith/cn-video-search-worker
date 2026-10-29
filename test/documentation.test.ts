@@ -40,7 +40,7 @@ test('documentation explorer sends the chosen single-site query, renders safe li
   const { window, document } = parseHTML(DOCS_HTML);
   const calls: { url: string; authorization?: string }[] = [], copied: string[] = [];
   // Select.value and validity are browser primitives not implemented by this lightweight DOM.
-  for (const [id, value] of [['platform', 'all'], ['mode', 'all']]) Object.defineProperty(document.getElementById(id)!, 'value', { value, writable: true });
+  for (const [id, value] of [['platform', 'all'], ['mode', 'series']]) Object.defineProperty(document.getElementById(id)!, 'value', { value, writable: true });
   Object.assign(window, { location: { origin: 'https://example.test' } });
   Object.assign(document.getElementById('query-form')!, { reportValidity: () => true });
   const fetcher = async (url: string, init?: { headers?: Record<string, string> }) => {
@@ -61,7 +61,7 @@ test('documentation explorer sends the chosen single-site query, renders safe li
   document.getElementById('query-form')!.dispatchEvent(new window.Event('submit', { cancelable: true }));
   await tick(); await tick();
   assert.equal(calls.length, 1); assert.equal(new URL(calls[0].url).pathname, '/v1/iqiyi/search');
-  assert.equal(new URL(calls[0].url).searchParams.get('mode'), 'all'); assert.equal(calls[0].authorization, 'Bearer super-secret');
+  assert.equal(new URL(calls[0].url).searchParams.get('view'), 'series'); assert.equal(calls[0].authorization, 'Bearer super-secret');
   assert.ok(!calls[0].url.includes('super-secret'));
   assert.equal(document.querySelectorAll('#result-list img').length, 0);
   assert.equal(document.querySelectorAll('#result-list a').length, 1);
@@ -101,4 +101,21 @@ test('series explorer opens the exact selected catalogue, retains auth headers a
   assert.equal(buttons[0].getAttribute('aria-expanded'), 'false'); assert.equal(calls.length, 2);
   buttons[1].dispatchEvent(new window.Event('click')); await tick();
   assert.equal(calls.length, 2); assert.match(document.querySelectorAll('.catalogue-panel')[1].textContent || '', /目录地址无效/);
+});
+
+test('documentation exposes exactly two modes, no old album selector, and separate playable previews', async () => {
+  const {window,document}=parseHTML(DOCS_HTML);
+  assert.deepEqual([...document.querySelectorAll('#mode option')].map(o=>o.getAttribute('value')),['official','series']);
+  assert.equal(document.getElementById('album-id'),null);assert.ok(!DOCS_HTML.includes('album_id'));
+  for(const [id,value] of [['platform','youku'],['mode','series']])Object.defineProperty(document.getElementById(id)!,'value',{value,writable:true});
+  Object.assign(window,{location:{origin:'https://test'}});Object.assign(document.getElementById('query-form')!,{reportValidity:()=>true});
+  new Script(DOCS_JS).runInNewContext({window,document,URL,AbortSignal,navigator:{},setTimeout:()=>0,fetch:async(url:string)=>{
+    if(url==='/v1/platforms')return new Response(JSON.stringify({platforms:Object.values(CAPABILITIES)}));
+    if(url.includes('/series/'))return new Response(JSON.stringify({ok:true,total:21,main_total:21,complete:false,unavailable_episode_numbers:[22],missing_episode_numbers:[],ai:{status:'applied',recovered:0},episodes:[],previews:[{platform:'youku',title:'第22集预告',url:'https://v.youku.com/v_show/id_Xreal.html',episode_number:22,episode_type:'preview'}]}));
+    return new Response(JSON.stringify({results:[{platform:'youku',content_type:'series',id:'longSeries',title:'嫁金钗',detail_url:'/v1/youku/series/longSeries?q=嫁金钗'}]}));
+  }});
+  document.getElementById('query-form')!.dispatchEvent(new window.Event('submit',{cancelable:true}));await tick();await tick();
+  document.querySelector('.series-card>button')!.dispatchEvent(new window.Event('click'));await tick();await tick();
+  assert.match(document.querySelector('.catalogue-panel')!.textContent||'',/正片待确认/);assert.match(document.querySelector('.catalogue-panel')!.textContent||'',/DeepSeek/);
+  assert.equal(document.querySelectorAll('.catalogue-panel details a').length,1);assert.ok(!document.querySelector('.catalogue-panel')!.textContent?.includes('缺集编号'));
 });

@@ -1,121 +1,255 @@
 import { PLATFORMS } from './types';
 import { CAPABILITIES, VERSION } from './aggregate';
-
-const videoSchema = {
-  type: 'object', required: ['platform', 'platform_name', 'title', 'url', 'kind', 'score', 'source'],
-  properties: {
-    platform: { type: 'string', enum: Object.keys(PLATFORMS) }, platform_name: { type: 'string' },
-    title: { type: 'string' }, url: { type: 'string', format: 'uri', description: '官方网页播放地址，未经逐次可播放性验证。' },
-    kind: { type: 'string', enum: ['video', 'series'] }, score: { type: 'number', minimum: 0, maximum: 1 },
-    source: { type: 'string', enum: ['native'] },
-    content_type: { enum: ['search', 'episode'] }, episode_number: { type: 'integer' }, album_id: { type: 'string' }, series_title: { type: 'string' },
+const platform = { type: 'string', enum: Object.keys(PLATFORMS) };
+const nullableInt = { type: ['integer', 'null'] };
+const numbers = { type: 'array', items: { type: 'integer' } };
+const strings = { type: 'array', items: { type: 'string' } };
+const security = [{ bearerAuth: [] }, { apiKey: [] }, {}];
+const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` });
+const response = (name: string, description: string) => ({
+  description,
+  content: { 'application/json': { schema: ref(name) } },
+});
+const searchParameters = [
+  {
+    name: 'q',
+    in: 'query',
+    required: true,
+    schema: { type: 'string', minLength: 1, maxLength: 80 },
+    example: '嫁金钗',
+  },
+  {
+    name: 'view',
+    in: 'query',
+    schema: { type: 'string', enum: ['official', 'series'], default: 'official' },
+    description: '官网综合搜索，或 AI 辅助筛选长影视作品的目录。',
+  },
+  {
+    name: 'page',
+    in: 'query',
+    schema: { type: 'integer', minimum: 1, maximum: 1000, default: 1 },
+    description: '仅 official，读取官网一页。',
+  },
+  {
+    name: 'platforms',
+    in: 'query',
+    schema: { type: 'string', default: 'all' },
+    description: '仅总接口：all 或逗号分隔平台标识。',
+  },
+  {
+    name: 'limit',
+    in: 'query',
+    schema: { type: 'integer', minimum: 1, maximum: 20, default: 5 },
+    description: '仅 series 的每站作品数，不限制详情目录；official 忽略。',
+  },
+];
+const searchContract = {
+  summary: '聚合五站官网搜索或长影视目录',
+  security,
+  parameters: searchParameters,
+  responses: {
+    '200': response('SearchResponse', '本页结果，检查 partial 和 providers 状态'),
+    '400': response('Error', '参数无效'),
+    '401': response('Error', '认证失败'),
+    '503': response('SearchResponse', '本次所选上游均不可用'),
   },
 };
 export const openapi = {
   openapi: '3.1.0',
-  info: { title: '国内五大影视平台统一查询 API', version: VERSION, description: '两层查询：搜索返回各站剧集摘要，跟随 detail_url 获取所选作品的分集目录。默认返回各平台官网未登录综合搜索本页卡片与原始响应。目录模式另行筛选影视作品，上游限制会如实标注。' },
+  info: {
+    title: '五站官网搜索与 AI 影视目录',
+    version: VERSION,
+    description:
+      '仅 official、series 两种模式。目录筛选电影、电视剧、综艺、动漫、纪录片，排除短剧及普通短视频。DeepSeek 仅分类和识别官方候选，不生成链接。',
+  },
   servers: [{ url: '/' }],
   components: {
-    securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' }, apiKey: { type: 'apiKey', in: 'header', name: 'X-API-Key' } },
+    securitySchemes: {
+      bearerAuth: { type: 'http', scheme: 'bearer' },
+      apiKey: { type: 'apiKey', in: 'header', name: 'X-API-Key' },
+    },
     schemas: {
-      Video: videoSchema,
-      OfficialResult: {type:'object',properties:{platform:{type:'string'},platform_name:{type:'string'},rank:{type:'integer'},content_type:{const:'official'},title:{type:'string'},url:{type:['string','null']},type_name:{type:'string'},raw:{description:'未经相关度过滤或去重的完整官网卡片。'}}},
-      Series: { type: 'object', required: ['platform', 'id', 'title', 'detail_url', 'content_type'], properties: {
-        platform: { enum: Object.keys(PLATFORMS) }, platform_name: { type: 'string' }, id: { type: 'string' }, title: { type: 'string' }, year: { type: 'string' }, kind: { enum: ['series', 'movie', 'collection'] }, type_name: { type: 'string' }, total_episodes: { type: ['integer', 'null'], description: '上游搜索标注条数，可能包含不同版本或附加内容。' }, url: { type: 'string', format: 'uri' }, detail_url: { type: 'string', description: '当前服务的相对路径，保留 q 提示及准确剧集 ID；客户端应直接跟随此地址。' }, score: { type: 'number' }, content_type: { const: 'series' },
-      } },
-      Catalogue: { type: 'object', properties: {
-        update_notice: { type: 'string', description: '上游原始更新说明（若提供）。连载作品的计划总集数见 series.total_episodes，expected_total 按当前更新范围核对；未播集数不列为缺集。' },
-        ok: { type: 'boolean' }, platform: { enum: Object.keys(PLATFORMS) }, series: { $ref: '#/components/schemas/Series' }, total: { type: 'integer' }, main_total: { type: 'integer' }, extra_total: { type: 'integer' }, expected_total: { type: ['integer', 'null'] }, complete: { type: 'boolean', description: '与上游当前目录一致，不代表尚未发布的分集或播放权限。' }, partial: { type: 'boolean' }, missing_episode_numbers: { type: 'array', items: { type: 'integer' } }, warnings: { type: 'array', items: { type: 'string' } }, cached: { type: 'boolean' }, fetched_at: { type: 'string', format: 'date-time' }, source: { type: 'string' }, took_ms: { type: 'integer' },
-        episodes: { type: 'array', items: { type: 'object', properties: { platform: { enum: Object.keys(PLATFORMS) }, episode_number: { type: ['integer', 'null'] }, title: { type: 'string' }, url: { type: 'string', format: 'uri' }, episode_type: { enum: ['main', 'extra'] } } } },
-      } },
-      Error: { type: 'object', properties: { ok: { const: false }, error: { type: 'object', properties: { code: { type: 'string' }, message: { type: 'string' } } } } },
-      SearchResponse: {
-        type: 'object', properties: {
-          ok: { type: 'boolean' }, query: { type: 'string' }, view: { enum: ['official', 'series', 'videos'] }, page:{type:'integer'},source_policy:{const:'same_platform_official_only'}, mode: { enum: ['all', 'search', 'episodes'] }, partial: { type: 'boolean' }, total: { type: 'integer', description: '本页返回卡片数；series 为筛选后的剧集摘要数，videos 为链接数。' }, limit: { type: 'integer', description: '每站剧集摘要或旧模式普通链接上限，不截断详情目录。' },
-          took_ms: { type: 'integer' }, results: { type: 'array', items: { oneOf: [{ $ref: '#/components/schemas/Series' }, { $ref: '#/components/schemas/Video' }, { $ref: '#/components/schemas/OfficialResult' }] } },
-          providers: { type: 'array', items: { type: 'object', properties: {
-            source:{const:'official'}, total:{type:['integer','null']}, page:{type:'integer'}, source_url:{type:['string','null']}, has_more:{type:['boolean','null']}, upstream:{description:'该平台本页原始官网响应，包含全部类型和其他模块。'}, platform: { type: 'string' }, status: { enum: ['ok', 'empty', 'degraded', 'unavailable', 'stale', 'unsupported'] },
-            count: { type: 'integer' }, available_count: { type: 'integer', description: '本次上游搜索中符合过滤规则的候选数，不是全剧总集数。' }, truncated: { type: 'boolean', description: '是否被本次 limit 截断。' }, warnings: { type: 'array', items: { type: 'string' } },
-            cached: { type: 'boolean' }, fetched_at: { type: 'string', format: 'date-time' }, search_url: { type: 'string', format: 'uri' },
-            operations: { type: 'object', properties: { search: { $ref: '#/components/schemas/Operation' }, episodes: { $ref: '#/components/schemas/Operation' } } },
-            catalog: { type: 'object', properties: { series: { type: 'object' }, series_candidates: { type: 'array', items: { type: 'object' } }, total: { type: 'integer' }, expected_total: { type: ['integer', 'null'] }, complete: { type: 'boolean' }, missing_episode_numbers: { type: 'array', items: { type: 'integer' } }, warnings: { type: 'array', items: { type: 'string' } }, cached: { type: 'boolean' }, fetched_at: { type: 'string', format: 'date-time' } } },
-          } } },
+      AI: {
+        type: 'object',
+        properties: {
+          status: { enum: ['applied', 'fallback', 'disabled', 'not_needed'] },
+          model: { type: 'string' },
+          classified: { type: 'integer' },
+          recovered: { type: 'integer' },
+          warnings: strings,
         },
       },
-      Operation: { type: 'object', properties: { status: { enum: ['ok', 'empty', 'degraded', 'unavailable', 'stale', 'unsupported', 'skipped'] }, count: { type: 'integer' }, warnings: { type: 'array', items: { type: 'string' } }, cached: { type: 'boolean' }, fetched_at: { type: 'string', format: 'date-time' } } },
+      Series: {
+        type: 'object',
+        required: ['platform', 'id', 'title', 'detail_url', 'content_type'],
+        properties: {
+          platform,
+          platform_name: { type: 'string' },
+          id: { type: 'string' },
+          title: { type: 'string' },
+          year: { type: 'string' },
+          kind: { enum: ['movie', 'series', 'collection'] },
+          category: { enum: ['movie', 'tv', 'variety', 'anime', 'documentary'] },
+          type_name: { type: 'string' },
+          total_episodes: nullableInt,
+          url: { type: 'string' },
+          detail_url: { type: 'string', description: '直接跟随该相对地址；保留关键词提示。' },
+          score: { type: 'number' },
+          content_type: { const: 'series' },
+        },
+      },
+      Episode: {
+        type: 'object',
+        properties: {
+          platform,
+          episode_number: nullableInt,
+          title: { type: 'string' },
+          url: { type: 'string', format: 'uri' },
+          episode_type: { enum: ['main', 'extra', 'preview'] },
+          recognition: { enum: ['structured', 'ai'] },
+        },
+      },
+      OfficialResult: {
+        type: 'object',
+        properties: {
+          platform,
+          platform_name: { type: 'string' },
+          rank: { type: 'integer' },
+          content_type: { const: 'official' },
+          title: { type: 'string' },
+          url: { type: ['string', 'null'] },
+          type_name: { type: 'string' },
+          raw: { description: '官网原始卡片，保留全部类型和原始顺序。' },
+        },
+      },
+      Catalogue: {
+        type: 'object',
+        properties: {
+          ok: { type: 'boolean' },
+          platform,
+          series: ref('Series'),
+          total: { type: 'integer' },
+          main_total: { type: 'integer' },
+          extra_total: { type: 'integer' },
+          expected_total: nullableInt,
+          update_notice: { type: 'string' },
+          complete: {
+            type: 'boolean',
+            description: '正片目录与官方当前已发布范围一致；不代表全剧完结或无需会员。',
+          },
+          partial: { type: 'boolean' },
+          missing_episode_numbers: { ...numbers, description: '已发布范围内未找到链接的编号。' },
+          unavailable_episode_numbers: {
+            ...numbers,
+            description: '发现预告链接但正片尚未确认的编号；不计入正片，也不重复列为缺失链接。',
+          },
+          episodes: { type: 'array', items: ref('Episode'), description: '正片与附加目录。' },
+          previews: {
+            type: 'array',
+            items: ref('Episode'),
+            description: '明确标为预告的官方链接，与正片分开。',
+          },
+          ai: ref('AI'),
+          warnings: strings,
+          cached: { type: 'boolean' },
+          fetched_at: { type: 'string', format: 'date-time' },
+          source: { type: 'string' },
+          took_ms: { type: 'integer' },
+        },
+      },
+      SearchResponse: {
+        type: 'object',
+        properties: {
+          ok: { type: 'boolean' },
+          query: { type: 'string' },
+          view: { enum: ['official', 'series'] },
+          page: { type: 'integer' },
+          limit: { type: 'integer' },
+          partial: { type: 'boolean' },
+          total: { type: 'integer', description: '本页返回卡片或作品数量，不是某部剧总集数。' },
+          source_policy: { const: 'same_platform_official_only' },
+          took_ms: { type: 'integer' },
+          results: { type: 'array', items: { oneOf: [ref('Series'), ref('OfficialResult')] } },
+          providers: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                platform,
+                status: { enum: ['ok', 'empty', 'degraded', 'unavailable'] },
+                count: { type: 'integer' },
+                total: nullableInt,
+                truncated: { type: 'boolean' },
+                warnings: strings,
+                ai: ref('AI'),
+                cached: { type: 'boolean' },
+                fetched_at: { type: 'string' },
+                page: { type: 'integer' },
+                has_more: { type: ['boolean', 'null'] },
+                source: { type: 'string' },
+                execution: { type: 'string' },
+                source_url: { type: ['string', 'null'] },
+                upstream: { description: 'official 模式完整官网响应。' },
+              },
+            },
+          },
+        },
+      },
+      Error: {
+        type: 'object',
+        properties: {
+          ok: { const: false },
+          error: { type: 'object', properties: { code: { type: 'string' }, message: { type: 'string' } } },
+        },
+      },
     },
   },
   paths: {
-    '/health': { get: { summary: '进程健康状态，不代表上游可用性', responses: { '200': { description: 'Worker is running' } } } },
-    '/v1/platforms': { get: { summary: '平台列表与标识', responses: { '200': { description: 'Supported platforms' } } } },
-    '/v1/episodes': { get: {
-      deprecated: true,
-      summary: '获取爱奇艺电视剧的有序分集目录',
-      description: '先选择电视剧专辑，再读取官方目录。complete=true 表示目录集数与完整编号一致；不代表无需会员或每个页面均可播放。最多读取 500 集，不受 search 的 limit=5 限制。',
-      security: [{ bearerAuth: [] }, { apiKey: [] }, {}],
-      parameters: [
-        { name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 1, maxLength: 80 }, example: '海市蜃楼' },
-        { name: 'platform', in: 'query', schema: { type: 'string', enum: ['iqiyi'], default: 'iqiyi' } },
-        { name: 'album_id', in: 'query', schema: { type: 'string', pattern: '^\\d{1,20}$' }, description: '可选：从该关键词匹配的 series_candidates 中选择专辑，避免同名电视剧混淆。' },
-      ],
-      responses: {
-        '200': { description: '分集目录，需检查 complete 与 missing_episode_numbers', content: { 'application/json': { schema: {
-          type: 'object', properties: {
-            ok: { type: 'boolean' }, query: { type: 'string' }, platform: { const: 'iqiyi' },
-            series: { type: 'object', properties: { album_id: { type: 'string' }, title: { type: 'string' }, year: { type: 'string' }, total_episodes: { type: ['integer', 'null'] } } },
-            series_candidates: { type: 'array', items: { type: 'object' } }, total: { type: 'integer' }, expected_total: { type: ['integer', 'null'] },
-            complete: { type: 'boolean' }, partial: { type: 'boolean' }, missing_episode_numbers: { type: 'array', items: { type: 'integer' } },
-            results: { type: 'array', items: { type: 'object', properties: { platform: { const: 'iqiyi' }, platform_name: { type: 'string' }, episode_number: { type: 'integer' }, title: { type: 'string' }, url: { type: 'string', format: 'uri' }, kind: { const: 'video' }, source: { const: 'native' } } } },
-            warnings: { type: 'array', items: { type: 'string' } }, cached: { type: 'boolean' }, fetched_at: { type: 'string', format: 'date-time' }, took_ms: { type: 'integer' },
-          },
-        } } } },
-        '400': { description: '参数错误或暂不支持此平台' }, '401': { description: '认证失败' },
-        '404': { description: '未匹配到电视剧专辑' }, '503': { description: '上游不可用或无可用分集' },
+    '/health': {
+      get: {
+        summary: '进程健康状态，不代表官网或 AI 可用性',
+        responses: { '200': { description: 'Worker is running' } },
       },
-    } },
-    '/v1/search': { get: {
-      summary: '聚合五站官网综合搜索，保留原始卡片与分页',
-      description: '默认 view=official，保留所选官网本页的综合结果与原始顺序，page 分页，不按 limit 截断。view=series 另提供影视目录摘要，通过 detail_url 获取特定版本的目录。view=videos 保留旧版扁平结果；显式 mode 参数隐式选择 videos。配置 API_KEY 后必须认证。partial=true 时检查 providers 状态。',
-      security: [{ bearerAuth: [] }, { apiKey: [] }, {}],
-      parameters: [
-        { name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 1, maxLength: 80 }, example: '三体' },
-        { name: 'view', in: 'query', schema: { type: 'string', enum: ['series', 'videos'], default: 'official' } },
-        { name: 'page', in: 'query', description: '仅 official 模式；从 1 开始，每次取官网一页，不抓取全站。', schema: { type: 'integer', minimum: 1, maximum: 1000, default: 1 } },
-        { name: 'mode', in: 'query', description: '兼容模式：仅 videos 使用。显式设置时隐式选择 videos；旧 episodes 仅爱奇艺，不用于新接入。', schema: { type: 'string', enum: ['all', 'search', 'episodes'] } },
-        { name: 'album_id', in: 'query', schema: { type: 'string', pattern: '^\\d{1,20}$' }, description: '爱奇艺专辑选择；仅 all/episodes 模式且选择包含 iqiyi 时可用。' },
-        { name: 'platforms', in: 'query', schema: { type: 'string', default: 'all' }, description: 'all 或 tencent,iqiyi,youku,mango,bilibili 的逗号分隔子集' },
-        { name: 'limit', in: 'query', schema: { type: 'integer', default: 5, minimum: 1, maximum: 20 }, description: '每个平台剧集摘要上限；videos 模式为普通搜索上限。详情目录不受此限制。' },
-      ],
-      responses: Object.fromEntries([200, 400, 401, 422, 503].map(code => [String(code), {
-        description: ({ 200: '查询完成，可能部分降级', 400: '参数错误', 401: '认证失败', 422: '所选平台均未接入此功能', 503: '所有所选平台不可用；请重试' } as Record<number, string>)[code],
-        content: { 'application/json': { schema: { $ref: [200, 422, 503].includes(code) ? '#/components/schemas/SearchResponse' : '#/components/schemas/Error' } } },
-      }])),
-    } },
+    },
+    '/v1/platforms': {
+      get: { summary: '平台与目录入口', responses: { '200': { description: 'Platform capabilities' } } },
+    },
+    '/v1/search': { get: searchContract },
   },
 };
-
-// Derive the five single-site contracts from the aggregate contract to prevent parameter drift.
-for (const capability of Object.values(CAPABILITIES)) {
-  Object.assign(openapi.paths, { [capability.endpoint]: { get: {
-    ...openapi.paths['/v1/search'].get,
-    summary: `${capability.name}单站统一查询`, description: `${capability.note} 与聚合接口共用业务逻辑，只返回 ${capability.id} 的内容。`,
-    parameters: openapi.paths['/v1/search'].get.parameters.filter(p => p.name !== 'platforms'),
-  } } });
-}
-
-for (const capability of Object.values(CAPABILITIES)) {
-  Object.assign(openapi.paths, { [capability.detail_endpoint]: { get: {
-    summary: `${capability.name}指定剧集的分集目录`,
-    description: '使用搜索返回的 detail_url。ID 精确定位作品，q 仅用于发现元数据和优酷 SSR 目录，必须保留返回链接中的 q。返回 episodes，不受搜索 limit 限制。complete=false 时检查 warnings。',
-    security: [{ bearerAuth: [] }, { apiKey: [] }, {}],
-    parameters: [
-      { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: '搜索摘要的原始 id，各平台格式不同。' },
-      { name: 'q', in: 'query', schema: { type: 'string', maxLength: 80 }, description: '保留 detail_url 中的发现关键词。优酷冷缓存读取需要此值。' },
-    ],
-    responses: {
-      '200': { description: '目录可能不完整，必须检查 complete', content: { 'application/json': { schema: { $ref: '#/components/schemas/Catalogue' } } } },
-      '400': { description: '参数或剧集 ID 错误' }, '401': { description: '认证失败' },
-      '503': { description: '上游本次未返回可用目录', content: { 'application/json': { schema: { $ref: '#/components/schemas/Catalogue' } } } },
+for (const p of Object.values(CAPABILITIES)) {
+  Object.assign(openapi.paths, {
+    [p.endpoint]: {
+      get: {
+        ...searchContract,
+        summary: `${p.name}单站查询`,
+        parameters: searchParameters.filter((v) => v.name !== 'platforms'),
+      },
     },
-  } } });
+  });
+  Object.assign(openapi.paths, {
+    [p.detail_endpoint]: {
+      get: {
+        summary: `${p.name}指定作品目录与 AI 分集识别`,
+        security,
+        description:
+          '使用搜索返回的 detail_url。AI 仅选取已验证的官方候选，预告单列；缺少 Secret 或 AI 失败时使用规则处理并返回 ai 状态。',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          {
+            name: 'q',
+            in: 'query',
+            schema: { type: 'string', maxLength: 80 },
+            description: '保留 detail_url 的原关键词。',
+          },
+        ],
+        responses: {
+          '200': response('Catalogue', '目录，检查 complete、预告与 AI 状态'),
+          '400': response('Error', '无效 ID 或参数'),
+          '401': response('Error', '认证失败'),
+          '503': response('Catalogue', '本次没有可用正片目录'),
+        },
+      },
+    },
+  });
 }

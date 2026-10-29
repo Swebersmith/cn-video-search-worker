@@ -8,13 +8,12 @@ import { readFile } from 'node:fs/promises';
 test('Youku nullable chapter labels retain published episodes, exclude previews and do not invent future gaps', async () => {
   for (const [id, title, planned, available, released] of [
     ['bcaa87c7834c46f99e7b', '嫁金钗', 30, 21, 22],
-    ['cdfe86fe91ec49fa9b46', '酷陪看·嫁金钗', 10, 4, 4],
   ] as const) {
     const full = JSON.parse(await readFile(`test/fixtures/youku-${id}.json`, 'utf8'));
     const handler = createHandler(async (url) => {
       if (url.includes('so.youku.com')) return new Response('verification');
       if (new URL(url).searchParams.get('appScene') === 'show_episode') return json(full);
-      return json({message:'success',originNodes:[{data:{showId:id,tempTitle:title,episodeTotal:planned}}]});
+      return json({message:'success',originNodes:[{data:{showId:id,tempTitle:title,episodeTotal:planned,featureDTO:{text:"电视剧"}}}]});
     });
     const response = await handler(request(`/v1/youku/series/${id}?q=${encodeURIComponent(title)}`));
     const d = await response.json() as any;
@@ -23,8 +22,10 @@ test('Youku nullable chapter labels retain published episodes, exclude previews 
     assert.equal(d.expected_total, released);
     assert.equal(d.series.total_episodes, planned);
     assert.equal(d.update_notice, full.updateNotice);
-    assert.equal(d.complete, available === released);
-    assert.deepEqual(d.missing_episode_numbers, available === released ? [] : [22]);
+    assert.equal(d.complete, Number(available) === released);
+    assert.deepEqual(d.missing_episode_numbers, []);
+    assert.deepEqual(d.unavailable_episode_numbers,[22]);
+    assert.ok(d.previews.some((e:any)=>e.episode_number===22));
     assert.ok(d.episodes.every((e: any) => e.episode_number && e.episode_number <= available));
   }
 });
@@ -32,7 +33,7 @@ test('Youku nullable chapter labels retain published episodes, exclude previews 
 test('Youku labelled bonus episodes remain separate from the numbered main series', async () => {
   const full = JSON.parse(await readFile('test/fixtures/youku-extra-api.json', 'utf8'));
   const h = createHandler(async url => url.includes('so.youku.com') ? new Response('verification')
-    : json(new URL(url).searchParams.has('appScene') ? full : {message:'success',originNodes:[{data:{showId:full.showId,tempTitle:'长安二十四计',episodeTotal:28}}]}));
+    : json(new URL(url).searchParams.has('appScene') ? full : {message:'success',originNodes:[{data:{showId:full.showId,tempTitle:'长安二十四计',episodeTotal:28,featureDTO:{text:'电视剧'}}}]}));
   const d = await (await h(request(`/v1/youku/series/${full.showId}?q=长安二十四计`))).json() as any;
   assert.equal(d.complete, true);
   assert.equal(d.main_total, 28);
@@ -43,16 +44,18 @@ test('Youku labelled bonus episodes remain separate from the numbered main serie
 });
 
 test('Youku nullable chapters still reject wrong shows, extras and gaps in the released range', async () => {
-  const full = JSON.parse(await readFile('test/fixtures/youku-cdfe86fe91ec49fa9b46.json', 'utf8'));
+  const full = JSON.parse(await readFile('test/fixtures/youku-bcaa87c7834c46f99e7b.json', 'utf8'));
+  full.serisesList=full.serisesList.slice(0,4);full.updateNotice='更新至4/30集';
   full.serisesList[1].action.value = full.serisesList[1].action.value.replace(full.showId, 'otherShow');
   full.serisesList[2].chapterName = '预告';
   full.serisesList[3].peripheryVideoType = 1;
   const h = createHandler(async url => url.includes('so.youku.com') ? new Response('verification')
-    : json(new URL(url).searchParams.has('appScene') ? full : {message:'success',originNodes:[{data:{showId:full.showId,tempTitle:'酷陪看·嫁金钗',episodeTotal:10}}]}));
+    : json(new URL(url).searchParams.has('appScene') ? full : {message:'success',originNodes:[{data:{showId:full.showId,tempTitle:'嫁金钗',episodeTotal:30,featureDTO:{text:'电视剧'}}}]}));
   const d = await (await h(request(`/v1/youku/series/${full.showId}?q=嫁金钗`))).json() as any;
   assert.equal(d.total, 1);
   assert.equal(d.complete, false);
-  assert.deepEqual(d.missing_episode_numbers, [2,3,4]);
+  assert.deepEqual(d.missing_episode_numbers, [2,4]);
+  assert.deepEqual(d.unavailable_episode_numbers,[3]);
 });
 
 test('Youku official JSON search and episode API recover from web challenges without mixing shows', async () => {
@@ -215,16 +218,7 @@ const upstream: Fetcher = async (url, init) => {
         ';window.other=1;',
     );
   if (url.includes('mobileso'))
-    return json({
-      code: 200,
-      data: {
-        contents: [
-          { title: '同名剧', year: '2020', total: 2, url: 'https://www.mgtv.com/b/101/1001.html' },
-          { title: '同名剧', url: 'https://www.mgtv.com/b/101/1002.html' },
-          { title: '同名剧', year: '2025', total: 2, url: 'https://www.mgtv.com/b/102/2001.html' },
-        ],
-      },
-    });
+    return json({code:200,data:{contents:[101,102].map((cid,i)=>({type:'program',data:{yearList:[{title:'同名剧',year:String(2020+i*5),total:2,desc:[{label:'类型',text:'电视剧'}],sourceList:[{source:'imgo',videoList:[{url:`https://www.mgtv.com/b/${cid}/${i===0?1001:2001}.html`}]}]}]}}))}});
   if (url.includes('pcweb.api')) {
     const u = new URL(url),
       vid = u.searchParams.get('video_id'),

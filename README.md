@@ -1,81 +1,79 @@
-# VideoSearch · 五站官网搜索与影视目录
+# VideoSearch · 五站官网搜索与 AI 影视目录
 
-默认搜索直接读取各平台官网综合搜索的本页响应。**每个站点只查询自己的官网，不使用第三方聚合接口、搜索引擎或其他平台的索引补结果。**
+正式地址：<https://videosearch.webber.qzz.io/> · [OpenAPI](https://videosearch.webber.qzz.io/openapi.json)
 
-正式地址：https://videosearch.webber.qzz.io/
+**只保留两个模式：官网综合搜索、影视目录。** 总接口聚合五站，单站接口只查询对应官网。
 
-## 1.4.0 行为变化
+| 模式 | 请求示例 | 行为 |
+| --- | --- | --- |
+| 官网综合搜索 | `/v1/search?q=嫁金钗&view=official&page=1` | 默认模式，保留官网本页全部卡片和顺序，以及原始响应。 |
+| 影视目录 | `/v1/search?q=嫁金钗&view=series&limit=5` | 筛选电影、长电视剧、综艺、动漫、纪录片；DeepSeek 辅助分类，排除短剧、陪看、解说、花絮、路透和普通短视频。 |
 
-默认 view 从 series 改为 official。旧版仅提取可展开目录的电视剧/番剧，省略了电影、普通视频、创作者及其他卡片，且会按本地相关度重排；这不能等同于官网搜索。
+单站路径为 `/v1/{platform}/search`，平台标识：`tencent`、`iqiyi`、`youku`、`mango`、`bilibili`。例如：
 
-新版官网模式保留官方响应的卡片和顺序，不按模糊匹配分数过滤，不去重，不用 limit=5 截断。未知模板同样保留。官网自己索引到的外站内容也保留为官网原始卡片，这与调用外站搜索代替本站结果不同。
+```text
+GET /v1/youku/search?q=嫁金钗&view=series
+→ 选择 results[] 中的作品，直接跟随 detail_url
+GET /v1/youku/series/bcaa87c7834c46f99e7b?q=嫁金钗
+→ 该作品的正片目录、预告和完整性状态
+```
 
-已彻底移除 Brave 备用搜索和“用腾讯索引替代芒果搜索”的运行时代码。旧搜索缓存更换命名空间，避免读回旧版跨来源结果。所有搜索入口，包括兼容模式，均受同站官网来源约束。
+2.0 删除了旧版扁平链接模式、三个兼容选项和旧爱奇艺专辑选择接口；旧参数请求返回 400，已移除的路由返回 404。新接入只使用上面两种模式和 `detail_url`。
 
-## 官网综合搜索（默认）
+## 参数与返回
 
-GET /v1/search?q=三体&page=1
-GET /v1/tencent/search?q=三体&page=1
-GET /v1/iqiyi/search?q=三体&page=1
-GET /v1/youku/search?q=嫁金钗&page=1
-GET /v1/mango/search?q=歌手2025&page=1
-GET /v1/bilibili/search?q=三体&page=1
+| 参数 | 范围 | 用途 |
+| --- | --- | --- |
+| `q` | 1—80 字符，搜索必填 | 模糊片名；目录请求保留 detail_url 中的关键词提示。 |
+| `view` | `official` / `series` | 默认 official。 |
+| `page` | 1—1000，默认 1 | 仅 official，每次读取官网一页。 |
+| `limit` | 1—20，默认 5 | 仅 series，限制每站作品数，不截断展开的目录。official 忽略此参数。 |
+| `platforms` | all 或逗号分隔平台标识 | 仅聚合接口，用于选择平台子集。 |
 
-上述接口默认 view=official。聚合接口可用 platforms=tencent,iqiyi 选择子集；单站接口不接受 platforms。
+官网模式每次读取本页真实官网响应，不进行 AI 改写、相关度重排、去重或目录类型过滤。`results[].raw` 保留完整卡片，`providers[].upstream` 保留官方原始响应。官网自己收录的外站卡片仍保留为原始数据；本服务不会调用别站搜索代替该站。
 
-- q：1—80 字符。
-- page：1—1000，一次获取官网一页。页长由各站原生接口决定，继续修改 page 请求下一页。
-- limit：官网模式忽略此参数，不截断官方本页结果；它只用于其他视图。
-- results[]：本页卡片，包含 platform、rank、title、url、type_name、raw。rank 是平台内原顺序，raw 保留完整原始卡片，包括子视频和模块信息。
-- providers[].upstream：该平台未经内容筛选的完整官网 JSON 响应，含原生分页、纠错词、相关搜索和其他模块，便于核对。
-- providers[].source_url：实际官方接口；source=official。source_policy=same_platform_official_only 表示来源策略。
-- providers[].total：官网标注总量，未知时为 null；顶层 total 是本页实际输出卡片数，两者不是一回事。
-- providers[].has_more：官方明确给出的下一页信息，无法可靠判定时为 null，不凭卡片数量猜测末页。
+目录模式的摘要包含 `id`、`title`、`year`、`category`、`type_name`、`total_episodes`、`detail_url`。分类只允许 `movie`、`tv`、`variety`、`anime`、`documentary`；作品长短依据内容类型，不凭集数多就把短剧当成长电视剧。芒果只将官网 program 等作品卡片作为候选，不把标了“电视剧”的几十秒路透视频当成正剧。
 
-卡片可以是影片、短视频、UP 主、人物或未知模板；没有可识别网页链接的卡片仍保留，url=null。网页模式可展开查看原始卡片，总 JSON 中还可查看完整官方响应。卡片中的非网页 App 跳转不执行，链接仅允许已知官方域名。
+目录详情包含：
 
-官网模式每次发起真实查询，不使用历史缓存来伪装当前官网结果。
+- `episodes[]`：正片及附加内容，带 `episode_number`、`title`、官方 `url`、`episode_type`（main / extra）。
+- `previews[]`：预告链接，`episode_type=preview`，不计入正片或目录总条数。
+- `total` / `main_total` / `extra_total`：实际目录条数。综艺保留上下、加更等原始标题，不将排序号伪装成期数。
+- `expected_total`：官方当前发布范围对应的目录条数；计划全集数仍在 `series.total_episodes`。
+- `missing_episode_numbers`：当前已发布范围内没有找到链接的编号。
+- `unavailable_episode_numbers`：已找到预告，但正片尚未确认的编号；与缺失链接分开显示。
+- `update_notice`：官方更新说明。`complete` / `partial` / `warnings` 表明本次目录是否取齐、是否存在上游限制。
+- `ai`：AI 状态、模型、分类数、实际补充条数和错误代码。
 
-## 五站官方来源
+例如本次《嫁金钗》官方更新说明写 22/30 集，但目录只提供 1—21 集正片，第 22、23 个候选明确标“预告”。服务会提供预告链接，并将第 22 集标为“正片待确认”；不会用预告替代正片，也不会把尚未发布的 23—30 集列为缺失。
 
-- 腾讯：腾讯官网使用的 MultiTerminalSearch。根据 normalList 中的 areaBoxIndex 展开官方模块，保留电影、电视剧、其他卡片和相关搜索的顺序。
-- 爱奇艺：官网 mesh homePageV3 综合搜索，保留所有 templates，不仅提取电视剧频道。
-- 优酷：官网 search.youku.com/api/search，保留 pageComponentList、originNodes 及官方分页。
-- 芒果：从当前官网公开脚本确认的 mobileso.bz.mgtv.com/pc/search/v2，按官网请求参数和公开校验规则生成请求。旧版 v1 的 401 不再通过腾讯索引兜底。
-- 哔哩哔哩：首页优先读取官网搜索页中的服务端数据（SSR）；官网 HTML 只包含首屏，后续翻页按官网页面脚本的 platform=pc、page_size=42 请求本站综合搜索。解析器只允许字面量和数据引用，不执行页面脚本。首屏页面数据不可用时尝试同站接口，并明确标为 degraded；没有第三方搜索源。
+`complete=true` 要求来源、分页、当前条数和编号校验通过，不表示全剧完结、免会员或每页必然可播放。
 
-这里对齐的是官网未登录、默认综合搜索的数据响应。登录状态、地区、个性化、官网 AB 实验、时间以及网络出口可能改变结果；本服务不会声称与任意用户浏览器的个性化页面逐项相同。HTTP 401/412、风控、超时或接口改版会明确返回 unavailable 和官网搜索链接，不用别站或第三方结果冒充成功。
+## DeepSeek 辅助处理
 
-## 影视目录（可选筛选视图）
+默认模型为 `deepseek-flash`，服务端调用 DeepSeek 的 JSON 输出接口，关闭思考模式以降低交互等待。目录查询中的作品标题、官方类型和精简候选标签会发送给 DeepSeek；访问密钥不进入模型提示、前端、URL、日志或 GitHub。
 
-如需原来的“选作品 → 展开分集”，显式使用 view=series：
+分类结合官方类型与 AI 判断。官方明确为短剧、陪看、剪辑等内容时，模型不能将其提升为长影视作品。AI 不可用时使用有明确依据的类型规则；无法确认的类型不进入目录，并在 `ai.status=fallback` 和 warnings 中说明。
 
-GET /v1/youku/search?q=嫁金钗&view=series&limit=5
-→ 跟随 results[].detail_url
+补集时先从官方响应提取候选并校验作品归属和官方播放路径，再让 AI 判断正片、预告或附加内容。**模型只返回候选编号，不输出 URL。** 程序只采用输入中真实存在的候选，检查集序、已播范围、置信度及冲突后重新计算完整性。官方明确标为预告的内容不能被 AI 改成正片。
 
-此视图只包含当前适配器能识别并展开目录的影视摘要，是筛选视图，不是官网全部结果。limit 为每站 1—20 部作品，默认 5，不截断展开后的目录。
+作品摘要和分类默认缓存 5 分钟；完整目录单独缓存。AI 请求有超时、响应大小和候选数量上限。使用已有 `API_KEY` 认证可控制共享接口访问；AI 调用使用你自己的 DeepSeek 配额。
 
-目录含 total、main_total、extra_total、expected_total、complete、missing_episode_numbers、warnings。complete=true 表示当前来源目录取齐，不表示全剧完结或无会员限制。
+## 官网来源与 B站本机出口
 
-优酷兼容 chapterName=null 的正片，用有效集序和作品 ID 校验；明确番外单列为 extra。update_notice 保留官方连载说明，series.total_episodes 保留计划总集数，未播集数不列为缺失。例如《嫁金钗》官方写更新至22/30集但本次只返回1—21集时，展示21集并只提示缺22，不伪造剩余链接。
+腾讯使用官方 MultiTerminalSearch；爱奇艺使用 mesh 搜索和专辑目录；优酷使用官方搜索与 show_episode API；芒果使用官网 search/v2 和 episode/list；B站使用官网 SSR、综合搜索和 season / section 目录。
 
-显式 view=videos 或旧 mode=all/search/episodes 仍保留历史扁平链接格式；旧 /v1/episodes 仅兼容爱奇艺目录。兼容模式的筛选、相关度排序与缓存不等同于官网模式。
+每站只读取自己的官网，不使用第三方搜索或其他网站的索引补结果。HTTP 401/412、风控、超时和改版会如实暴露，不将离线测试样本当成线上数据。
 
-## 运行、测试与生产部署
+Cloudflare 出口可能被 B站限制。仓库保留自建本机出口：`scripts/local-gateway.mjs` 只监听回环地址，并通过用户自己的 Cloudflare Tunnel 与 Worker 通信；公网通道必须使用独立认证。程序仅转发白名单中的 B站搜索、目录和匿名会话路径，不提供第三方搜索数据。
 
-### 本机官方出口（哔哩哔哩）
+Windows 用 `scripts/start-local-origin.ps1` 启动，用 `scripts/stop-local-origin.ps1` 停止。电脑和连接器必须持续在线；重启后需重新启动。密钥和连接配置放在被 Git 忽略的 `.local-gateway/`，不提交仓库。
 
-Cloudflare 出口可能被 B站官网返回 412。可在自己的电脑运行 scripts/local-gateway.mjs，通过自己的 Cloudflare Tunnel 连接到 Worker。这个自建程序只转发到固定的 B站官网搜索、目录及匿名会话路径，不提供搜索数据，不调用第三方聚合接口。
-
-本机服务仅监听 127.0.0.1，公网通道必须携带独立认证密钥；拒绝其他域名、非 HTTPS 目标、任意路径和重定向。Worker 的 BILIBILI_GATEWAY_URL 指向自己的通道，BILIBILI_GATEWAY_TOKEN 使用 Secret 保存。密钥及连接器凭据位于被 Git 忽略的 .local-gateway/，不会进入仓库。
-
-Windows 上用 scripts/start-local-origin.ps1 启动隐藏后台进程，用 scripts/stop-local-origin.ps1 停止。电脑重启后需重新运行启动脚本。该电脑必须保持开机、联网，连接器也需持续运行；本机离线会明确报错，不用第三方结果补齐。若浏览器已启用本地 HTTP 代理，启动脚本让本机官网请求使用同一代理。
-
-响应 providers[].execution=self_hosted_local_origin 表示使用自己的本机出口，source_url 仍是实际 B站官网 URL。其他四站继续由 Worker 直接查询各自官网。
+## 配置、运行与部署
 
 需要 Node.js 24：
 
-~~~bash
+```bash
 npm ci
 cp .dev.vars.example .dev.vars
 npm run dev
@@ -83,18 +81,24 @@ npm run check
 npm test
 npm run test:runtime
 npm run docs
-npm run smoke:official  # 官网综合搜索真实实测
-npm run smoke           # 筛选目录模式真实实测
-~~~
+```
 
-生产验收设置 API_BASE_URL=https://videosearch.webber.qzz.io，再运行 smoke:official。受控代理环境可设置 NODE_USE_ENV_PROXY=1。原始结果分别写入 official-smoke-results.json 与 smoke-results.json，任一站失败均非零退出，不将离线样本测试当成生产五站可用证据。
+| 变量 / Secret | 默认 | 用途 |
+| --- | --- | --- |
+| `DEEPSEEK_API_KEY` | 无，Secret | AI 分类与候选识别；生产在 Cloudflare Secrets 配置。 |
+| `DEEPSEEK_MODEL` | deepseek-flash | DeepSeek 模型名称。 |
+| `AI_TIMEOUT_MS` | 18000 | 每次 AI 请求超时，3000—25000 毫秒。 |
+| `API_KEY` | 无，Secret | 可选 API 访问认证。 |
+| `BILIBILI_GATEWAY_URL` | 生产已配置 | 自建本机出口地址。 |
+| `BILIBILI_GATEWAY_TOKEN` | 无，Secret | 自建出口认证。 |
+| `CACHE_TTL_SECONDS` | 300 | 摘要与完整目录缓存，30—3600 秒。 |
+| `UPSTREAM_TIMEOUT_MS` | 生产 10000 | 每次官网请求超时。 |
+| `CORS_ORIGIN` | * | 跨域来源。 |
 
-API_KEY 为可选访问密钥，配置后使用 Authorization: Bearer <key> 或 X-API-Key。密钥不接受 URL 参数，说明页、OpenAPI、能力清单和健康检查公开。不再需要任何第三方搜索密钥。
+配置 API_KEY 后，使用 Authorization: Bearer 或 X-API-Key 请求头；不接受 URL 密钥。页面、OpenAPI、能力清单、健康检查公开。在线调试仅请求当前域名，复制的 cURL 使用密钥占位符。
 
-运行变量包括 API_KEY、CORS_ORIGIN、UPSTREAM_TIMEOUT_MS，以及兼容/目录视图使用的 CACHE_TTL_SECONDS、STALE_TTL_SECONDS。生产每次官网请求超时上限配置为 10 秒，以容纳较慢的综合搜索分页；实际超时仍如实显示。官网综合模式不使用搜索缓存。
+Worker 已连接 GitHub main 的 Cloudflare Workers Builds。推送后自动检查、测试、部署到现有 Worker，保留 `videosearch.webber.qzz.io` 与 Secrets。详见 [持续部署说明](docs/continuous-deployment.md)。
 
-生产 Worker 已连接 GitHub main 的 Cloudflare Workers Builds。合并后自动执行类型检查、回归测试和真实 workerd 测试，通过后部署到 cn-video-search，保留现有域名与运行变量。CI 通过不等于生产验收，仍需检查构建结果并从正式域名实测。
-
-详细部署配置见 docs/continuous-deployment.md；历史验证记录见 docs/validation.md（旧版第三方/跨站兜底记录不代表当前版本行为）。
+真实验收：`API_BASE_URL=https://videosearch.webber.qzz.io npm run smoke:official` 或 `npm run smoke`；任一站失败时非零退出，记录实际限制。受控代理环境可加 `NODE_USE_ENV_PROXY=1`。历史记录见 [validation.md](docs/validation.md)，旧版行为不代表当前版本。
 
 MIT License.

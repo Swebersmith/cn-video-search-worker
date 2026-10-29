@@ -1,6 +1,25 @@
 import { canonical, score, text } from './normalize';
+import {
+  classifySeries,
+  knownCategory,
+  isLongContent,
+  recognizeEpisodes,
+  aiState,
+  type AIState,
+  type ContentCategory,
+  type EpisodeCandidate,
+} from './ai';
+import { episodeCandidates } from './episode-evidence';
 import { bounded, PLATFORMS, type CacheStore, type Env, type Fetcher, type Platform } from './types';
-import { iqiyiSearchData, json, request, tencentSearchData, mangoSearchData, youkuSearchData, UpstreamError } from './providers';
+import {
+  iqiyiSearchData,
+  json,
+  request,
+  tencentSearchData,
+  mangoSearchData,
+  youkuSearchData,
+  UpstreamError,
+} from './providers';
 
 type Obj = Record<string, unknown>;
 const obj = (x: unknown): Obj => (x && typeof x === 'object' && !Array.isArray(x) ? (x as Obj) : {});
@@ -57,6 +76,7 @@ export interface SeriesSummary {
   year: string;
   kind: 'series' | 'movie' | 'collection';
   type_name: string;
+  category?: ContentCategory;
   total_episodes: number | null;
   url: string;
   detail_url: string;
@@ -68,14 +88,18 @@ export interface CatalogueEpisode {
   title: string;
   url: string;
   platform: Platform;
-  episode_type: 'main' | 'extra';
+  episode_type: 'main' | 'extra' | 'preview';
+  recognition?: 'ai' | 'structured';
 }
 interface Seed {
   series: SeriesSummary;
   preview: CatalogueEpisode[];
   preview_verified?: boolean;
+  candidates?: EpisodeCandidate[];
 }
 interface Discovery {
+  ai: AIState;
+  excluded_ids: string[];
   records: Seed[];
   warnings: string[];
   fetched_at: string;
@@ -94,6 +118,9 @@ export interface CatalogueResult {
   partial: boolean;
   missing_episode_numbers: number[];
   episodes: CatalogueEpisode[];
+  previews: CatalogueEpisode[];
+  unavailable_episode_numbers: number[];
+  ai: AIState;
   warnings: string[];
   cached: boolean;
   fetched_at: string;
@@ -227,19 +254,38 @@ function fromTencent(payload: unknown, platform: Platform, query: string): Seed[
   return out;
 }
 function youkuEpisode(v: Obj, id: string, title: string): CatalogueEpisode | undefined {
-  const vid = string(v.videoId), order = num(v.orderId);
-  const extra = /^(番外|彩蛋|特辑|加更)/.test(text(v.displayName)) || /^(番外|彩蛋|特辑|加更)/.test(text(v.chapterName));
-  if (!/^[a-z\d=]+$/i.test(vid) || (!order && !extra) || (v.showId && string(v.showId) !== id) ||
-      (v.chapterName && v.chapterName !== '正片' && !extra) || Number(v.peripheryVideoType || 0) !== 0 ||
-      v.isTrailer === true || v.isTrailer === 1) return;
+  const vid = string(v.videoId),
+    order = num(v.orderId);
+  const extra =
+    /^(番外|彩蛋|特辑|加更)/.test(text(v.displayName)) || /^(番外|彩蛋|特辑|加更)/.test(text(v.chapterName));
+  if (
+    !/^[a-z\d=]+$/i.test(vid) ||
+    (!order && !extra) ||
+    (v.showId && string(v.showId) !== id) ||
+    (v.chapterName && v.chapterName !== '正片' && !extra) ||
+    Number(v.peripheryVideoType || 0) !== 0 ||
+    v.isTrailer === true ||
+    v.isTrailer === 1
+  )
+    return;
   const action = string(obj(v.action).value);
   if (action) {
     try {
-      const u = new URL(action), show = u.searchParams.get('showid'), video = u.searchParams.get('vid');
+      const u = new URL(action),
+        show = u.searchParams.get('showid'),
+        video = u.searchParams.get('vid');
       if ((show && show !== id) || (video && video !== vid)) return;
-    } catch { return; }
+    } catch {
+      return;
+    }
   }
-  return episode('youku', extra ? null : order, v.title || `${title} 第${order}集`, `https://v.youku.com/v_show/id_${vid}.html`, extra);
+  return episode(
+    'youku',
+    extra ? null : order,
+    v.title || `${title} 第${order}集`,
+    `https://v.youku.com/v_show/id_${vid}.html`,
+    extra,
+  );
 }
 function fromYouku(payload: unknown, query: string): Seed[] {
   const out: Seed[] = [];
@@ -271,6 +317,7 @@ function fromYouku(payload: unknown, query: string): Seed[] {
       ),
       preview: eps,
       preview_verified: true,
+      candidates: episodeCandidates(group, 'youku', id, 'youku_search'),
     });
   }
   return out;
@@ -302,7 +349,7 @@ async function freshDiscovery(
   query: string,
   env: Env,
   fetcher: Fetcher,
-): Promise<{ records: Seed[]; warnings: string[] }> {
+): Promise<{ records: Seed[]; warnings: string[]; ai: AIState; excluded_ids: string[] }> {
   const q = encodeURIComponent(query),
     warnings: string[] = [];
   let records: Seed[] = [];
@@ -314,7 +361,7 @@ async function freshDiscovery(
       const a = obj(obj(raw).albumInfo),
         id = string(a.qipuId);
       if (
-        String(a.channel).split(',').at(-1) !== '2' ||
+        !['1', '2', '3', '4', '6'].includes(String(a.channel).split(',').at(-1) || '') ||
         (a.siteId && a.siteId !== 'iqiyi') ||
         !validSeriesId(platform, id)
       )
@@ -327,8 +374,19 @@ async function freshDiscovery(
         return e ? [e] : [];
       });
       records.push({
-        series: summary(platform, id, a.title, query, a.totalNumber, obj(a.year).value, c.url, '电视剧'),
+        series: summary(
+          platform,
+          id,
+          a.title,
+          query,
+          String(a.channel).endsWith(',1') ? 1 : a.totalNumber,
+          obj(a.year).value,
+          c.url,
+          String(a.channel).split(',')[0],
+          String(a.channel).endsWith(',1') ? 'movie' : 'series',
+        ),
         preview: previews,
+        candidates: episodeCandidates(a, platform, id, 'iqiyi_search'),
       });
     }
   } else if (platform === 'tencent')
@@ -394,11 +452,49 @@ async function freshDiscovery(
     }
   } else {
     const d = await mangoSearchData(query, env, fetcher);
-    for (const v of objects(d.data)) {
-      const c = canonical(v.url || v.pageUrl, platform), title = text(v.title || v.name || v.clipName || v.t3 || v.t1);
-      if (!c || !title) continue;
-      const id = c.url.match(/\/b\/(\d+)\/(\d+)/)?.slice(1).join('-');
-      if (id) records.push({series:summary(platform,id,title,query,v.totalNumber || v.total,v.year,c.url,'芒果剧集'),preview:[]});
+    for (const raw of arr(d.data.contents)) {
+      const card = obj(raw),
+        data = obj(card.data);
+      // Native video cards are clips, even when their tag says TV/variety. Only program cards are albums.
+      if (!['program', 'movie', 'album', 'show'].includes(string(card.type))) continue;
+      const years = arr(data.yearList).length ? arr(data.yearList) : [data];
+      for (const rawYear of years) {
+        const v = obj(rawYear),
+          title = text(v.title || data.title);
+        const type = arr(v.desc)
+          .map((x) => obj(x))
+          .filter((x) => x.label === '类型')
+          .map((x) => text(x.text))
+          .join(' ');
+        for (const rawSite of arr(v.sourceList)) {
+          const site = obj(rawSite);
+          if (site.source && site.source !== 'imgo') continue;
+          const video = arr(site.videoList)
+            .map((x) => obj(x))
+            .find((x) => canonical(x.url, platform));
+          const c = canonical(video?.url || site.playUrl, platform);
+          if (!c || !title) continue;
+          const parts = c.url.match(/\/b\/(\d+)\/(\d+)/);
+          if (!parts) continue;
+          const startVid = /^\d+$/.test(string(site.vid)) ? string(site.vid) : parts[2];
+          const id = parts[1] + '-' + startVid;
+          const primary = `https://www.mgtv.com/b/${parts[1]}/${startVid}.html`;
+          records.push({
+            series: summary(
+              platform,
+              id,
+              title,
+              query,
+              v.totalNumber || v.total,
+              v.year,
+              primary,
+              type,
+              /电影/.test(type) ? 'movie' : 'series',
+            ),
+            preview: [],
+          });
+        }
+      }
     }
   }
   const unique = new Map<string, Seed>();
@@ -407,9 +503,23 @@ async function freshDiscovery(
       const key = platform === 'mango' ? r.series.id.split('-')[0] : r.series.id;
       if (!unique.has(key)) unique.set(key, r);
     }
+  const candidates = [...unique.values()].sort((a, b) => b.series.score - a.series.score).slice(0, 50);
+  const classified = await classifySeries(
+    candidates.map((v) => v.series),
+    env,
+    fetcher,
+  );
+  records = candidates.filter((v) => isLongContent(classified.categories.get(v.series.id)!));
+  for (const v of records) {
+    v.series.category = classified.categories.get(v.series.id);
+    if (v.series.category === 'movie') v.series.kind = 'movie';
+  }
+  warnings.push(...classified.ai.warnings);
   return {
-    records: [...unique.values()].sort((a, b) => b.series.score - a.series.score).slice(0, 50),
+    records,
     warnings,
+    ai: classified.ai,
+    excluded_ids: candidates.filter((v) => !records.includes(v)).map((v) => v.series.id),
   };
 }
 async function discovery(
@@ -420,7 +530,7 @@ async function discovery(
   cache?: CacheStore,
 ): Promise<Discovery> {
   const key = new Request(
-      `https://cn-video-search.internal/series/native-only/v2/${platform}?q=${encodeURIComponent(query)}`,
+      `https://cn-video-search.internal/series/long-ai/v4/${platform}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -469,6 +579,7 @@ export async function searchSeries(
       results: d.records.slice(0, limit).map((r) => r.series),
       warnings: d.warnings,
       cached: d.cached,
+      ai: d.ai,
       fetched_at: d.fetched_at,
     };
   } catch (e) {
@@ -479,6 +590,7 @@ export async function searchSeries(
       count: 0,
       truncated: false,
       results: [] as SeriesSummary[],
+      ai: aiState(env, 'not_needed'),
       warnings: [e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR'],
       cached: false,
       fetched_at: new Date().toISOString(),
@@ -495,7 +607,7 @@ export async function seriesCatalogue(
   cache?: CacheStore,
 ): Promise<CatalogueResult> {
   const key = new Request(
-      `https://cn-video-search.internal/catalogue/native-only/v3/${platform}/${id}?q=${encodeURIComponent(query)}`,
+      `https://cn-video-search.internal/catalogue/long-ai/v5/${platform}/${id}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -508,10 +620,13 @@ export async function seriesCatalogue(
       }
     } catch {}
   let seed: Seed | undefined;
+  let excluded = false;
   const warnings: string[] = [];
   if (query)
     try {
-      seed = (await discovery(platform, query, env, fetcher, cache)).records.find((r) => r.series.id === id);
+      const d = await discovery(platform, query, env, fetcher, cache);
+      seed = d.records.find((r) => r.series.id === id);
+      excluded = d.excluded_ids.includes(id);
     } catch (e) {
       warnings.push(`discovery:${e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR'}`);
     }
@@ -522,8 +637,19 @@ export async function seriesCatalogue(
   let source: string = platform;
   let updateNotice = '';
   let episodes: CatalogueEpisode[] = [];
+  let candidates: EpisodeCandidate[] = seed?.candidates || [];
+  let ai = aiState(env);
+  const collect = (raw: unknown, source: string) => {
+    candidates.push(...episodeCandidates(raw, platform, id, source));
+  };
   try {
-    if (platform === 'iqiyi') {
+    if (excluded) throw new UpstreamError('CONTENT_TYPE_EXCLUDED');
+    if (platform === 'iqiyi' && meta.kind === 'movie' && seed) {
+      const e = episode(platform, 1, meta.title, meta.url);
+      if (e) episodes.push(e);
+      expected = 1;
+      verified = true;
+    } else if (platform === 'iqiyi') {
       const first = obj(
         json(
           await request(
@@ -565,6 +691,7 @@ export async function seriesCatalogue(
           warnings.push('CATALOGUE_PAGE_FAILED');
         }
       if ((total || 0) > 500 || pages.at(-1)?.hasMore === true) allPages = false;
+      for (const page of pages) collect(page, 'iqiyi_album');
       for (const page of pages)
         for (const raw of arr(page.epsodelist)) {
           const v = obj(raw);
@@ -609,6 +736,7 @@ export async function seriesCatalogue(
           !Array.isArray(data.module_list_datas)
         )
           throw new UpstreamError('CATALOGUE_SCHEMA_CHANGED');
+        collect(data, 'tencent_catalogue');
         for (const v of objects(data)) {
           const p = obj(v.item_params);
           if (p.cid !== id || !p.vid || !/^[a-z\d]+$/i.test(string(p.vid))) continue;
@@ -645,14 +773,30 @@ export async function seriesCatalogue(
       verified = seed.preview_verified === true;
       source = 'youku_ssr_catalogue';
       if (new Set(episodes.filter((e) => e.episode_type === 'main').map((e) => e.url)).size !== expected) {
-        const data = obj(json(await request(
-          `https://search.youku.com/api/search?appScene=show_episode&appCaller=h5&showIds=${id}&keyword=${encodeURIComponent(meta.title)}`,
-          env, fetcher,
-        )));
-        if (data.message !== 'success' || string(data.showId) !== id || Number(data.isYouku) !== 1 || !Array.isArray(data.serisesList))
+        const data = obj(
+          json(
+            await request(
+              `https://search.youku.com/api/search?appScene=show_episode&appCaller=h5&showIds=${id}&keyword=${encodeURIComponent(meta.title)}`,
+              env,
+              fetcher,
+            ),
+          ),
+        );
+        if (
+          data.message !== 'success' ||
+          string(data.showId) !== id ||
+          Number(data.isYouku) !== 1 ||
+          !Array.isArray(data.serisesList)
+        )
           throw new UpstreamError('YOUKU_CATALOGUE_SCHEMA_CHANGED');
+        collect(data, 'youku_episode_api');
         episodes = data.serisesList.flatMap((raw) => {
-          const e = youkuEpisode(obj(raw), id, meta.title);
+          const item = obj(raw);
+          const e = youkuEpisode(
+            meta.kind === 'movie' && !item.orderId ? { ...item, orderId: 1 } : item,
+            id,
+            meta.title,
+          );
           return e ? [e] : [];
         });
         updateNotice = text(data.updateNotice);
@@ -661,14 +805,19 @@ export async function seriesCatalogue(
           if (expected !== null && Number(released[2]) !== expected) warnings.push('UPDATE_TOTAL_MISMATCH');
           else {
             // The planned finale is not a missing episode. Preserve genuine gaps within the published range.
-            const available = Math.max(Number(released[1]), ...episodes.filter((e) => e.episode_type === 'main').map((e) => e.episode_number || 0));
+            const available = Math.max(
+              Number(released[1]),
+              ...episodes.filter((e) => e.episode_type === 'main').map((e) => e.episode_number || 0),
+            );
             if (available <= Number(released[2])) expected = available;
           }
         }
-        if (expected !== null) expected += new Set(episodes.filter((e) => e.episode_type === 'extra').map((e) => e.url)).size;
+        if (expected !== null)
+          expected += new Set(episodes.filter((e) => e.episode_type === 'extra').map((e) => e.url)).size;
         verified = true;
         source = 'youku_episode_api';
-      } else if (expected !== null) expected += new Set(episodes.filter((e) => e.episode_type === 'extra').map((e) => e.url)).size;
+      } else if (expected !== null)
+        expected += new Set(episodes.filter((e) => e.episode_type === 'extra').map((e) => e.url)).size;
     } else if (platform === 'bilibili') {
       let data: Obj;
       try {
@@ -728,6 +877,7 @@ export async function seriesCatalogue(
         title: text(data.title) || meta.title,
         url: `https://www.bilibili.com/bangumi/play/${id}`,
       };
+      collect(data, 'bilibili_season');
       expected = num(data.total) || expected;
       for (const raw of arr(data.episodes)) {
         const v = obj(raw);
@@ -736,7 +886,7 @@ export async function seriesCatalogue(
           /预告|PV|花絮/.test(text(v.badge) + ' ' + text(v.share_copy))
         )
           continue;
-        const n = num(v.title);
+        const n = meta.kind === 'movie' ? 1 : num(v.title);
         if (!n) continue;
         const e = episode(platform, n, `${meta.title} 第${n}集 ${text(v.long_title)}`, v.link);
         if (e) episodes.push(e);
@@ -762,6 +912,7 @@ export async function seriesCatalogue(
           throw new UpstreamError('CATALOGUE_SCHEMA_CHANGED');
         totalPages = num(data.total_page) || 1;
         totalItems = num(data.count) || num(data.total) || totalItems;
+        collect(data, 'mango_catalogue');
         for (const raw of data.list) {
           const v = obj(raw),
             c = canonical(v.url, platform);
@@ -787,6 +938,47 @@ export async function seriesCatalogue(
       warnings.push('SEARCH_PREVIEW_FALLBACK');
     }
   }
+  // Preserve source-labelled previews, then ask AI only about ambiguous/unparsed candidates.
+  const candidateMap = new Map<string, EpisodeCandidate>();
+  for (const c of candidates) {
+    const old = candidateMap.get(c.url);
+    if (!old) candidateMap.set(c.url, { ...c });
+    else {
+      old.preview ||= c.preview;
+      old.extra ||= c.extra;
+      old.number_hint ??= c.number_hint;
+    }
+  }
+  candidates = [...candidateMap.values()].map((c, i) => ({ ...c, ref: `c${i + 1}` }));
+  const previews: CatalogueEpisode[] = candidates
+    .filter((c) => c.preview)
+    .map((c) => ({
+      platform,
+      url: c.url,
+      title: c.title,
+      episode_number: c.number_hint,
+      episode_type: 'preview' as const,
+      recognition: 'structured' as const,
+    }));
+  const previewUrls = new Set(previews.map((e) => e.url));
+  episodes = episodes.filter((e) => !previewUrls.has(e.url));
+  const unknown = candidates.filter((c) => !episodes.some((e) => e.url === c.url));
+  const mainNumbers = new Set(episodes.filter((e) => e.episode_type === 'main').map((e) => e.episode_number));
+  const hasGap =
+    expected !== null &&
+    Array.from({ length: Math.min(expected, 10000) }, (_, i) => i + 1).some((n) => !mainNumbers.has(n));
+  if (unknown.length && (hasGap || unknown.some((c) => !c.preview && !c.extra))) {
+    const recognized = await recognizeEpisodes(meta, unknown, episodes, expected, env, fetcher);
+    ai = recognized.ai;
+    warnings.push(...ai.warnings);
+    const oldUrls = new Set([...episodes, ...previews].map((e) => e.url));
+    ai.recovered = recognized.episodes.filter((e) => !oldUrls.has(e.url)).length;
+    for (const e of recognized.episodes) {
+      if (e.episode_type === 'preview') {
+        if (!previews.some((v) => v.url === e.url)) previews.push({ ...e, recognition: 'ai' });
+      } else episodes.push(e);
+    }
+  }
   const seen = new Map<string, CatalogueEpisode>();
   for (const e of episodes) seen.set(e.url, e);
   episodes = [...seen.values()];
@@ -806,10 +998,12 @@ export async function seriesCatalogue(
       : expected === null
         ? null
         : expected - (episodes.length - main.length);
-  const missing =
+  const gaps =
     numberedExpected && numeric
       ? Array.from({ length: numberedExpected }, (_, i) => i + 1).filter((n) => !numbers.has(n))
       : [];
+  const unavailable = gaps.filter((n) => previews.some((e) => e.episode_number === n));
+  const missing = gaps.filter((n) => !unavailable.includes(n));
   const conflicts = numeric && main.length !== numbers.size;
   if (conflicts) warnings.push('CONFLICTING_EPISODE_NUMBERS');
   const complete =
@@ -818,9 +1012,11 @@ export async function seriesCatalogue(
     expected !== null &&
     episodes.length === expected &&
     !missing.length &&
+    !unavailable.length &&
     !conflicts &&
     !warnings.includes('EPISODE_TOTAL_MISMATCH') &&
     !warnings.includes('UPDATE_TOTAL_MISMATCH');
+  if (unavailable.length) warnings.push('EPISODE_MAIN_UNAVAILABLE');
   if (!complete) warnings.push('EPISODE_LIST_INCOMPLETE');
   const result: CatalogueResult = {
     ok: episodes.length > 0,
@@ -835,6 +1031,9 @@ export async function seriesCatalogue(
     partial: !complete,
     missing_episode_numbers: missing,
     episodes,
+    previews,
+    unavailable_episode_numbers: unavailable,
+    ai,
     warnings: [...new Set(warnings)],
     cached: false,
     fetched_at: new Date().toISOString(),

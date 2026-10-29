@@ -8,9 +8,10 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
   const mf = new Miniflare(convertV4MiniflareOptions({
     name: 'cn-video-search-runtime-test', modules: true,
     scriptPath: resolve('dist/index.js'), compatibilityDate: '2026-10-28',
-    bindings: { API_KEY: 'runtime-test-secret' },
+    bindings: { API_KEY: 'runtime-test-secret', DEEPSEEK_API_KEY: 'runtime-ai-secret' },
     outboundService: async (request: Request) => {
       outboundCalls++;
+      if(request.url==='https://api.deepseek.com/chat/completions'){assert.equal(request.headers.get('Authorization'),'Bearer runtime-ai-secret');return new Response(JSON.stringify({choices:[{finish_reason:'stop',message:{content:JSON.stringify({items:[{id:'12345',category:'tv',confidence:1}]})}}]}));}
       if(request.url.startsWith('https://search.bilibili.com/all?'))return new Response('<script>window.__pinia=(function(a){return {searchResponse:{searchAllResponse:{page:1,numPages:2,result:[{result_type:"video",data:[{title:a,arcurl:"https://www.bilibili.com/video/BV123"}]}]}}}}("官网投稿"))</script>');
       assert.ok(request.url.startsWith('https://mesh.if.iqiyi.com/') || request.url.startsWith('https://pcw-api.iqiyi.com/'));
       const data = request.url.includes('pcw-api')
@@ -21,30 +22,9 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
   }));
   try {
     assert.equal((await mf.dispatchFetch('https://example.test/health')).status, 200);
-    const url = 'https://example.test/v1/search?q=%E7%8B%82%E9%A3%99&platforms=iqiyi&mode=search';
-    assert.equal((await mf.dispatchFetch(url)).status, 401);
-    assert.equal(outboundCalls, 0);
     const headers = { Authorization: 'Bearer runtime-test-secret' };
-    const first = await mf.dispatchFetch(url, { headers });
-    const data = await first.json() as any;
-    assert.equal(first.status, 200, JSON.stringify(data));
-    assert.equal(data.results[0].url, 'https://www.iqiyi.com/v_xkt6z3z798.html');
-    assert.equal(data.providers[0].cached, false);
-    const second = await mf.dispatchFetch(url + '&limit=1', { headers });
-    assert.equal((await second.json() as any).providers[0].cached, true);
-    assert.equal(outboundCalls, 1);
-    const episodeUrl = 'https://example.test/v1/episodes?q=%E7%8B%82%E9%A3%99';
-    assert.equal((await mf.dispatchFetch(episodeUrl)).status, 401);
-    const episodes = await (await mf.dispatchFetch(episodeUrl, { headers })).json() as any;
-    assert.equal(episodes.total, 24); assert.equal(episodes.complete, true);
-    assert.deepEqual(episodes.results.map((e: any) => e.episode_number), Array.from({ length: 24 }, (_, i) => i + 1));
-    assert.equal((await (await mf.dispatchFetch(episodeUrl, { headers })).json() as any).cached, true);
-    assert.equal(outboundCalls, 3);
-    const unified = await (await mf.dispatchFetch('https://example.test/v1/iqiyi/search?q=%E7%8B%82%E9%A3%99&view=videos', { headers })).json() as any;
-    assert.equal(unified.mode, 'all'); assert.equal(unified.providers.length, 1);
-    assert.equal(unified.results.filter((e: any) => e.content_type === 'episode').length, 24);
-    assert.equal(unified.providers[0].catalog.complete, true); assert.equal(outboundCalls, 3);
     const discovery = await (await mf.dispatchFetch('https://example.test/v1/iqiyi/search?view=series&q=%E7%8B%82%E9%A3%99', { headers })).json() as any;
+    assert.equal(discovery.providers[0].ai.status,'applied');
     assert.equal(discovery.view, 'series'); assert.equal(discovery.total, 1); assert.equal(discovery.results[0].id, '12345');
     const detailUrl = 'https://example.test' + discovery.results[0].detail_url;
     assert.equal((await mf.dispatchFetch(detailUrl)).status, 401);
@@ -56,6 +36,7 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     assert.equal(docs.status, 200); assert.match(await docs.text(), /总接口与单站接口/);
     assert.equal((await mf.dispatchFetch('https://example.test/assets/docs.js')).status, 200);
     const officialUrl='https://example.test/v1/iqiyi/search?q=%E7%8B%82%E9%A3%99';
+    assert.equal((await mf.dispatchFetch('https://example.test/v1/episodes?q=狂飙')).status,404);
     const beforeOfficial=outboundCalls;
     for(let i=0;i<2;i++) {
       const official=await (await mf.dispatchFetch(officialUrl,{headers})).json() as any;
