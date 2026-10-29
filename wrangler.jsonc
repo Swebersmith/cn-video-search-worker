@@ -4,6 +4,9 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-10-28",
   "workers_dev": true,
+  "routes": [
+    { "pattern": "videosearch.webber.qzz.io", "custom_domain": true }
+  ],
   "vars": {
     "CORS_ORIGIN": "*",
     "CACHE_TTL_SECONDS": "300",

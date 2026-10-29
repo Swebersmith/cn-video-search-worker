@@ -4,9 +4,10 @@
 
 仓库包含 Worker 源码、OpenAPI 3.1 文档、自动测试、手动部署工作流和每周实测工作流。已部署到 Cloudflare Workers：
 
-- 接口地址：`https://cn-video-search.382990094xwb.workers.dev`
-- [搜索示例](https://cn-video-search.382990094xwb.workers.dev/v1/search?q=%E4%B8%89%E4%BD%93&platforms=tencent,iqiyi&limit=5)
-- [OpenAPI 文档](https://cn-video-search.382990094xwb.workers.dev/openapi.json) · [健康检查](https://cn-video-search.382990094xwb.workers.dev/health)
+- 接口地址：`https://videosearch.webber.qzz.io`
+- [搜索示例](https://videosearch.webber.qzz.io/v1/search?q=%E4%B8%89%E4%BD%93&platforms=tencent,iqiyi&limit=5)
+- [OpenAPI 文档](https://videosearch.webber.qzz.io/openapi.json) · [健康检查](https://videosearch.webber.qzz.io/health)
+- 原 `workers.dev` 地址继续可用：`https://cn-video-search.382990094xwb.workers.dev`
 
 当前部署未设置访问密钥，可直接调用；备用搜索密钥尚未配置。Cloudflare 出口实测腾讯视频、爱奇艺返回结果，优酷、芒果 TV、哔哩哔哩受到上游限制；请检查响应的 `providers` 状态。
 
@@ -78,7 +79,7 @@ npm run deploy
 
 无浏览器的部署环境可以配置 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`。Token 需具有目标账户的 `Workers Scripts: Edit` 和 `Account Settings: Read` 权限。不要将 Token 写入配置文件或源码。Worker 默认名称是 `cn-video-search`，如账户内已有同名服务，请先修改 [wrangler.jsonc](wrangler.jsonc)。
 
-部署命令成功后会打印实际的 `workers.dev` 地址。当前实例使用上文的正式地址；复制部署到你自己的账户时，请替换为命令返回的地址。
+自定义域名已写入 `wrangler.jsonc` 的 `routes`，Cloudflare 自动管理其 DNS 和 HTTPS 证书。复制部署到你自己的账户时，请将域名改为自己账户下托管的域名，或移除 `routes` 使用部署命令返回的 `workers.dev` 地址。
 
 ### GitHub Actions
 
@@ -162,7 +163,7 @@ npm run deploy
 
 ```js
 // 含密钥的请求建议由你的后端发起；不要在公开前端代码中写入共享密钥。
-const base = 'https://cn-video-search.382990094xwb.workers.dev';
+const base = 'https://videosearch.webber.qzz.io';
 const params = new URLSearchParams({ q: '三体', platforms: 'all', limit: '5' });
 const response = await fetch(`${base}/v1/search?${params}`, {
   headers: { Authorization: `Bearer ${process.env.VIDEO_SEARCH_API_KEY}` },

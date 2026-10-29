@@ -2,6 +2,12 @@
 
 源码首次验证日期：2026-10-28。Cloudflare 部署及线上验证日期：2026-10-29。
 
+## 自定义域名验证（2026-10-29）
+
+`videosearch.webber.qzz.io` 已通过 Cloudflare Workers Custom Domain 绑定至 `cn-video-search`，Cloudflare 自动管理 DNS 与 HTTPS 证书。现以 `https://videosearch.webber.qzz.io` 为正式接入地址，原 `workers.dev` 地址保留。
+
+已通过有效 HTTPS 连接验证 `/health`、`/openapi.json` 返回 HTTP 200；查询 `q=三体&platforms=tencent,iqiyi&limit=1` 返回 HTTP 200 和播放页结果。域名配置已同步至 `wrangler.jsonc`，后续使用 Wrangler 部署时会保留绑定。该验证不代表所有上游平台均可用，五站状态仍以接口响应为准。
+
 ## Cloudflare 线上验证（2026-10-29）
 
 正式地址：`https://cn-video-search.382990094xwb.workers.dev`。部署的业务源码提交为 `2c80783d28b48528cc7614ec5f6565556ada7724`；部署标识见 [deployment.json](deployment.json)。当前没有配置 `API_KEY` 和 `BRAVE_SEARCH_API_KEY`。
