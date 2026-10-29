@@ -101,9 +101,28 @@ npm run deploy
 
 当前域名通过 `wrangler.jsonc` 的 `routes` 保持绑定；复制项目到其他账户时，请换成自己的域名或移除 `routes` 使用部署返回的 `workers.dev` 地址。原地址 `https://cn-video-search.382990094xwb.workers.dev` 仍可用。
 
-GitHub 仓库包含 CI、手动部署和每周实测工作流。当前部署使用 Cloudflare 已授权连接；GitHub Actions 的部署 Secrets 和实测变量尚需仓库管理员配置：
+### GitHub 推送后自动部署
 
-1. 设置 `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID` Secrets，然后手动运行 **Deploy Worker**。Token 使用目标账户的 Workers Scripts: Edit 和 Account Settings: Read 权限。
+现有 Worker 已通过 **Cloudflare Workers Builds** 连接 `Swebersmith/cn-video-search-worker`。向 `main` 推送或合并修改后，会自动安装依赖、检查、测试并部署到 `cn-video-search`；无需每次手动发布或在 GitHub 中保存 Cloudflare Token。
+
+| 设置 | 当前值 |
+| --- | --- |
+| 生产分支 | `main` |
+| 根目录 | `/` |
+| Node.js | `24` |
+| 构建命令 | `npm run check && npm test && npm run test:runtime` |
+| 部署命令 | `npm run deploy -- --keep-vars` |
+| 非生产分支预览 | 关闭，不会发布到生产 |
+
+检查或测试失败时不会执行部署命令，线上继续运行上一个成功版本。`--keep-vars` 保留控制台设置的变量，Secret 由 Cloudflare 管理；自定义域名由仓库内 `wrangler.jsonc` 保持绑定。
+
+在 Cloudflare 控制台选择 `cn-video-search` → **Settings → Builds** 查看仓库连接、构建历史和日志。完整操作说明见 [持续部署说明](docs/continuous-deployment.md)，配置记录见 [cloudflare-builds.json](docs/cloudflare-builds.json)。
+
+### GitHub Actions（检查与备用部署）
+
+GitHub 的 CI 仍会在提交和 PR 时执行检查，与 Workers Builds 的生产部署独立。原手动部署工作流仅作为备用，正常更新无需运行。若需要使用备用流程或每周上游实测，可配置：
+
+1. 备用部署：设置 `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID` Secrets，然后手动运行 **Deploy Worker**。Token 使用目标账户的 Workers Scripts: Edit 和 Account Settings: Read 权限；已有自定义域名时还需满足相应域名路由权限。
 2. 将 Repository Variable `API_BASE_URL` 设为正式域名，按需设置 `API_KEY` Secret，启用每周真实搜索实测。未设置地址时跳过。
 
 ## 缓存、维护和验证

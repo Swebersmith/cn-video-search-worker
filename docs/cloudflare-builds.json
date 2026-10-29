@@ -1,0 +1,17 @@
+{
+  "provider": "cloudflare-workers-builds",
+  "worker_name": "cn-video-search",
+  "repository": "Swebersmith/cn-video-search-worker",
+  "production_branch": "main",
+  "automatic_builds_enabled": true,
+  "root_directory": "/",
+  "node_version": "24",
+  "build_command": "npm run check && npm test && npm run test:runtime",
+  "deploy_command": "npm run deploy -- --keep-vars",
+  "build_caching_enabled": true,
+  "preview_builds_enabled": false,
+  "path_includes": ["*"],
+  "path_excludes": [],
+  "production_url": "https://videosearch.webber.qzz.io",
+  "configured_at": "2026-10-29T04:25:52.612Z"
+}
