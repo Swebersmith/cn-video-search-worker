@@ -59,15 +59,11 @@ GET /v1/youku/series/bcaa87c7834c46f99e7b?q=嫁金钗
 
 作品摘要和分类默认缓存 5 分钟；完整目录单独缓存。AI 请求有超时、响应大小和候选数量上限。使用已有 `API_KEY` 认证可控制共享接口访问；AI 调用使用你自己的 DeepSeek 配额。
 
-## 官网来源与 B站本机出口
+## 官网来源
 
 腾讯使用官方 MultiTerminalSearch；爱奇艺使用 mesh 搜索和专辑目录；优酷使用官方搜索与 show_episode API；芒果使用官网 search/v2 和 episode/list；B站使用官网 SSR、综合搜索和 season / section 目录。
 
-每站只读取自己的官网，不使用第三方搜索或其他网站的索引补结果。HTTP 401/412、风控、超时和改版会如实暴露，不将离线测试样本当成线上数据。
-
-Cloudflare 出口可能被 B站限制。仓库保留自建本机出口：`scripts/local-gateway.mjs` 只监听回环地址，并通过用户自己的 Cloudflare Tunnel 与 Worker 通信；公网通道必须使用独立认证。程序仅转发白名单中的 B站搜索、目录和匿名会话路径，不提供第三方搜索数据。
-
-Windows 用 `scripts/start-local-origin.ps1` 启动，用 `scripts/stop-local-origin.ps1` 停止。电脑和连接器必须持续在线；重启后需重新启动。密钥和连接配置放在被 Git 忽略的 `.local-gateway/`，不提交仓库。
+所有站点由 Worker 直接访问各自官网，不依赖本机服务。B站对 Cloudflare 出口的 412 会如实标记，不使用第三方搜索数据替代。
 
 ## 配置、运行与部署
 
@@ -89,8 +85,6 @@ npm run docs
 | `DEEPSEEK_MODEL` | deepseek-flash | DeepSeek 模型名称。 |
 | `AI_TIMEOUT_MS` | 18000 | 每次 AI 请求超时，3000—25000 毫秒。 |
 | `API_KEY` | 无，Secret | 可选 API 访问认证。 |
-| `BILIBILI_GATEWAY_URL` | 生产已配置 | 自建本机出口地址。 |
-| `BILIBILI_GATEWAY_TOKEN` | 无，Secret | 自建出口认证。 |
 | `CACHE_TTL_SECONDS` | 300 | 摘要与完整目录缓存，30—3600 秒。 |
 | `UPSTREAM_TIMEOUT_MS` | 生产 10000 | 每次官网请求超时。 |
 | `CORS_ORIGIN` | * | 跨域来源。 |

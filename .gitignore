@@ -9,4 +9,3 @@ coverage/
 smoke-results.json
 
 official-smoke-results.json
-.local-gateway/
