@@ -7,18 +7,19 @@ const videoSchema = {
     platform: { type: 'string', enum: Object.keys(PLATFORMS) }, platform_name: { type: 'string' },
     title: { type: 'string' }, url: { type: 'string', format: 'uri', description: '官方网页播放地址，未经逐次可播放性验证。' },
     kind: { type: 'string', enum: ['video', 'series'] }, score: { type: 'number', minimum: 0, maximum: 1 },
-    source: { type: 'string', enum: ['native', 'brave'] },
+    source: { type: 'string', enum: ['native'] },
     content_type: { enum: ['search', 'episode'] }, episode_number: { type: 'integer' }, album_id: { type: 'string' }, series_title: { type: 'string' },
   },
 };
 export const openapi = {
   openapi: '3.1.0',
-  info: { title: '国内五大影视平台统一查询 API', version: VERSION, description: '两层查询：搜索返回各站剧集摘要，跟随 detail_url 获取所选作品的分集目录。五站均有目录适配，上游限制会标注不完整。仅返回官方播放页。' },
+  info: { title: '国内五大影视平台统一查询 API', version: VERSION, description: '两层查询：搜索返回各站剧集摘要，跟随 detail_url 获取所选作品的分集目录。默认返回各平台官网未登录综合搜索本页卡片与原始响应。目录模式另行筛选影视作品，上游限制会如实标注。' },
   servers: [{ url: '/' }],
   components: {
     securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' }, apiKey: { type: 'apiKey', in: 'header', name: 'X-API-Key' } },
     schemas: {
       Video: videoSchema,
+      OfficialResult: {type:'object',properties:{platform:{type:'string'},platform_name:{type:'string'},rank:{type:'integer'},content_type:{const:'official'},title:{type:'string'},url:{type:['string','null']},type_name:{type:'string'},raw:{description:'未经相关度过滤或去重的完整官网卡片。'}}},
       Series: { type: 'object', required: ['platform', 'id', 'title', 'detail_url', 'content_type'], properties: {
         platform: { enum: Object.keys(PLATFORMS) }, platform_name: { type: 'string' }, id: { type: 'string' }, title: { type: 'string' }, year: { type: 'string' }, kind: { enum: ['series', 'movie', 'collection'] }, type_name: { type: 'string' }, total_episodes: { type: ['integer', 'null'], description: '上游搜索标注条数，可能包含不同版本或附加内容。' }, url: { type: 'string', format: 'uri' }, detail_url: { type: 'string', description: '当前服务的相对路径，保留 q 提示及准确剧集 ID；客户端应直接跟随此地址。' }, score: { type: 'number' }, content_type: { const: 'series' },
       } },
@@ -30,10 +31,10 @@ export const openapi = {
       Error: { type: 'object', properties: { ok: { const: false }, error: { type: 'object', properties: { code: { type: 'string' }, message: { type: 'string' } } } } },
       SearchResponse: {
         type: 'object', properties: {
-          ok: { type: 'boolean' }, query: { type: 'string' }, view: { enum: ['series', 'videos'] }, mode: { enum: ['all', 'search', 'episodes'] }, partial: { type: 'boolean' }, total: { type: 'integer', description: '本次返回的剧集摘要数（videos 模式为链接数）。' }, limit: { type: 'integer', description: '每站剧集摘要或旧模式普通链接上限，不截断详情目录。' },
-          took_ms: { type: 'integer' }, results: { type: 'array', items: { oneOf: [{ $ref: '#/components/schemas/Series' }, { $ref: '#/components/schemas/Video' }] } },
+          ok: { type: 'boolean' }, query: { type: 'string' }, view: { enum: ['official', 'series', 'videos'] }, page:{type:'integer'},source_policy:{const:'same_platform_official_only'}, mode: { enum: ['all', 'search', 'episodes'] }, partial: { type: 'boolean' }, total: { type: 'integer', description: '本页返回卡片数；series 为筛选后的剧集摘要数，videos 为链接数。' }, limit: { type: 'integer', description: '每站剧集摘要或旧模式普通链接上限，不截断详情目录。' },
+          took_ms: { type: 'integer' }, results: { type: 'array', items: { oneOf: [{ $ref: '#/components/schemas/Series' }, { $ref: '#/components/schemas/Video' }, { $ref: '#/components/schemas/OfficialResult' }] } },
           providers: { type: 'array', items: { type: 'object', properties: {
-            platform: { type: 'string' }, status: { enum: ['ok', 'empty', 'degraded', 'unavailable', 'stale', 'unsupported'] },
+            source:{const:'official'}, total:{type:['integer','null']}, page:{type:'integer'}, source_url:{type:['string','null']}, has_more:{type:['boolean','null']}, upstream:{description:'该平台本页原始官网响应，包含全部类型和其他模块。'}, platform: { type: 'string' }, status: { enum: ['ok', 'empty', 'degraded', 'unavailable', 'stale', 'unsupported'] },
             count: { type: 'integer' }, available_count: { type: 'integer', description: '本次上游搜索中符合过滤规则的候选数，不是全剧总集数。' }, truncated: { type: 'boolean', description: '是否被本次 limit 截断。' }, warnings: { type: 'array', items: { type: 'string' } },
             cached: { type: 'boolean' }, fetched_at: { type: 'string', format: 'date-time' }, search_url: { type: 'string', format: 'uri' },
             operations: { type: 'object', properties: { search: { $ref: '#/components/schemas/Operation' }, episodes: { $ref: '#/components/schemas/Operation' } } },
@@ -73,12 +74,13 @@ export const openapi = {
       },
     } },
     '/v1/search': { get: {
-      summary: '聚合五站剧集列表，点击后读取目录',
-      description: '默认 view=series，results 是剧集摘要，通过 detail_url 获取特定版本的目录。view=videos 保留旧版扁平结果；显式 mode 参数隐式选择 videos。配置 API_KEY 后必须认证。partial=true 时检查 providers 状态。',
+      summary: '聚合五站官网综合搜索，保留原始卡片与分页',
+      description: '默认 view=official，保留所选官网本页的综合结果与原始顺序，page 分页，不按 limit 截断。view=series 另提供影视目录摘要，通过 detail_url 获取特定版本的目录。view=videos 保留旧版扁平结果；显式 mode 参数隐式选择 videos。配置 API_KEY 后必须认证。partial=true 时检查 providers 状态。',
       security: [{ bearerAuth: [] }, { apiKey: [] }, {}],
       parameters: [
         { name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 1, maxLength: 80 }, example: '三体' },
-        { name: 'view', in: 'query', schema: { type: 'string', enum: ['series', 'videos'], default: 'series' } },
+        { name: 'view', in: 'query', schema: { type: 'string', enum: ['series', 'videos'], default: 'official' } },
+        { name: 'page', in: 'query', description: '仅 official 模式；从 1 开始，每次取官网一页，不抓取全站。', schema: { type: 'integer', minimum: 1, maximum: 1000, default: 1 } },
         { name: 'mode', in: 'query', description: '兼容模式：仅 videos 使用。显式设置时隐式选择 videos；旧 episodes 仅爱奇艺，不用于新接入。', schema: { type: 'string', enum: ['all', 'search', 'episodes'] } },
         { name: 'album_id', in: 'query', schema: { type: 'string', pattern: '^\\d{1,20}$' }, description: '爱奇艺专辑选择；仅 all/episodes 模式且选择包含 iqiyi 时可用。' },
         { name: 'platforms', in: 'query', schema: { type: 'string', default: 'all' }, description: 'all 或 tencent,iqiyi,youku,mango,bilibili 的逗号分隔子集' },

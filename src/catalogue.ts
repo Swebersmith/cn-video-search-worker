@@ -1,6 +1,6 @@
 import { canonical, score, text } from './normalize';
 import { bounded, PLATFORMS, type CacheStore, type Env, type Fetcher, type Platform } from './types';
-import { iqiyiSearchData, json, request, tencentSearchData, youkuSearchData, UpstreamError } from './providers';
+import { iqiyiSearchData, json, request, tencentSearchData, mangoSearchData, youkuSearchData, UpstreamError } from './providers';
 
 type Obj = Record<string, unknown>;
 const obj = (x: unknown): Obj => (x && typeof x === 'object' && !Array.isArray(x) ? (x as Obj) : {});
@@ -393,36 +393,12 @@ async function freshDiscovery(
       warnings.push('DISCOVERY_FROM_BILIBILI_ALL');
     }
   } else {
-    try {
-      const d = obj(
-        json(
-          await request(`https://mobileso.bz.mgtv.com/pc/search/v1?q=${q}&pn=1&pc=20&corr=1`, env, fetcher, {
-            headers: { Referer: 'https://so.mgtv.com/' },
-          }),
-        ),
-      );
-      if (![200, 0, '200', '0'].includes(d.code as number) || obj(d.data).forbidden)
-        throw new UpstreamError('SEARCH_API_REJECTED');
-      for (const v of objects(d.data)) {
-        const c = canonical(v.url || v.pageUrl, platform),
-          title = text(v.title || v.name || v.clipName || v.t3 || v.t1);
-        if (!c || !title) continue;
-        const id = c.url
-          .match(/\/b\/(\d+)\/(\d+)/)
-          ?.slice(1)
-          .join('-');
-        if (id)
-          records.push({
-            series: summary(platform, id, title, query, v.totalNumber || v.total, v.year, c.url, '芒果剧集'),
-            preview: [],
-          });
-      }
-    } catch (e) {
-      warnings.push(`native:${e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR'}`);
-    }
-    if (!records.length) {
-      records = fromTencent(await tencentSearchData(query, env, fetcher), platform, query);
-      warnings.push('DISCOVERY_FROM_TENCENT_INDEX');
+    const d = await mangoSearchData(query, env, fetcher);
+    for (const v of objects(d.data)) {
+      const c = canonical(v.url || v.pageUrl, platform), title = text(v.title || v.name || v.clipName || v.t3 || v.t1);
+      if (!c || !title) continue;
+      const id = c.url.match(/\/b\/(\d+)\/(\d+)/)?.slice(1).join('-');
+      if (id) records.push({series:summary(platform,id,title,query,v.totalNumber || v.total,v.year,c.url,'芒果剧集'),preview:[]});
     }
   }
   const unique = new Map<string, Seed>();
@@ -444,7 +420,7 @@ async function discovery(
   cache?: CacheStore,
 ): Promise<Discovery> {
   const key = new Request(
-      `https://cn-video-search.internal/series/v1/${platform}?q=${encodeURIComponent(query)}`,
+      `https://cn-video-search.internal/series/native-only/v2/${platform}?q=${encodeURIComponent(query)}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -519,7 +495,7 @@ export async function seriesCatalogue(
   cache?: CacheStore,
 ): Promise<CatalogueResult> {
   const key = new Request(
-      `https://cn-video-search.internal/catalogue/v2/${platform}/${id}?q=${encodeURIComponent(query)}`,
+      `https://cn-video-search.internal/catalogue/native-only/v3/${platform}/${id}?q=${encodeURIComponent(query)}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)

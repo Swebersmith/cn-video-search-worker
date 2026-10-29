@@ -1,5 +1,7 @@
 import { bounded, PLATFORMS, type Env, type Fetcher, type Platform, type Video } from './types';
 import { ranked, text, video } from './normalize';
+import { md5 } from '@noble/hashes/legacy.js';
+import { bytesToHex } from '@noble/hashes/utils.js';
 
 export class UpstreamError extends Error {}
 export class PartialUpstreamError extends UpstreamError {
@@ -67,14 +69,30 @@ export function extractHtml(body: string, platform: Platform, query: string): Vi
 }
 
 export type IqiyiSearchLoader = () => Promise<unknown>;
-export async function iqiyiSearchData(query: string, env: Env, fetcher: Fetcher): Promise<unknown> {
-  return json(await request(`https://mesh.if.iqiyi.com/portal/lw/search/homePageV3?key=${encodeURIComponent(query)}&version=14.9.0&size=20&pageNum=1&source=pcw`, env, fetcher));
+export async function iqiyiSearchData(query: string, env: Env, fetcher: Fetcher, page = 1): Promise<unknown> {
+  return json(await request(`https://mesh.if.iqiyi.com/portal/lw/search/homePageV3?key=${encodeURIComponent(query)}&version=14.9.0&size=20&pageNum=${page}&source=pcw`, env, fetcher));
 }
-export async function tencentSearchData(query: string, env: Env, fetcher: Fetcher): Promise<unknown> {
+export async function tencentSearchData(query: string, env: Env, fetcher: Fetcher, page = 1): Promise<unknown> {
   return json(await request('https://pbaccess.video.qq.com/trpc.videosearch.mobile_search.MultiTerminalSearch/MbSearch?vversion_platform=2', env, fetcher, {
     method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://v.qq.com', Referer: 'https://v.qq.com/' },
-    body: JSON.stringify({ version: '2', clientType: 1, filterValue: '', uuid: crypto.randomUUID(), retry: 0, query, pagenum: 0, pagesize: 20, queryFrom: 0, searchSession: '', featureList: [] }),
+    body: JSON.stringify({ version: '2', clientType: 1, filterValue: '', uuid: crypto.randomUUID(), retry: 0, query, pagenum: page - 1, pagesize: 20, queryFrom: 0, searchSession: '', featureList: [] }),
   }));
+}
+// Parameters and public request checksum follow the search module on so.mgtv.com.
+// Source: static.hitv.com/pc/2.6e76f43.js, module 1304 (2026-10-29).
+export function mangoSearchUrl(query: string, page = 1, now = new Date(), nonce = crypto.randomUUID()): string {
+  const params: Record<string, string> = { src:'mgtv', did:crypto.randomUUID(), timestamp:now.toISOString().replace(/\.\d{3}Z/, 'Z'), signVersion:'1', signNonce:nonce.replaceAll('-', ''), q:query, pn:String(page), pc:'10', corr:'1' };
+  const sorted = Object.keys(params).sort((a,b) => a.localeCompare(b)).map(k => `${encodeURI(k)}=${encodeURI(params[k])}`).join('&');
+  const marker = 'xHAa3YZflWLogZUOzl'; // Public frontend constant, not an account credential.
+  params.signature = bytesToHex(md5(new TextEncoder().encode(marker + sorted + marker)));
+  const encode = (s: string) => encodeURIComponent(s).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+  return 'https://mobileso.bz.mgtv.com/pc/search/v2?' + Object.entries(params).map(([k,v]) => `${encode(k)}=${encode(v)}`).join('&');
+}
+export async function mangoSearchData(query: string, env: Env, fetcher: Fetcher, page = 1): Promise<any> {
+  const d = json(await request(mangoSearchUrl(query, page), env, fetcher, {headers:{Referer:'https://so.mgtv.com/'}}));
+  if (![200, 0, '200', '0'].includes(d.code) || d.data?.forbidden) throw new UpstreamError('SEARCH_API_REJECTED');
+  if (!Array.isArray(d.data?.contents)) throw new UpstreamError('SEARCH_SCHEMA_CHANGED');
+  return d;
 }
 export async function youkuSearchData(query: string, env: Env, fetcher: Fetcher): Promise<unknown> {
   const d = json(await request(`https://search.youku.com/api/search?keyword=${encodeURIComponent(query)}&pg=1&pz=20`, env, fetcher));
@@ -124,18 +142,9 @@ export async function nativeSearch(platform: Platform, query: string, env: Env, 
     if (!items.length && JSON.stringify(root).includes('v.qq.com')) throw new UpstreamError('SCHEMA_CHANGED');
     return items;
   }
-  const d = json(await request(`https://mobileso.bz.mgtv.com/pc/search/v1?q=${q}&pn=1&pc=20&corr=1`, env, fetcher, { headers: { Referer: 'https://so.mgtv.com/' } }));
+  const d = await mangoSearchData(query, env, fetcher);
   if (d.code !== undefined && ![0, 200, '0', '200'].includes(d.code)) throw new UpstreamError('API_REJECTED');
   if (d.data?.forbidden) throw new UpstreamError('API_FORBIDDEN');
   if (!d.data || typeof d.data !== 'object') throw new UpstreamError('SCHEMA_CHANGED');
   return extractJson(d.data, platform, query);
-}
-
-export async function braveSearch(platform: Platform, query: string, env: Env, fetcher: Fetcher): Promise<Video[]> {
-  const search = encodeURIComponent(`${query} site:${PLATFORMS[platform].domain}`);
-  const d = json(await request(`https://api.search.brave.com/res/v1/web/search?q=${search}&count=20&search_lang=zh-hans`, env, fetcher, {
-    headers: { Accept: 'application/json', 'X-Subscription-Token': env.BRAVE_SEARCH_API_KEY! },
-  }));
-  if (!Array.isArray(d?.web?.results)) throw new UpstreamError('SEARCH_SCHEMA_CHANGED');
-  return ranked(d.web.results.map((r: any) => video(platform, query, r.title, r.url, 'brave')).filter((v: Video | undefined): v is Video => Boolean(v)));
 }
