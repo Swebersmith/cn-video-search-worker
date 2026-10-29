@@ -17,9 +17,9 @@ const upstream: Fetcher = async url => {
 };
 const req = (path: string) => new Request('https://example.test' + path);
 
-test('default aggregate integrates all 24 episodes, removes duplicates and shares the upstream search request', async () => {
+test('legacy videos aggregate integrates all 24 episodes, removes duplicates and shares the upstream search request', async () => {
   const calls: string[] = [];
-  const r = await createHandler(async (url, init) => { calls.push(url); return upstream(url, init); })(req('/v1/search?q=海市蜃楼&limit=1'));
+  const r = await createHandler(async (url, init) => { calls.push(url); return upstream(url, init); })(req('/v1/search?q=海市蜃楼&view=videos&limit=1'));
   const d = await r.json() as any;
   assert.equal(r.status, 200); assert.equal(d.mode, 'all'); assert.equal(d.total, 28);
   const iq = d.results.filter((v: any) => v.platform === 'iqiyi');
@@ -30,7 +30,7 @@ test('default aggregate integrates all 24 episodes, removes duplicates and share
 });
 test('five dedicated endpoints return only their own platform content', async () => {
   for (const id of Object.keys(PLATFORMS)) {
-    const r = await createHandler(upstream)(req(`/v1/${id}/search?q=海市蜃楼`));
+    const r = await createHandler(upstream)(req(`/v1/${id}/search?q=海市蜃楼&view=videos`));
     const d = await r.json() as any;
     assert.equal(r.status, 200, id); assert.ok(d.results.length); assert.equal(d.providers.length, 1);
     assert.ok(d.results.every((v: any) => v.platform === id), id);
@@ -38,8 +38,8 @@ test('five dedicated endpoints return only their own platform content', async ()
 });
 test('aggregate subset and dedicated endpoint expose the same result contract', async () => {
   const handler = createHandler(upstream);
-  const a = await (await handler(req('/v1/search?q=海市蜃楼&platforms=iqiyi'))).json() as any;
-  const b = await (await handler(req('/v1/iqiyi/search?q=海市蜃楼'))).json() as any;
+  const a = await (await handler(req('/v1/search?q=海市蜃楼&platforms=iqiyi&view=videos'))).json() as any;
+  const b = await (await handler(req('/v1/iqiyi/search?q=海市蜃楼&view=videos'))).json() as any;
   assert.deepEqual(a.results, b.results); assert.equal(a.total, b.total); assert.equal(a.providers[0].catalog.complete, b.providers[0].catalog.complete);
 });
 test('search mode skips catalogs and episodes mode skips native search results', async () => {
@@ -57,7 +57,7 @@ test('unsupported episode adapters are explicit and never generate fake full cat
   assert.equal(r.status, 422); assert.equal(d.providers[0].status, 'unsupported'); assert.equal(d.total, 0); assert.equal(calls, 0);
 });
 test('catalog failures preserve search results and expose the failing operation', async () => {
-  const r = await createHandler(async (url, init) => url.includes('pcw-api') ? new Response('', { status: 403 }) : upstream(url, init))(req('/v1/iqiyi/search?q=海市蜃楼&limit=1'));
+  const r = await createHandler(async (url, init) => url.includes('pcw-api') ? new Response('', { status: 403 }) : upstream(url, init))(req('/v1/iqiyi/search?q=海市蜃楼&view=videos&limit=1'));
   const d = await r.json() as any;
   assert.equal(r.status, 200); assert.equal(d.partial, true); assert.equal(d.providers[0].catalog.complete, false);
   assert.equal(d.providers[0].operations.episodes.status, 'degraded'); assert.ok(d.results.length >= 1);
@@ -75,7 +75,7 @@ test('documentation and capabilities are public, static and protected by a stric
   assert.match((await handler(req('/assets/docs.js'))).headers.get('Content-Type') || '', /javascript/);
   const p = await (await handler(req('/v1/platforms'))).json() as any;
   assert.equal(p.platforms.length, 5); assert.equal(p.platforms.find((v: any) => v.id === 'iqiyi').episodes, true);
-  assert.equal(p.platforms.find((v: any) => v.id === 'youku').episodes, false);
+  assert.equal(p.platforms.find((v: any) => v.id === 'youku').episodes, true);
 });
 test('legacy episode URL remains a clearly deprecated compatibility route', async () => {
   const r = await createHandler(upstream)(req('/v1/episodes?q=海市蜃楼'));

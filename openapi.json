@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "国内五大影视平台统一查询 API",
-    "version": "1.2.0",
-    "description": "总接口与单站接口共用 all/search/episodes 模式。默认综合查询，已接入爱奇艺分集目录；其他站点暂仅支持搜索。仅返回官方播放页。"
+    "version": "1.3.0",
+    "description": "两层查询：搜索返回各站剧集摘要，跟随 detail_url 获取所选作品的分集目录。五站均有目录适配，上游限制会标注不完整。仅返回官方播放页。"
   },
   "servers": [
     {
@@ -92,6 +92,173 @@
           }
         }
       },
+      "Series": {
+        "type": "object",
+        "required": [
+          "platform",
+          "id",
+          "title",
+          "detail_url",
+          "content_type"
+        ],
+        "properties": {
+          "platform": {
+            "enum": [
+              "tencent",
+              "iqiyi",
+              "youku",
+              "mango",
+              "bilibili"
+            ]
+          },
+          "platform_name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "series",
+              "movie",
+              "collection"
+            ]
+          },
+          "type_name": {
+            "type": "string"
+          },
+          "total_episodes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "上游搜索标注条数，可能包含不同版本或附加内容。"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "detail_url": {
+            "type": "string",
+            "description": "当前服务的相对路径，保留 q 提示及准确剧集 ID；客户端应直接跟随此地址。"
+          },
+          "score": {
+            "type": "number"
+          },
+          "content_type": {
+            "const": "series"
+          }
+        }
+      },
+      "Catalogue": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "platform": {
+            "enum": [
+              "tencent",
+              "iqiyi",
+              "youku",
+              "mango",
+              "bilibili"
+            ]
+          },
+          "series": {
+            "$ref": "#/components/schemas/Series"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "main_total": {
+            "type": "integer"
+          },
+          "extra_total": {
+            "type": "integer"
+          },
+          "expected_total": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "与上游当前目录一致，不代表尚未发布的分集或播放权限。"
+          },
+          "partial": {
+            "type": "boolean"
+          },
+          "missing_episode_numbers": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cached": {
+            "type": "boolean"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string"
+          },
+          "took_ms": {
+            "type": "integer"
+          },
+          "episodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "platform": {
+                  "enum": [
+                    "tencent",
+                    "iqiyi",
+                    "youku",
+                    "mango",
+                    "bilibili"
+                  ]
+                },
+                "episode_number": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "episode_type": {
+                  "enum": [
+                    "main",
+                    "extra"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -120,6 +287,12 @@
           "query": {
             "type": "string"
           },
+          "view": {
+            "enum": [
+              "series",
+              "videos"
+            ]
+          },
           "mode": {
             "enum": [
               "all",
@@ -132,11 +305,11 @@
           },
           "total": {
             "type": "integer",
-            "description": "本次实际返回的去重结果数，不是电视剧总集数。"
+            "description": "本次返回的剧集摘要数（videos 模式为链接数）。"
           },
           "limit": {
             "type": "integer",
-            "description": "仅约束普通搜索结果，分集目录不按此截断。"
+            "description": "每站剧集摘要或旧模式普通链接上限，不截断详情目录。"
           },
           "took_ms": {
             "type": "integer"
@@ -144,7 +317,14 @@
           "results": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Video"
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Series"
+                },
+                {
+                  "$ref": "#/components/schemas/Video"
+                }
+              ]
             }
           },
           "providers": {
@@ -488,8 +668,8 @@
     },
     "/v1/search": {
       "get": {
-        "summary": "聚合五站搜索与已接入的分集目录",
-        "description": "默认 mode=all。配置 API_KEY 时必须认证；未配置时可匿名访问。limit 仅限制每站普通搜索，分集目录不被截断；partial=true 时检查 providers.operations。",
+        "summary": "聚合五站剧集列表，点击后读取目录",
+        "description": "默认 view=series，results 是剧集摘要，通过 detail_url 获取特定版本的目录。view=videos 保留旧版扁平结果；显式 mode 参数隐式选择 videos。配置 API_KEY 后必须认证。partial=true 时检查 providers 状态。",
         "security": [
           {
             "bearerAuth": []
@@ -512,16 +692,28 @@
             "example": "三体"
           },
           {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "series",
+                "videos"
+              ],
+              "default": "series"
+            }
+          },
+          {
             "name": "mode",
             "in": "query",
+            "description": "兼容模式：仅 videos 使用。显式设置时隐式选择 videos；旧 episodes 仅爱奇艺，不用于新接入。",
             "schema": {
               "type": "string",
               "enum": [
                 "all",
                 "search",
                 "episodes"
-              ],
-              "default": "all"
+              ]
             }
           },
           {
@@ -551,7 +743,7 @@
               "minimum": 1,
               "maximum": 20
             },
-            "description": "每个平台普通搜索上限，分集目录不受此限制。"
+            "description": "每个平台剧集摘要上限；videos 模式为普通搜索上限。详情目录不受此限制。"
           }
         ],
         "responses": {
@@ -611,7 +803,7 @@
     "/v1/tencent/search": {
       "get": {
         "summary": "腾讯视频单站统一查询",
-        "description": "支持播放页搜索；完整分集目录暂未接入。 与聚合接口共用业务逻辑，只返回 tencent 的内容。",
+        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 tencent 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -634,16 +826,28 @@
             "example": "三体"
           },
           {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "series",
+                "videos"
+              ],
+              "default": "series"
+            }
+          },
+          {
             "name": "mode",
             "in": "query",
+            "description": "兼容模式：仅 videos 使用。显式设置时隐式选择 videos；旧 episodes 仅爱奇艺，不用于新接入。",
             "schema": {
               "type": "string",
               "enum": [
                 "all",
                 "search",
                 "episodes"
-              ],
-              "default": "all"
+              ]
             }
           },
           {
@@ -664,7 +868,7 @@
               "minimum": 1,
               "maximum": 20
             },
-            "description": "每个平台普通搜索上限，分集目录不受此限制。"
+            "description": "每个平台剧集摘要上限；videos 模式为普通搜索上限。详情目录不受此限制。"
           }
         ],
         "responses": {
@@ -724,7 +928,7 @@
     "/v1/iqiyi/search": {
       "get": {
         "summary": "爱奇艺单站统一查询",
-        "description": "支持电视剧专辑目录、集数排序和完整性检查。 与聚合接口共用业务逻辑，只返回 iqiyi 的内容。",
+        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 iqiyi 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -747,16 +951,28 @@
             "example": "三体"
           },
           {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "series",
+                "videos"
+              ],
+              "default": "series"
+            }
+          },
+          {
             "name": "mode",
             "in": "query",
+            "description": "兼容模式：仅 videos 使用。显式设置时隐式选择 videos；旧 episodes 仅爱奇艺，不用于新接入。",
             "schema": {
               "type": "string",
               "enum": [
                 "all",
                 "search",
                 "episodes"
-              ],
-              "default": "all"
+              ]
             }
           },
           {
@@ -777,7 +993,7 @@
               "minimum": 1,
               "maximum": 20
             },
-            "description": "每个平台普通搜索上限，分集目录不受此限制。"
+            "description": "每个平台剧集摘要上限；videos 模式为普通搜索上限。详情目录不受此限制。"
           }
         ],
         "responses": {
@@ -837,7 +1053,7 @@
     "/v1/youku/search": {
       "get": {
         "summary": "优酷单站统一查询",
-        "description": "支持播放页搜索；完整分集目录暂未接入。 与聚合接口共用业务逻辑，只返回 youku 的内容。",
+        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 youku 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -860,16 +1076,28 @@
             "example": "三体"
           },
           {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "series",
+                "videos"
+              ],
+              "default": "series"
+            }
+          },
+          {
             "name": "mode",
             "in": "query",
+            "description": "兼容模式：仅 videos 使用。显式设置时隐式选择 videos；旧 episodes 仅爱奇艺，不用于新接入。",
             "schema": {
               "type": "string",
               "enum": [
                 "all",
                 "search",
                 "episodes"
-              ],
-              "default": "all"
+              ]
             }
           },
           {
@@ -890,7 +1118,7 @@
               "minimum": 1,
               "maximum": 20
             },
-            "description": "每个平台普通搜索上限，分集目录不受此限制。"
+            "description": "每个平台剧集摘要上限；videos 模式为普通搜索上限。详情目录不受此限制。"
           }
         ],
         "responses": {
@@ -950,7 +1178,7 @@
     "/v1/mango/search": {
       "get": {
         "summary": "芒果 TV单站统一查询",
-        "description": "支持播放页搜索；完整分集目录暂未接入。 与聚合接口共用业务逻辑，只返回 mango 的内容。",
+        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 mango 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -973,16 +1201,28 @@
             "example": "三体"
           },
           {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "series",
+                "videos"
+              ],
+              "default": "series"
+            }
+          },
+          {
             "name": "mode",
             "in": "query",
+            "description": "兼容模式：仅 videos 使用。显式设置时隐式选择 videos；旧 episodes 仅爱奇艺，不用于新接入。",
             "schema": {
               "type": "string",
               "enum": [
                 "all",
                 "search",
                 "episodes"
-              ],
-              "default": "all"
+              ]
             }
           },
           {
@@ -1003,7 +1243,7 @@
               "minimum": 1,
               "maximum": 20
             },
-            "description": "每个平台普通搜索上限，分集目录不受此限制。"
+            "description": "每个平台剧集摘要上限；videos 模式为普通搜索上限。详情目录不受此限制。"
           }
         ],
         "responses": {
@@ -1063,7 +1303,7 @@
     "/v1/bilibili/search": {
       "get": {
         "summary": "哔哩哔哩单站统一查询",
-        "description": "支持播放页搜索；完整分集目录暂未接入。 与聚合接口共用业务逻辑，只返回 bilibili 的内容。",
+        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 bilibili 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -1086,16 +1326,28 @@
             "example": "三体"
           },
           {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "series",
+                "videos"
+              ],
+              "default": "series"
+            }
+          },
+          {
             "name": "mode",
             "in": "query",
+            "description": "兼容模式：仅 videos 使用。显式设置时隐式选择 videos；旧 episodes 仅爱奇艺，不用于新接入。",
             "schema": {
               "type": "string",
               "enum": [
                 "all",
                 "search",
                 "episodes"
-              ],
-              "default": "all"
+              ]
             }
           },
           {
@@ -1116,7 +1368,7 @@
               "minimum": 1,
               "maximum": 20
             },
-            "description": "每个平台普通搜索上限，分集目录不受此限制。"
+            "description": "每个平台剧集摘要上限；videos 模式为普通搜索上限。详情目录不受此限制。"
           }
         ],
         "responses": {
@@ -1166,6 +1418,321 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tencent/series/{id}": {
+      "get": {
+        "summary": "腾讯视频指定剧集的分集目录",
+        "description": "使用搜索返回的 detail_url。ID 精确定位作品，q 仅用于发现元数据和优酷 SSR 目录，必须保留返回链接中的 q。返回 episodes，不受搜索 limit 限制。complete=false 时检查 warnings。",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "搜索摘要的原始 id，各平台格式不同。"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "description": "保留 detail_url 中的发现关键词。优酷冷缓存读取需要此值。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "目录可能不完整，必须检查 complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数或剧集 ID 错误"
+          },
+          "401": {
+            "description": "认证失败"
+          },
+          "503": {
+            "description": "上游本次未返回可用目录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/iqiyi/series/{id}": {
+      "get": {
+        "summary": "爱奇艺指定剧集的分集目录",
+        "description": "使用搜索返回的 detail_url。ID 精确定位作品，q 仅用于发现元数据和优酷 SSR 目录，必须保留返回链接中的 q。返回 episodes，不受搜索 limit 限制。complete=false 时检查 warnings。",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "搜索摘要的原始 id，各平台格式不同。"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "description": "保留 detail_url 中的发现关键词。优酷冷缓存读取需要此值。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "目录可能不完整，必须检查 complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数或剧集 ID 错误"
+          },
+          "401": {
+            "description": "认证失败"
+          },
+          "503": {
+            "description": "上游本次未返回可用目录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/youku/series/{id}": {
+      "get": {
+        "summary": "优酷指定剧集的分集目录",
+        "description": "使用搜索返回的 detail_url。ID 精确定位作品，q 仅用于发现元数据和优酷 SSR 目录，必须保留返回链接中的 q。返回 episodes，不受搜索 limit 限制。complete=false 时检查 warnings。",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "搜索摘要的原始 id，各平台格式不同。"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "description": "保留 detail_url 中的发现关键词。优酷冷缓存读取需要此值。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "目录可能不完整，必须检查 complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数或剧集 ID 错误"
+          },
+          "401": {
+            "description": "认证失败"
+          },
+          "503": {
+            "description": "上游本次未返回可用目录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mango/series/{id}": {
+      "get": {
+        "summary": "芒果 TV指定剧集的分集目录",
+        "description": "使用搜索返回的 detail_url。ID 精确定位作品，q 仅用于发现元数据和优酷 SSR 目录，必须保留返回链接中的 q。返回 episodes，不受搜索 limit 限制。complete=false 时检查 warnings。",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "搜索摘要的原始 id，各平台格式不同。"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "description": "保留 detail_url 中的发现关键词。优酷冷缓存读取需要此值。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "目录可能不完整，必须检查 complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数或剧集 ID 错误"
+          },
+          "401": {
+            "description": "认证失败"
+          },
+          "503": {
+            "description": "上游本次未返回可用目录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/bilibili/series/{id}": {
+      "get": {
+        "summary": "哔哩哔哩指定剧集的分集目录",
+        "description": "使用搜索返回的 detail_url。ID 精确定位作品，q 仅用于发现元数据和优酷 SSR 目录，必须保留返回链接中的 q。返回 episodes，不受搜索 limit 限制。complete=false 时检查 warnings。",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "搜索摘要的原始 id，各平台格式不同。"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "description": "保留 detail_url 中的发现关键词。优酷冷缓存读取需要此值。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "目录可能不完整，必须检查 complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数或剧集 ID 错误"
+          },
+          "401": {
+            "description": "认证失败"
+          },
+          "503": {
+            "description": "上游本次未返回可用目录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalogue"
                 }
               }
             }

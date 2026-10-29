@@ -70,6 +70,12 @@ export type IqiyiSearchLoader = () => Promise<unknown>;
 export async function iqiyiSearchData(query: string, env: Env, fetcher: Fetcher): Promise<unknown> {
   return json(await request(`https://mesh.if.iqiyi.com/portal/lw/search/homePageV3?key=${encodeURIComponent(query)}&version=14.9.0&size=20&pageNum=1&source=pcw`, env, fetcher));
 }
+export async function tencentSearchData(query: string, env: Env, fetcher: Fetcher): Promise<unknown> {
+  return json(await request('https://pbaccess.video.qq.com/trpc.videosearch.mobile_search.MultiTerminalSearch/MbSearch?vversion_platform=2', env, fetcher, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://v.qq.com', Referer: 'https://v.qq.com/' },
+    body: JSON.stringify({ version: '2', clientType: 1, filterValue: '', uuid: crypto.randomUUID(), retry: 0, query, pagenum: 0, pagesize: 20, queryFrom: 0, searchSession: '', featureList: [] }),
+  }));
+}
 export async function nativeSearch(platform: Platform, query: string, env: Env, fetcher: Fetcher, loadIqiyi?: IqiyiSearchLoader): Promise<Video[]> {
   const q = encodeURIComponent(query);
   if (platform === 'iqiyi') {
@@ -101,10 +107,7 @@ export async function nativeSearch(platform: Platform, query: string, env: Env, 
     return results;
   }
   if (platform === 'tencent') {
-    const d = json(await request('https://pbaccess.video.qq.com/trpc.videosearch.mobile_search.MultiTerminalSearch/MbSearch?vversion_platform=2', env, fetcher, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://v.qq.com', Referer: 'https://v.qq.com/' },
-      body: JSON.stringify({ version: '2', clientType: 1, filterValue: '', uuid: crypto.randomUUID(), retry: 0, query, pagenum: 0, pagesize: 20, queryFrom: 0, searchSession: '', featureList: [] }),
-    }));
+    const d = await tencentSearchData(query, env, fetcher) as Record<string, any>;
     if ((d.ret !== undefined && Number(d.ret) !== 0) || (d.errcode !== undefined && Number(d.errcode) !== 0)) throw new UpstreamError('API_REJECTED');
     const root = d.data ?? d;
     if (root.errcode !== undefined && Number(root.errcode) !== 0) throw new UpstreamError('API_REJECTED');

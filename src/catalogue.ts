@@ -1,0 +1,767 @@
+import { canonical, score, text } from './normalize';
+import { bounded, PLATFORMS, type CacheStore, type Env, type Fetcher, type Platform } from './types';
+import { iqiyiSearchData, json, request, tencentSearchData, UpstreamError } from './providers';
+
+type Obj = Record<string, unknown>;
+const obj = (x: unknown): Obj => (x && typeof x === 'object' && !Array.isArray(x) ? (x as Obj) : {});
+const arr = (x: unknown): unknown[] => (Array.isArray(x) ? x : []);
+const num = (x: unknown): number | null =>
+  typeof x === 'number' || typeof x === 'string'
+    ? /^\d+$/.test(String(x)) && Number(x) > 0 && Number(x) <= 10000
+      ? Number(x)
+      : null
+    : null;
+const string = (x: unknown): string =>
+  typeof x === 'string' ? x : typeof x === 'number' && Number.isSafeInteger(x) ? String(x) : '';
+function objects(value: unknown): Obj[] {
+  const out: Obj[] = [];
+  function walk(x: unknown, depth: number) {
+    if (depth > 24 || out.length > 20000) return;
+    if (Array.isArray(x)) {
+      for (const v of x) walk(v, depth + 1);
+    } else if (x && typeof x === 'object') {
+      const o = obj(x);
+      out.push(o);
+      for (const v of Object.values(o)) walk(v, depth + 1);
+    }
+  }
+  walk(value, 0);
+  return out;
+}
+export function embeddedJson(html: string, name: string): unknown {
+  const start = html.indexOf(name);
+  if (start < 0) throw new UpstreamError('SCHEMA_OR_CHALLENGE');
+  const equal = html.indexOf('=', start + name.length),
+    open = html.indexOf('{', equal + 1);
+  if (equal < 0 || open < 0) throw new UpstreamError('SCHEMA_CHANGED');
+  let depth = 0,
+    quoted = false,
+    escaped = false;
+  for (let i = open; i < html.length; i++) {
+    const c = html[i];
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (c === '"') quoted = false;
+    } else if (c === '"') quoted = true;
+    else if (c === '{' || c === '[') depth++;
+    else if ((c === '}' || c === ']') && --depth === 0) return json(html.slice(open, i + 1));
+  }
+  throw new UpstreamError('INVALID_EMBEDDED_JSON');
+}
+export interface SeriesSummary {
+  platform: Platform;
+  platform_name: string;
+  id: string;
+  title: string;
+  year: string;
+  kind: 'series' | 'movie' | 'collection';
+  type_name: string;
+  total_episodes: number | null;
+  url: string;
+  detail_url: string;
+  score: number;
+  content_type: 'series';
+}
+export interface CatalogueEpisode {
+  episode_number: number | null;
+  title: string;
+  url: string;
+  platform: Platform;
+  episode_type: 'main' | 'extra';
+}
+interface Seed {
+  series: SeriesSummary;
+  preview: CatalogueEpisode[];
+  preview_verified?: boolean;
+}
+interface Discovery {
+  records: Seed[];
+  warnings: string[];
+  fetched_at: string;
+  cached: boolean;
+}
+export interface CatalogueResult {
+  ok: boolean;
+  platform: Platform;
+  series: SeriesSummary;
+  total: number;
+  expected_total: number | null;
+  main_total: number;
+  extra_total: number;
+  complete: boolean;
+  partial: boolean;
+  missing_episode_numbers: number[];
+  episodes: CatalogueEpisode[];
+  warnings: string[];
+  cached: boolean;
+  fetched_at: string;
+  source: string;
+}
+export function validSeriesId(platform: Platform, id: string): boolean {
+  return {
+    iqiyi: /^\d{1,20}$/,
+    tencent: /^[a-z\d]{5,32}$/i,
+    youku: /^[a-z\d]{8,40}$/i,
+    mango: /^\d{1,12}-\d{1,16}$/,
+    bilibili: /^ss\d{1,16}$/,
+  }[platform].test(id);
+}
+function summary(
+  platform: Platform,
+  id: string,
+  title: unknown,
+  query: string,
+  expected: unknown,
+  year: unknown,
+  url: string,
+  typeName = '',
+  kind: SeriesSummary['kind'] = 'series',
+): SeriesSummary {
+  return {
+    platform,
+    platform_name: PLATFORMS[platform].name,
+    id,
+    title: text(title) || `${PLATFORMS[platform].name} ${id}`,
+    year: text(string(year)),
+    kind,
+    type_name: text(typeName),
+    total_episodes: num(expected),
+    url,
+    detail_url: `/v1/${platform}/series/${encodeURIComponent(id)}?q=${encodeURIComponent(query.slice(0, 80))}`,
+    score: score(query, text(title)),
+    content_type: 'series',
+  };
+}
+function episode(
+  platform: Platform,
+  number: unknown,
+  title: unknown,
+  url: unknown,
+  extra = false,
+): CatalogueEpisode | undefined {
+  const c = canonical(url, platform),
+    t = text(title);
+  if (!c || !t) return;
+  return {
+    platform,
+    episode_number: num(number),
+    title: t,
+    url: c.url,
+    episode_type: extra ? 'extra' : 'main',
+  };
+}
+function redirectTarget(raw: unknown): string {
+  if (typeof raw !== 'string') return '';
+  try {
+    const u = new URL(raw);
+    return u.hostname === 'v.qq.com' && u.pathname === '/search_redirect.html'
+      ? u.searchParams.get('url') || ''
+      : raw;
+  } catch {
+    return raw;
+  }
+}
+function fromTencent(payload: unknown, platform: Platform, query: string): Seed[] {
+  const root = obj(payload),
+    data = obj(root.data);
+  if (
+    (root.ret !== undefined && Number(root.ret) !== 0) ||
+    !data.normalList ||
+    (data.errcode !== undefined && Number(data.errcode) !== 0)
+  )
+    throw new UpstreamError('SEARCH_API_REJECTED');
+  const out: Seed[] = [];
+  for (const o of objects(data)) {
+    const v = obj(o.videoInfo);
+    if (!v.title) continue;
+    for (const rawSite of [...arr(v.episodeSites), ...arr(v.playSites)]) {
+      const site = obj(rawSite),
+        entries = arr(site.episodeInfoList);
+      for (const raw of entries) {
+        const e = obj(raw),
+          target = redirectTarget(e.url),
+          c = canonical(target, platform);
+        if (!c) continue;
+        const id =
+          platform === 'tencent'
+            ? c.url.match(/\/cover\/([a-z\d]+)/i)?.[1]
+            : platform === 'mango'
+              ? c.url
+                  .match(/\/b\/(\d+)\/(\d+)/)
+                  ?.slice(1)
+                  .join('-')
+              : platform === 'youku'
+                ? new URL(c.url).searchParams.get('s')
+                : platform === 'bilibili'
+                  ? c.url.match(/\/play\/(ss\d+)/)?.[1]
+                  : undefined;
+        if (!id || !validSeriesId(platform, id)) continue;
+        const title = text(v.title),
+          kind = Number(v.videoType) === 1 ? 'movie' : 'series';
+        const link = platform === 'tencent' ? `https://v.qq.com/x/cover/${id}.html` : c.url;
+        const previews = entries.flatMap((raw) => {
+          const p = obj(raw),
+            ep = episode(platform, p.title, `${title} ${text(p.title)}`, redirectTarget(p.url));
+          return ep ? [ep] : [];
+        });
+        out.push({
+          series: summary(
+            platform,
+            id,
+            title,
+            query,
+            site.totalEpisode,
+            string(v.year),
+            link,
+            text(v.typeName),
+            kind,
+          ),
+          preview: previews,
+        });
+        break;
+      }
+    }
+  }
+  return out;
+}
+function fromYouku(payload: unknown, query: string): Seed[] {
+  const out: Seed[] = [];
+  const groups = obj(obj(payload).data).nodes;
+  if (!Array.isArray(groups)) throw new UpstreamError('SCHEMA_CHANGED');
+  for (const group of groups) {
+    const nodes = objects(group),
+      show = nodes.find((o) => o.showId && o.episodeTotal && o.tempTitle);
+    if (!show) continue;
+    const id = string(show.showId);
+    if (!validSeriesId('youku', id)) continue;
+    const title = text(show.tempTitle || obj(show.titleDTO).displayName);
+    const eps = nodes.flatMap((v) => {
+      const vid = string(v.videoId);
+      if (!/^[a-z\d=]+$/i.test(vid) || !v.orderId || (v.chapterName && v.chapterName !== '正片')) return [];
+      const ep = episode(
+        'youku',
+        v.orderId,
+        v.title || `${title} 第${v.orderId}集`,
+        `https://v.youku.com/v_show/id_${vid}.html`,
+      );
+      return ep ? [ep] : [];
+    });
+    const feature = text(obj(show.featureDTO).text);
+    out.push({
+      series: summary(
+        'youku',
+        id,
+        title,
+        query,
+        show.episodeTotal,
+        feature.match(/\b(?:19|20)\d{2}\b/)?.[0],
+        `https://v.youku.com/video?s=${id}`,
+        feature,
+      ),
+      preview: eps,
+      preview_verified: true,
+    });
+  }
+  return out;
+}
+async function freshDiscovery(
+  platform: Platform,
+  query: string,
+  env: Env,
+  fetcher: Fetcher,
+): Promise<{ records: Seed[]; warnings: string[] }> {
+  const q = encodeURIComponent(query),
+    warnings: string[] = [];
+  let records: Seed[] = [];
+  if (platform === 'iqiyi') {
+    const d = obj(await iqiyiSearchData(query, env, fetcher)),
+      templates = obj(d.data).templates;
+    if (!Array.isArray(templates)) throw new UpstreamError('SCHEMA_CHANGED');
+    for (const raw of templates) {
+      const a = obj(obj(raw).albumInfo),
+        id = string(a.qipuId);
+      if (
+        String(a.channel).split(',').at(-1) !== '2' ||
+        (a.siteId && a.siteId !== 'iqiyi') ||
+        !validSeriesId(platform, id)
+      )
+        continue;
+      const c = canonical(a.pageUrl, platform);
+      if (!c) continue;
+      const previews = arr(a.videos).flatMap((v) => {
+        const o = obj(v),
+          e = episode(platform, o.number, o.title, o.pageUrl);
+        return e ? [e] : [];
+      });
+      records.push({
+        series: summary(platform, id, a.title, query, a.totalNumber, obj(a.year).value, c.url, '电视剧'),
+        preview: previews,
+      });
+    }
+  } else if (platform === 'tencent')
+    records = fromTencent(await tencentSearchData(query, env, fetcher), platform, query);
+  else if (platform === 'youku')
+    records = fromYouku(
+      embeddedJson(
+        await request(`https://so.youku.com/search_video/q_${q}`, env, fetcher, {
+          headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'text/html' },
+        }),
+        'window.__INITIAL_DATA__',
+      ),
+      query,
+    );
+  else if (platform === 'bilibili') {
+    const pages = await Promise.allSettled(
+      ['media_bangumi', 'media_ft'].map(async (type) => {
+        const d = obj(
+          json(
+            await request(
+              `https://api.bilibili.com/x/web-interface/search/type?search_type=${type}&keyword=${q}&page=1`,
+              env,
+              fetcher,
+              { headers: { Referer: 'https://www.bilibili.com/' } },
+            ),
+          ),
+        );
+        if (d.code !== 0) throw new UpstreamError(`API_${Number(d.code) || 'ERROR'}`);
+        const data = obj(d.data);
+        if (!Array.isArray(data.result) && Number(data.numResults) !== 0)
+          throw new UpstreamError('SCHEMA_CHANGED');
+        return arr(data.result).flatMap((raw) => {
+          const v = obj(raw),
+            id = `ss${string(v.season_id)}`;
+          if (!validSeriesId(platform, id)) return [];
+          return [
+            {
+              series: summary(
+                platform,
+                id,
+                v.title,
+                query,
+                null,
+                '',
+                `https://www.bilibili.com/bangumi/play/${id}`,
+                text(v.season_type_name),
+              ),
+              preview: [],
+            },
+          ];
+        });
+      }),
+    );
+    for (const p of pages)
+      if (p.status === 'fulfilled') records.push(...p.value);
+      else warnings.push(p.reason instanceof UpstreamError ? p.reason.message : 'UPSTREAM_ERROR');
+    if (!records.length && warnings.length) throw new UpstreamError(warnings[0]);
+  } else {
+    try {
+      const d = obj(
+        json(
+          await request(`https://mobileso.bz.mgtv.com/pc/search/v1?q=${q}&pn=1&pc=20&corr=1`, env, fetcher, {
+            headers: { Referer: 'https://so.mgtv.com/' },
+          }),
+        ),
+      );
+      if (![200, 0, '200', '0'].includes(d.code as number) || obj(d.data).forbidden)
+        throw new UpstreamError('SEARCH_API_REJECTED');
+      for (const v of objects(d.data)) {
+        const c = canonical(v.url || v.pageUrl, platform),
+          title = text(v.title || v.name || v.clipName || v.t3 || v.t1);
+        if (!c || !title) continue;
+        const id = c.url
+          .match(/\/b\/(\d+)\/(\d+)/)
+          ?.slice(1)
+          .join('-');
+        if (id)
+          records.push({
+            series: summary(platform, id, title, query, v.totalNumber || v.total, v.year, c.url, '芒果剧集'),
+            preview: [],
+          });
+      }
+    } catch (e) {
+      warnings.push(`native:${e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR'}`);
+    }
+    if (!records.length) {
+      records = fromTencent(await tencentSearchData(query, env, fetcher), platform, query);
+      warnings.push('DISCOVERY_FROM_TENCENT_INDEX');
+    }
+  }
+  const unique = new Map<string, Seed>();
+  for (const r of records)
+    if (r.series.score >= 0.12) {
+      const key = platform === 'mango' ? r.series.id.split('-')[0] : r.series.id;
+      if (!unique.has(key)) unique.set(key, r);
+    }
+  return {
+    records: [...unique.values()].sort((a, b) => b.series.score - a.series.score).slice(0, 50),
+    warnings,
+  };
+}
+async function discovery(
+  platform: Platform,
+  query: string,
+  env: Env,
+  fetcher: Fetcher,
+  cache?: CacheStore,
+): Promise<Discovery> {
+  const key = new Request(
+      `https://cn-video-search.internal/series/v1/${platform}?q=${encodeURIComponent(query)}`,
+    ),
+    ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
+  if (cache)
+    try {
+      const r = await cache.match(key);
+      if (r) {
+        const d = (await r.json()) as Discovery;
+        const age = Date.now() - Date.parse(d.fetched_at);
+        if (age >= 0 && age < ttl * 1000) return { ...d, cached: true };
+      }
+    } catch {}
+  const d = {
+    ...(await freshDiscovery(platform, query, env, fetcher)),
+    fetched_at: new Date().toISOString(),
+    cached: false,
+  };
+  if (cache)
+    try {
+      await cache.put(
+        key,
+        new Response(JSON.stringify(d), { headers: { 'Cache-Control': `public, max-age=${ttl}` } }),
+      );
+    } catch {}
+  return d;
+}
+export async function searchSeries(
+  platform: Platform,
+  query: string,
+  limit: number,
+  env: Env,
+  fetcher: Fetcher,
+  cache?: CacheStore,
+) {
+  try {
+    const d = await discovery(platform, query, env, fetcher, cache);
+    return {
+      platform,
+      status: d.warnings.some((w) => !w.startsWith('DISCOVERY_'))
+        ? 'degraded'
+        : d.records.length ? 'ok' : 'empty',
+      total: d.records.length,
+      count: Math.min(limit, d.records.length),
+      truncated: d.records.length > limit,
+      results: d.records.slice(0, limit).map((r) => r.series),
+      warnings: d.warnings,
+      cached: d.cached,
+      fetched_at: d.fetched_at,
+    };
+  } catch (e) {
+    return {
+      platform,
+      status: 'unavailable',
+      total: 0,
+      count: 0,
+      truncated: false,
+      results: [] as SeriesSummary[],
+      warnings: [e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR'],
+      cached: false,
+      fetched_at: new Date().toISOString(),
+    };
+  }
+}
+
+export async function seriesCatalogue(
+  platform: Platform,
+  id: string,
+  query: string,
+  env: Env,
+  fetcher: Fetcher,
+  cache?: CacheStore,
+): Promise<CatalogueResult> {
+  const key = new Request(
+      `https://cn-video-search.internal/catalogue/v1/${platform}/${id}?q=${encodeURIComponent(query)}`,
+    ),
+    ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
+  if (cache)
+    try {
+      const r = await cache.match(key);
+      if (r) {
+        const d = (await r.json()) as CatalogueResult;
+        if (Date.now() >= Date.parse(d.fetched_at) && Date.now() - Date.parse(d.fetched_at) < ttl * 1000)
+          return { ...d, cached: true };
+      }
+    } catch {}
+  let seed: Seed | undefined;
+  const warnings: string[] = [];
+  if (query)
+    try {
+      seed = (await discovery(platform, query, env, fetcher, cache)).records.find((r) => r.series.id === id);
+    } catch (e) {
+      warnings.push(`discovery:${e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR'}`);
+    }
+  let meta = seed?.series || summary(platform, id, '', query, null, '', '', platform);
+  let expected = meta.total_episodes,
+    verified = false,
+    allPages = true;
+  let source: string = platform;
+  let episodes: CatalogueEpisode[] = [];
+  try {
+    if (platform === 'iqiyi') {
+      const first = obj(
+        json(
+          await request(
+            `https://pcw-api.iqiyi.com/albums/album/avlistinfo?aid=${id}&page=1&size=100`,
+            env,
+            fetcher,
+          ),
+        ),
+      );
+      if (first.code !== 'A00000' || string(obj(first.data).albumId) !== id)
+        throw new UpstreamError('ALBUM_SCHEMA_CHANGED');
+      const data = obj(first.data),
+        total = num(data.total);
+      if (!Array.isArray(data.epsodelist)) throw new UpstreamError('ALBUM_SCHEMA_CHANGED');
+      if (expected && total && expected !== total) warnings.push('EPISODE_TOTAL_MISMATCH');
+      expected = total || expected;
+      const pages = [data];
+      const count = Math.min(5, Math.ceil((total || 100) / 100));
+      const rest = await Promise.allSettled(
+        Array.from({ length: count - 1 }, async (_, i) => {
+          const r = obj(
+            json(
+              await request(
+                `https://pcw-api.iqiyi.com/albums/album/avlistinfo?aid=${id}&page=${i + 2}&size=100`,
+                env,
+                fetcher,
+              ),
+            ),
+          );
+          if (r.code !== 'A00000' || string(obj(r.data).albumId) !== id)
+            throw new UpstreamError('ALBUM_SCHEMA_CHANGED');
+          return obj(r.data);
+        }),
+      );
+      for (const p of rest)
+        if (p.status === 'fulfilled') pages.push(p.value);
+        else {
+          allPages = false;
+          warnings.push('CATALOGUE_PAGE_FAILED');
+        }
+      if ((total || 0) > 500 || pages.at(-1)?.hasMore === true) allPages = false;
+      for (const page of pages)
+        for (const raw of arr(page.epsodelist)) {
+          const v = obj(raw);
+          if ((v.contentType !== undefined && Number(v.contentType) !== 1) || v.effective === false) continue;
+          const e = episode(platform, v.order, v.name, v.playUrl);
+          if (e) episodes.push(e);
+        }
+      verified = true;
+    } else if (platform === 'tencent') {
+      let context: unknown = undefined;
+      for (let page = 0; page < 5; page++) {
+        const r = obj(
+          json(
+            await request(
+              'https://pbaccess.video.qq.com/trpc.universal_backend_service.page_server_rpc.PageServer/GetPageData?vplatform=2&vversion_name=8.2.96',
+              env,
+              fetcher,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Referer: 'https://m.v.qq.com/' },
+                body: JSON.stringify({
+                  page_params: {
+                    req_from: 'web_mobile',
+                    page_id: 'vsite_episode_list',
+                    page_type: 'detail_operation',
+                    id_type: '1',
+                    page_size: '100',
+                    cid: id,
+                    detail_page_type: '1',
+                    ...(context ? { page_context: context } : {}),
+                  },
+                  has_cache: 1,
+                }),
+              },
+            ),
+          ),
+        );
+        const data = obj(r.data);
+        if (
+          Number(r.ret) !== 0 ||
+          typeof data.has_next_page !== 'boolean' ||
+          !Array.isArray(data.module_list_datas)
+        )
+          throw new UpstreamError('CATALOGUE_SCHEMA_CHANGED');
+        for (const v of objects(data)) {
+          const p = obj(v.item_params);
+          if (p.cid !== id || !p.vid || !/^[a-z\d]+$/i.test(string(p.vid))) continue;
+          const n = num(p.title) || num(p.c_title_output),
+            label = text(p.c_title_output || p.title);
+          if (!label) continue;
+          const extra = meta.kind !== 'movie' && !n;
+          const e = episode(
+            platform,
+            n,
+            n ? `${seed?.series.title || '第'} ${n}集` : label,
+            `https://v.qq.com/x/cover/${id}/${p.vid}.html`,
+            extra,
+          );
+          if (e) episodes.push(e);
+        }
+        verified = true;
+        if (data.has_next_page !== true) break;
+        context = data.next_page_context;
+        if (!context || page === 4) {
+          allPages = false;
+          break;
+        }
+      }
+      if (!expected && allPages) expected = new Set(episodes.map((e) => e.url)).size || null;
+    } else if (platform === 'youku') {
+      // The SSR payload scopes each complete episode block to its own showId; never combine sibling shows.
+      if (!seed && query)
+        seed = (await discovery(platform, query, env, fetcher)).records.find((r) => r.series.id === id);
+      if (!seed) throw new UpstreamError(query ? 'SERIES_NOT_FOUND' : 'DETAIL_QUERY_REQUIRED');
+      meta = seed.series;
+      expected = meta.total_episodes;
+      episodes = seed.preview;
+      verified = seed.preview_verified === true;
+      source = 'youku_ssr_catalogue';
+    } else if (platform === 'bilibili') {
+      const r = obj(
+        json(
+          await request(
+            `https://api.bilibili.com/pgc/view/web/season?season_id=${id.slice(2)}`,
+            env,
+            fetcher,
+            { headers: { Referer: 'https://www.bilibili.com/' } },
+          ),
+        ),
+      );
+      const data = obj(r.result);
+      if (r.code !== 0 || `ss${string(data.season_id)}` !== id || !Array.isArray(data.episodes))
+        throw new UpstreamError('SEASON_SCHEMA_CHANGED');
+      meta = {
+        ...meta,
+        title: text(data.title) || meta.title,
+        url: `https://www.bilibili.com/bangumi/play/${id}`,
+      };
+      expected = num(data.total) || expected;
+      for (const raw of data.episodes) {
+        const v = obj(raw);
+        if (
+          (v.section_type !== undefined && v.section_type !== 0) ||
+          /预告|PV|花絮/.test(text(v.badge) + ' ' + text(v.share_copy))
+        )
+          continue;
+        const n = num(v.title);
+        if (!n) continue;
+        const e = episode(platform, n, `${meta.title} 第${n}集 ${text(v.long_title)}`, v.link);
+        if (e) episodes.push(e);
+      }
+      verified = true;
+    } else {
+      const [cid, vid] = id.split('-');
+      let totalPages = 1,
+        totalItems: number | null = null;
+      for (let page = 0; page < Math.min(totalPages, 10); page++) {
+        const r = obj(
+          json(
+            await request(
+              `https://pcweb.api.mgtv.com/episode/list?video_id=${vid}&page=${page + 1}&size=100`,
+              env,
+              fetcher,
+              { headers: { Referer: 'https://www.mgtv.com/' } },
+            ),
+          ),
+        );
+        const data = obj(r.data);
+        if (Number(r.code) !== 200 || !Array.isArray(data.list))
+          throw new UpstreamError('CATALOGUE_SCHEMA_CHANGED');
+        totalPages = num(data.total_page) || 1;
+        totalItems = num(data.count) || num(data.total) || totalItems;
+        for (const raw of data.list) {
+          const v = obj(raw),
+            c = canonical(v.url, platform);
+          if (!c || !c.url.includes(`/b/${cid}/`)) continue;
+          const title = text(v.t2 || v.t3 || v.t1),
+            extra = /加更|直拍|纯享|花絮|预告|超前营业|特别企划|陪看|Reaction/.test(title);
+          const n = title.match(/第\s*(\d+)\s*[集期]/)?.[1] || (/^\d+$/.test(title) ? title : null);
+          const e = episode(platform, n, title, c.url, extra);
+          if (e) episodes.push(e);
+        }
+      }
+      if (totalPages > 10) allPages = false;
+      // This endpoint counts multiple editions and extras. Keep their labels and never invent sequential numbers.
+      expected = totalItems;
+      verified = true;
+      source = 'mgtv_episode_list';
+    }
+  } catch (e) {
+    allPages = false;
+    warnings.push(e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR');
+    if (!episodes.length && seed?.preview.length) {
+      episodes = seed.preview;
+      warnings.push('SEARCH_PREVIEW_FALLBACK');
+    }
+  }
+  const seen = new Map<string, CatalogueEpisode>();
+  for (const e of episodes) seen.set(e.url, e);
+  episodes = [...seen.values()];
+  episodes.sort(
+    (a, b) =>
+      Number(a.episode_type === 'extra') - Number(b.episode_type === 'extra') ||
+      (a.episode_number ?? 100000) - (b.episode_number ?? 100000),
+  );
+  const main = episodes.filter((e) => e.episode_type === 'main'),
+    numbers = new Set(main.map((e) => e.episode_number).filter((n): n is number => n !== null));
+  const numeric = meta.kind !== 'movie' && platform !== 'mango';
+  // Tencent search totals include extras. When entries are missing, only report provable gaps,
+  // rather than inventing trailing episode numbers from an ambiguous total.
+  const numberedExpected =
+    platform === 'tencent' && episodes.length !== expected
+      ? Math.max(0, ...numbers)
+      : expected === null
+        ? null
+        : expected - (episodes.length - main.length);
+  const missing =
+    numberedExpected && numeric
+      ? Array.from({ length: numberedExpected }, (_, i) => i + 1).filter((n) => !numbers.has(n))
+      : [];
+  const conflicts = numeric && main.length !== numbers.size;
+  if (conflicts) warnings.push('CONFLICTING_EPISODE_NUMBERS');
+  const complete =
+    verified &&
+    allPages &&
+    expected !== null &&
+    episodes.length === expected &&
+    !missing.length &&
+    !conflicts &&
+    !warnings.includes('EPISODE_TOTAL_MISMATCH');
+  if (!complete) warnings.push('EPISODE_LIST_INCOMPLETE');
+  const result: CatalogueResult = {
+    ok: episodes.length > 0,
+    platform,
+    series: meta,
+    total: episodes.length,
+    main_total: main.length,
+    extra_total: episodes.length - main.length,
+    expected_total: expected,
+    complete,
+    partial: !complete,
+    missing_episode_numbers: missing,
+    episodes,
+    warnings: [...new Set(warnings)],
+    cached: false,
+    fetched_at: new Date().toISOString(),
+    source,
+  };
+  if (complete && cache)
+    try {
+      await cache.put(
+        key,
+        new Response(JSON.stringify(result), { headers: { 'Cache-Control': `public, max-age=${ttl}` } }),
+      );
+    } catch {}
+  return result;
+}

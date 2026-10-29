@@ -1,82 +1,78 @@
-# VideoSearch · 五站统一查询接口
+# VideoSearch · 五站剧集与分集目录
 
-Cloudflare Workers 上的影视官方播放页发现服务。**一个聚合接口、五个单站接口，同一套参数与返回结构。** 默认综合模式合并搜索结果与已接入的分集目录，按 URL 去重，保留集数编号。
+Cloudflare Workers 上的影视官方播放页发现服务。**一个聚合接口、五个单站接口，先返回剧集列表，再展开所选作品的分集目录。** 同名作品、年份和不同版本按平台 ID 分开，不再默认展开搜索到的第一部剧。
 
-- [接口说明与在线调试](https://videosearch.webber.qzz.io/)
-- [OpenAPI 3.1](https://videosearch.webber.qzz.io/openapi.json) · [平台能力清单](https://videosearch.webber.qzz.io/v1/platforms)
-- [服务健康检查](https://videosearch.webber.qzz.io/health)，只检查 Worker，不检查上游。
+- [说明页面与在线调试](https://videosearch.webber.qzz.io/)：选择总接口或单站，搜索后点击“展开分集”。
+- [OpenAPI 3.1](https://videosearch.webber.qzz.io/openapi.json) · [平台能力](https://videosearch.webber.qzz.io/v1/platforms) · [健康检查](https://videosearch.webber.qzz.io/health)
 
-## 接口结构
+## 两层查询
 
-统一请求路径中的 `q` 为必填关键词，以下示例均默认 `mode=all`。
-
-| 接口 | 路径 | 行为 |
+| 用途 | 路径 | 内容 |
 | --- | --- | --- |
-| 聚合总接口 | `/v1/search?q=海市蜃楼` | 并行查询五站，聚合结果 |
-| 腾讯视频 | `/v1/tencent/search?q=海市蜃楼` | 仅腾讯视频内容 |
-| 爱奇艺 | `/v1/iqiyi/search?q=海市蜃楼` | 仅爱奇艺内容，支持电视剧分集目录 |
-| 优酷 | `/v1/youku/search?q=海市蜃楼` | 仅优酷内容 |
-| 芒果 TV | `/v1/mango/search?q=海市蜃楼` | 仅芒果 TV 内容 |
-| 哔哩哔哩 | `/v1/bilibili/search?q=海市蜃楼` | 仅哔哩哔哩内容 |
+| 聚合总接口 | `/v1/search?q=三体` | 并行搜索五站，聚合剧集摘要 |
+| 腾讯视频 | `/v1/tencent/search?q=三体` | 仅腾讯剧集 |
+| 爱奇艺 | `/v1/iqiyi/search?q=海市蜃楼` | 仅爱奇艺剧集 |
+| 优酷 | `/v1/youku/search?q=甄嬛传` | 仅优酷剧集 |
+| 芒果 TV | `/v1/mango/search?q=歌手2025` | 仅芒果作品 |
+| 哔哩哔哩 | `/v1/bilibili/search?q=三体` | 仅哔哩哔哩番剧 / 影视作品 |
+| 指定作品目录 | `/v1/{platform}/series/{id}?q=原关键词` | 精确选择某部作品的分集目录 |
 
-聚合接口与单站接口调用同一份平台查询逻辑，不通过外部 HTTP 请求再调用自己的接口。单站接口不接受 `platforms`，保证不会查询或返回其他网站。
+搜索默认 `view=series`，返回多个作品的摘要。每项包含 `platform`、`id`、`title`、`year`、`type_name`、`total_episodes`、`url` 和 **`detail_url`**。客户端应直接跟随 `detail_url`，保留其中的 `q` 提示，避免自行推测不同平台的 ID 格式。优酷冷缓存目录需要通过该关键词取得准确 showId 对应的 SSR 数据。
 
-### 三种功能模式
+```text
+GET /v1/iqiyi/search?q=海市蜃楼
+→ results[0].detail_url
+GET /v1/iqiyi/series/6244560312265801?q=海市蜃楼
+→ episodes[0..23]，complete=true
+```
 
-| mode | 行为 |
-| --- | --- |
-| `all` | 默认：合并普通搜索和已接入的分集目录。相同 URL 只返回一次，分集信息优先。 |
-| `search` | 只做普通模糊搜索，不请求分集目录。 |
-| `episodes` | 只请求已接入的分集目录；暂未接入的站点返回 `unsupported`。 |
+总接口和单站接口直接调用同一份业务逻辑；单站不接受 `platforms`，也不会把外站跳转链接标成本平台内容。只做剧集发现时不会预先向所有匹配剧集拉取目录。
 
-当前五站都接入普通搜索；**完整分集目录当前仅接入爱奇艺电视剧**。其他站点没有完整目录适配器，不会拿搜索片段冒充全集。平台风控、地区限制和改版仍会影响实际可用性；不承诺五站始终可用。
-
-原 `/v1/episodes` 保留历史返回格式并添加 `Deprecation` 响应头，只用于旧接入兼容。新接入请使用上述统一接口的 `mode` 参数。
-
-## 参数
+### 参数
 
 | 参数 | 默认值 / 范围 | 说明 |
 | --- | --- | --- |
-| `q` | 必填，1—80 字符 | 片名或标题片段；自动统一全角和空格。 |
-| `mode` | `all` | `all`、`search`、`episodes`，总接口和单站接口一致。 |
-| `platforms` | `all` | **仅聚合接口**：逗号分隔的标识子集，例如 `tencent,iqiyi`。 |
-| `limit` | `5`，1—20 | 每站普通搜索上限；**不会截断分集目录**。 |
-| `album_id` | 可选，数字 | 爱奇艺同名电视剧专辑选择；要求 `mode=all/episodes` 且查询范围包含爱奇艺。 |
+| `q` | 1—80 字符，搜索必填 | 模糊片名。目录请求应保留 `detail_url` 中的原关键词。 |
+| `view` | `series` | `series` 返回剧集摘要；`videos` 保留旧版扁平链接。 |
+| `platforms` | `all` | 仅聚合接口：逗号分隔的平台标识子集，如 `tencent,iqiyi`。 |
+| `limit` | `5`，1—20 | 每站最多返回多少部作品，**不截断点击后的分集目录**。 |
 
-```text
-https://videosearch.webber.qzz.io/v1/search?q=海市蜃楼
-https://videosearch.webber.qzz.io/v1/iqiyi/search?q=海市蜃楼
-https://videosearch.webber.qzz.io/v1/iqiyi/search?q=海市蜃楼&mode=episodes
-https://videosearch.webber.qzz.io/v1/search?q=三体&platforms=tencent,iqiyi&mode=search&limit=10
-```
+搜索 `total` 是本次返回的剧集条数，`providers[].total` 是本次发现的候选数；`truncated` 表示被 limit 截断。它们都不是电视剧总集数。上游搜索并不保证发现整个站点的全部作品。
 
-`limit=5` 并不表示一部剧只有 5 集。综合查询里爱奇艺正片目录可返回 24 集，加上其他站搜索结果；`total` 是最终去重结果数，不是电视剧总集数。
+### 目录响应
 
-## 返回结构
+- `series`：准确选中的作品摘要。
+- `episodes[]`：官方播放页链接，包含 `episode_number`（无法可靠判断则为 null）、`title`、`url`、`platform`、`episode_type`（`main` / `extra`）。按集数排序，附加内容单列在后。
+- `total` / `main_total` / `extra_total`：实际返回的全部目录条数、主目录条数、附加内容条数。主目录可能包含上下部或语言版本，不一定等于连续剧的集数。
+- `expected_total`：上游当前目录的预期条数，包含该来源计入的附加内容；未知时为 null。
+- `complete` / `partial` / `missing_episode_numbers` / `warnings`：是否与该来源当前目录一致，是否存在缺集或上游故障。
+- `source` / `fetched_at` / `cached`：来源、读取时间与缓存状态。
 
-- `results[].url`：官方播放页地址；不包含流媒体直链。
-- `platform`：内容来源；`content_type` 为 `search` 或 `episode`。
-- 分集结果包含 `episode_number`、`album_id`、`series_title`，每站内部按集数排序。
-- `providers[]`：各站整体状态、去重后条数，以及 `operations.search`、`operations.episodes` 两个功能各自的状态、条数、缓存时间和警告。
-- `providers[].catalog`：所选专辑和候选专辑、`expected_total`、`complete`、`missing_episode_numbers`。仅目录存在时返回；具体链接统一在顶层 `results`。
-- `available_count` / `truncated` 仅描述普通搜索候选及搜索上限，不表示目录完整性。
-- `partial=true` 表示至少一站降级、不可用或所选功能未接入，应查看分站状态，不要丢弃其他站成功的结果。
+`complete=true` 要求来源验证、分页完成、条数与编号检查通过；不代表未来尚未发布的分集、免会员或每页必然可播放。预览降级、缺集、分页失败或冲突都不会标为完整。搜索标注的 `series.total_episodes` 可能含彩蛋或不同版本，保留原值供比较。
 
-`complete=true` 仅在官方目录读取成功、声明的总集数一致、编号和链接校验齐全时出现。目录最多读取 500 集；超出上限、缺集或使用搜索预览降级时明确标为不完整。目录完整不代表免会员或每个页面此刻都能播放。
+### 五站目录来源
 
-### 状态与认证
+| 平台 | 剧集发现 | 目录与过滤 |
+| --- | --- | --- |
+| 爱奇艺 | 官方 mesh 搜索中的电视剧专辑 | pcw avlist，校验 albumId，正片 contentType，最多 500 集 |
+| 腾讯视频 | 官方 MultiTerminalSearch 的自有播放站点 | PageServer 选集，校验 cid，保留彩蛋并标为 extra，最多 5 页 |
+| 优酷 | 官方搜索页的 `__INITIAL_DATA__` JSON | 按 showId 约束同一作品的正片节点，检查集数，不混用相邻作品 |
+| 芒果 TV | 原生搜索，受限时使用腾讯公开索引中的芒果官方链接 | 芒果 episode/list，按 clip ID 校验、一基分页，最多 10 页；保留期数、加更和版本原始标题 |
+| 哔哩哔哩 | 官方番剧 / 影视搜索分类 | 官方 season 目录，校验 season_id，过滤预告分区和预告标记 |
 
-| HTTP 状态 | 含义 |
-| --- | --- |
-| 200 | 查询完成，包括正常无结果或部分降级。 |
-| 400 | 参数错误。 |
-| 401 | 配置了访问密钥，但请求未通过认证。 |
-| 422 | 所选站点均未接入请求的功能。 |
-| 503 | 所选站点本次全部不可用，无可用结果。 |
+上游风控、地区限制和改版仍影响实际可用性。优酷可能返回验证页面，哔哩哔哩可能返回 412，芒果原生搜索可能返回 401；这些都会暴露为 warnings / unavailable，不返回伪造目录。适配器已实现不等于任意时刻、任意作品都有可用目录。服务只提供官方播放页，不解析媒体流。
 
-当前部署未配置 `API_KEY`，可直接调用。设置后，查询接口必须使用 `Authorization: Bearer <key>` 或 `X-API-Key: <key>`；不接受 URL 密钥。说明页面、OpenAPI、能力清单和健康检查保持公开。
+## 兼容旧接入
 
-在线调试在当前域名发送请求，密钥仅在页面内使用，不写入 URL、存储或复制的命令。复制 cURL 使用密钥占位符。对外服务建议在自己的后端保管共享密钥。
+显式 `view=videos` 或携带旧 `mode=all/search/episodes` 参数时，保留旧扁平 `results` 格式。旧 `all` 合并普通搜索和爱奇艺目录，旧 `episodes` 仅爱奇艺。`album_id` 也只在旧模式中使用。原 `/v1/episodes` 保留并带 `Deprecation` 响应头。**新接入统一使用摘要 → detail_url 的五站目录流程。**
+
+## 状态、认证和页面
+
+200 表示请求完成，仍需检查 partial；400 为参数错误，401 为认证失败，503 为本次没有可用上游结果 / 目录。单站失败时总接口保留其他站的结果。
+
+当前部署未配置 `API_KEY`，可直接调用。配置后使用 `Authorization: Bearer <key>` 或 `X-API-Key: <key>`；不接受 URL 密钥。说明页、OpenAPI、能力清单和健康检查公开。
+
+在线调试只请求当前域名，密钥仅通过请求头传递，不写入 URL、存储或复制的命令；复制 cURL 使用占位符。目录展开保持版本 ID 和认证信息，结果使用安全的 DOM 文本及官方域名链接。
 
 ## 本地运行和部署
 
@@ -127,7 +123,7 @@ GitHub 的 CI 仍会在提交和 PR 时执行检查，与 Workers Builds 的生�
 
 ## 缓存、维护和验证
 
-Worker 无需 KV 或 D1，使用按数据中心存储的 Cache API。普通搜索默认缓存 5 分钟，上游故障时可回退到最近 24 小时缓存并标记旧数据；分集目录只缓存完整结果。综合查询会共享同一请求中的爱奇艺搜索数据，避免搜索和目录重复拉取。
+Worker 无需 KV 或 D1，使用按数据中心存储的 Cache API。剧集发现默认缓存 5 分钟，分集目录只缓存完整结果，两类缓存相互独立。旧版普通链接搜索保留最近 24 小时的故障回退，明确标记旧数据。
 
 | 环境变量 | 默认值 | 用途 |
 | --- | --- | --- |

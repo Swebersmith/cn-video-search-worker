@@ -4,6 +4,7 @@ import { iqiyiEpisodes, SeriesNotFound } from './episodes';
 import { UpstreamError } from './providers';
 import { CAPABILITIES, queryPlatform, VERSION, type Mode } from './aggregate';
 import { DOCS_HTML, DOCS_CSS, DOCS_JS } from './documentation';
+import { searchSeries, seriesCatalogue, validSeriesId } from './catalogue';
 
 export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
   return async (request: Request, env: Env = {}): Promise<Response> => {
@@ -28,21 +29,28 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     if (path === '/health') return reply({ ok: true, service: 'cn-video-search', version: VERSION, upstream_checked: false });
     if (path === '/openapi.json') return reply(openapi);
     if (path === '/v1/platforms') return reply({ ok: true, platforms: Object.values(CAPABILITIES) });
-    if (path === '/v1') return reply({ version: VERSION, aggregate: '/v1/search', modes: ['all', 'search', 'episodes'], default_mode: 'all', platforms: Object.values(CAPABILITIES), docs: '/', openapi: '/openapi.json' });
+    if (path === '/v1') return reply({ version: VERSION, aggregate: '/v1/search', default_view: 'series', views: ['series', 'videos'], platforms: Object.values(CAPABILITIES), docs: '/', openapi: '/openapi.json' });
     const singleId = path.match(/^\/v1\/([a-z]+)\/search$/)?.[1];
     const single = singleId && Object.hasOwn(PLATFORMS, singleId) ? singleId as Platform : undefined;
     const legacyEpisodes = path === '/v1/episodes';
-    if (path !== '/v1/search' && !single && !legacyEpisodes) return fail('NOT_FOUND', 'Endpoint not found.', 404);
+    const detail = path.match(/^\/v1\/([a-z]+)\/series\/([^/]+)$/);
+    const detailPlatform = detail && Object.hasOwn(PLATFORMS, detail[1]) ? detail[1] as Platform : undefined;
+    if (path !== '/v1/search' && !single && !legacyEpisodes && !detailPlatform) return fail('NOT_FOUND', 'Endpoint not found.', 404);
     if (env.API_KEY) {
       const supplied = request.headers.get('X-API-Key') || request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
       if (!supplied || supplied !== env.API_KEY) return fail('UNAUTHORIZED', 'Missing or invalid API key.', 401);
     }
-    const allowed = new Set(legacyEpisodes ? ['q', 'platform', 'album_id'] : single ? ['q', 'mode', 'limit', 'album_id'] : ['q', 'mode', 'platforms', 'limit', 'album_id']);
+    const allowed = new Set(detailPlatform ? ['q'] : legacyEpisodes ? ['q', 'platform', 'album_id'] : single ? ['q', 'view', 'mode', 'limit', 'album_id'] : ['q', 'view', 'mode', 'platforms', 'limit', 'album_id']);
     for (const name of url.searchParams.keys()) {
       if (!allowed.has(name) || url.searchParams.getAll(name).length !== 1) return fail('INVALID_PARAMETER', `Unknown or repeated parameter: ${name}`, 400);
     }
     const raw = url.searchParams.get('q') || '', query = raw.normalize('NFKC').trim().replace(/\s+/g, ' ');
-    if (!query || query.length > 80 || /[\u0000-\u001f\u007f]/.test(raw) || !/[\p{L}\p{N}]/u.test(query)) return fail('INVALID_QUERY', 'q must contain 1–80 characters with letters or numbers, without control characters.', 400);
+    if ((!query && !detailPlatform) || query.length > 80 || /[\u0000-\u001f\u007f]/.test(raw) || (query && !/[\p{L}\p{N}]/u.test(query))) return fail('INVALID_QUERY', 'q must contain 1–80 characters with letters or numbers, without control characters.', 400);
+    if (detailPlatform && detail) {
+      if (!validSeriesId(detailPlatform, detail[2])) return fail('INVALID_SERIES_ID', 'Invalid series ID for this platform.', 400);
+      const result = await seriesCatalogue(detailPlatform, detail[2], query, env, fetcher, cache);
+      return reply({ ...result, took_ms: Date.now() - started }, result.ok ? 200 : 503);
+    }
     const albumId = url.searchParams.get('album_id') ?? undefined;
     if (albumId !== undefined && !/^\d{1,20}$/.test(albumId)) return fail('INVALID_ALBUM_ID', 'album_id must contain 1–20 digits.', 400);
     if (legacyEpisodes) {
@@ -64,6 +72,14 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     const ids = single ? [single] : selection === 'all' ? Object.keys(PLATFORMS) : selection.split(',').map(s => s.trim());
     if (!ids.length || ids.some(id => !Object.hasOwn(PLATFORMS, id))) return fail('INVALID_PLATFORMS', `platforms must be all or a subset of ${Object.keys(PLATFORMS).join(',')}.`, 400);
     const platforms = [...new Set(ids)] as Platform[];
+    const view = url.searchParams.get('view') ?? (url.searchParams.has('mode') ? 'videos' : 'series');
+    if (!['series', 'videos'].includes(view)) return fail('INVALID_VIEW', 'view must be series or videos.', 400);
+    if (view === 'series') {
+      if (albumId || url.searchParams.has('mode')) return fail('INVALID_PARAMETER', 'Series discovery uses q, limit and platforms. Follow detail_url to retrieve episodes.', 400);
+      const providers = await Promise.all(platforms.map(p => searchSeries(p, query, Number(limit), env, fetcher, cache)));
+      const results = providers.flatMap(p => p.results), unavailable = providers.every(p => p.status === 'unavailable');
+      return reply({ ok: !unavailable, query, view, partial: providers.some(p => ['unavailable', 'degraded'].includes(p.status)), total: results.length, limit: Number(limit), took_ms: Date.now() - started, results, providers: providers.map(({ results: _r, ...metadata }) => metadata) }, unavailable ? 503 : 200);
+    }
     if (albumId && (mode === 'search' || !platforms.includes('iqiyi'))) return fail('INVALID_ALBUM_ID', 'album_id is available for iQIYI catalog queries only.', 400);
     try {
       const providers = await Promise.all(platforms.map(p => queryPlatform(p, query, mode as Mode, Number(limit), albumId, env, fetcher, cache)));

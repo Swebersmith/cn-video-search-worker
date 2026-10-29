@@ -4,12 +4,13 @@ import { iqiyiEpisodes, SeriesNotFound, type EpisodesResult } from './episodes';
 import { iqiyiSearchData, UpstreamError } from './providers';
 import { score } from './normalize';
 
-export const VERSION = '1.2.0';
+export const VERSION = '1.3.0';
 export type Mode = 'all' | 'search' | 'episodes';
 export const CAPABILITIES = Object.fromEntries(Object.entries(PLATFORMS).map(([id, p]) => [id, {
-  id, name: p.name, domain: p.domain, endpoint: `/v1/${id}/search`, search: true, episodes: id === 'iqiyi',
-  note: id === 'iqiyi' ? '支持电视剧专辑目录、集数排序和完整性检查。' : '支持播放页搜索；完整分集目录暂未接入。',
-}])) as Record<Platform, { id: string; name: string; domain: string; endpoint: string; search: boolean; episodes: boolean; note: string }>;
+  id, name: p.name, domain: p.domain, endpoint: `/v1/${id}/search`, search: true, series: true, episodes: true,
+  detail_endpoint: `/v1/${id}/series/{id}`, legacy_inline_episodes: id === 'iqiyi',
+  note: '先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。',
+}])) as Record<Platform, { id: string; name: string; domain: string; endpoint: string; search: boolean; series: boolean; episodes: boolean; detail_endpoint: string; legacy_inline_episodes: boolean; note: string }>;
 
 type OperationStatus = ProviderResult['status'] | 'unsupported' | 'skipped';
 interface Operation { status: OperationStatus; count: number; warnings: string[]; cached?: boolean; fetched_at?: string }
@@ -42,7 +43,7 @@ export async function queryPlatform(platform: Platform, query: string, mode: Mod
   const loadIqiyi = () => payload ??= iqiyiSearchData(query, env, fetcher);
   const tasks = await Promise.allSettled([
     mode === 'episodes' ? Promise.resolve(undefined) : searchPlatform(platform, query, env, fetcher, cache, loadIqiyi),
-    mode === 'search' || !CAPABILITIES[platform].episodes ? Promise.resolve(undefined) : iqiyiEpisodes(query, albumId, env, fetcher, cache, loadIqiyi),
+    mode === 'search' || platform !== 'iqiyi' ? Promise.resolve(undefined) : iqiyiEpisodes(query, albumId, env, fetcher, cache, loadIqiyi),
   ]);
   const s = tasks[0], e = tasks[1];
   const search = s.status === 'fulfilled' ? s.value as ProviderResult | undefined : undefined;
@@ -50,7 +51,7 @@ export async function queryPlatform(platform: Platform, query: string, mode: Mod
   const searchOperation: Operation = mode === 'episodes' ? omitted('skipped') : search
     ? { status: search.status, count: Math.min(search.results.length, limit), warnings: search.warnings, cached: search.cached, fetched_at: search.fetched_at }
     : { status: 'unavailable', count: 0, warnings: [`search:${s.status === 'rejected' ? code(s.reason) : 'UPSTREAM_ERROR'}`] };
-  const episodeOperation: Operation = mode === 'search' ? omitted('skipped') : !CAPABILITIES[platform].episodes ? omitted('unsupported') : episodes
+  const episodeOperation: Operation = mode === 'search' ? omitted('skipped') : platform !== 'iqiyi' ? omitted('unsupported') : episodes
     ? { status: !episodes.ok ? 'unavailable' : episodes.complete ? 'ok' : 'degraded', count: episodes.total, warnings: episodes.warnings, cached: episodes.cached, fetched_at: episodes.fetched_at }
     : e.status === 'rejected' && e.reason instanceof SeriesNotFound
       ? { status: 'empty', count: 0, warnings: [] }
