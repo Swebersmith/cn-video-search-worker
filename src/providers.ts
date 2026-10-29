@@ -42,10 +42,10 @@ export function extractJson(data: unknown, platform: Platform, query: string): V
     if (Array.isArray(value)) { for (const item of value) walk(item, depth + 1, parentTitle); return; }
     const obj = value as Record<string, unknown>;
     const params = obj.item_params && typeof obj.item_params === 'object' ? obj.item_params as Record<string, unknown> : {};
-    const ownTitle = text(obj.title || obj.name || obj.videoName || obj.video_name || params.title);
+    const ownTitle = text(obj.title || obj.name || obj.videoName || obj.video_name || obj.tempTitle || params.title);
     const title = parentTitle && /^(\d+|第?[\d一二三四五六七八九十]+集|立即播放|正片|彩蛋\d*)$/.test(ownTitle)
       ? `${parentTitle} ${ownTitle}` : ownTitle || parentTitle;
-    for (const key of ['pageUrl', 'url', 'playUrl', 'play_url', 'web_url', 'video_url', 'jumpUrl', 'jump_url', 'goto_url', 'action_url']) {
+    for (const key of ['pageUrl', 'url', 'playUrl', 'play_url', 'web_url', 'video_url', 'jumpUrl', 'jump_url', 'goto_url', 'action_url', 'value']) {
       const item = video(platform, query, title, obj[key] || params[key]);
       if (item) found.push(item);
     }
@@ -76,6 +76,11 @@ export async function tencentSearchData(query: string, env: Env, fetcher: Fetche
     body: JSON.stringify({ version: '2', clientType: 1, filterValue: '', uuid: crypto.randomUUID(), retry: 0, query, pagenum: 0, pagesize: 20, queryFrom: 0, searchSession: '', featureList: [] }),
   }));
 }
+export async function youkuSearchData(query: string, env: Env, fetcher: Fetcher): Promise<unknown> {
+  const d = json(await request(`https://search.youku.com/api/search?keyword=${encodeURIComponent(query)}&pg=1&pz=20`, env, fetcher));
+  if (d.message !== 'success' || !Array.isArray(d.originNodes)) throw new UpstreamError('SEARCH_SCHEMA_CHANGED');
+  return { data: { nodes: d.originNodes } };
+}
 export async function nativeSearch(platform: Platform, query: string, env: Env, fetcher: Fetcher, loadIqiyi?: IqiyiSearchLoader): Promise<Video[]> {
   const q = encodeURIComponent(query);
   if (platform === 'iqiyi') {
@@ -101,10 +106,12 @@ export async function nativeSearch(platform: Platform, query: string, env: Env, 
     return items;
   }
   if (platform === 'youku') {
-    const html = await request(`https://so.youku.com/search_video/q_${q}`, env, fetcher);
-    const results = extractHtml(html, platform, query);
-    if (!results.length && !/没有找到|暂无|无相关|未找到/.test(html)) throw new UpstreamError('SCHEMA_OR_CHALLENGE');
-    return results;
+    try {
+      const html = await request(`https://so.youku.com/search_video/q_${q}`, env, fetcher);
+      const results = extractHtml(html, platform, query);
+      if (results.length || /没有找到|暂无|无相关|未找到/.test(html)) return results;
+    } catch { /* The official structured search can survive a failed web entry point. */ }
+    return extractJson(await youkuSearchData(query, env, fetcher), platform, query);
   }
   if (platform === 'tencent') {
     const d = await tencentSearchData(query, env, fetcher) as Record<string, any>;

@@ -56,7 +56,7 @@ GET /v1/iqiyi/series/6244560312265801?q=海市蜃楼
 | --- | --- | --- |
 | 爱奇艺 | 官方 mesh 搜索中的电视剧专辑 | pcw avlist，校验 albumId，正片 contentType，最多 500 集 |
 | 腾讯视频 | 官方 MultiTerminalSearch 的自有播放站点 | PageServer 选集，校验 cid，保留彩蛋并标为 extra，最多 5 页 |
-| 优酷 | 官方搜索页的 `__INITIAL_DATA__` JSON | 按 showId 约束同一作品的正片节点，检查集数，不混用相邻作品 |
+| 优酷 | 官方搜索页的 `__INITIAL_DATA__` JSON，网页受限时使用官方 JSON 搜索 | 按 showId 约束正片节点；搜索仅返回预览时使用官方 `show_episode` 选集 API，校验作品 ID 与集数 |
 | 芒果 TV | 原生搜索，受限时使用腾讯公开索引中的芒果官方链接 | 芒果 episode/list，按 clip ID 校验、一基分页，最多 10 页；保留期数、加更和版本原始标题 |
 | 哔哩哔哩 | 官方番剧 / 影视分类搜索，失败时尝试综合搜索 | 官方 season 目录，失败时尝试 main_section；校验 season_id / 分区 ID，过滤预告分区和预告标记 |
 

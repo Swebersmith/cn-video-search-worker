@@ -1,0 +1,81 @@
+{
+  "checked_at": "2026-10-29T05:36:40.413Z",
+  "view": "series",
+  "providers": [
+    {
+      "platform": "tencent",
+      "http_status": 200,
+      "status": "ok",
+      "series_count": 2,
+      "selected_id": "mzc002007knmh3g",
+      "detail_http_status": 200,
+      "episode_count": 40,
+      "main_total": 30,
+      "extra_total": 10,
+      "complete": true,
+      "warnings": []
+    },
+    {
+      "platform": "iqiyi",
+      "http_status": 200,
+      "status": "ok",
+      "series_count": 1,
+      "selected_id": "6244560312265801",
+      "detail_http_status": 200,
+      "episode_count": 24,
+      "main_total": 24,
+      "extra_total": 0,
+      "complete": true,
+      "warnings": []
+    },
+    {
+      "platform": "youku",
+      "http_status": 200,
+      "status": "degraded",
+      "series_count": 2,
+      "selected_id": "cbff984c962411de83b1",
+      "detail_http_status": 200,
+      "episode_count": 76,
+      "main_total": 76,
+      "extra_total": 0,
+      "complete": true,
+      "warnings": [
+        "web:SCHEMA_OR_CHALLENGE",
+        "DISCOVERY_FROM_YOUKU_API"
+      ]
+    },
+    {
+      "platform": "mango",
+      "http_status": 200,
+      "status": "degraded",
+      "series_count": 1,
+      "selected_id": "753011-22869999",
+      "detail_http_status": 200,
+      "episode_count": 70,
+      "main_total": 14,
+      "extra_total": 56,
+      "complete": true,
+      "warnings": [
+        "native:HTTP_401",
+        "DISCOVERY_FROM_TENCENT_INDEX"
+      ]
+    },
+    {
+      "platform": "bilibili",
+      "http_status": 200,
+      "status": "degraded",
+      "series_count": 2,
+      "selected_id": "ss26257",
+      "detail_http_status": 200,
+      "episode_count": 15,
+      "main_total": 15,
+      "extra_total": 0,
+      "complete": true,
+      "warnings": [
+        "HTTP_412",
+        "HTTP_412",
+        "DISCOVERY_FROM_BILIBILI_ALL"
+      ]
+    }
+  ]
+}
