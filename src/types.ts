@@ -11,8 +11,6 @@ export interface Env {
   DEEPSEEK_API_KEY?: string;
   DEEPSEEK_MODEL?: string;
   AI_TIMEOUT_MS?: string;
-  BILIBILI_GATEWAY_URL?: string;
-  BILIBILI_GATEWAY_TOKEN?: string;
   CORS_ORIGIN?: string;
   CACHE_TTL_SECONDS?: string;
   UPSTREAM_TIMEOUT_MS?: string;

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "五站官网搜索与 AI 影视目录",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "仅 official、series 两种模式。目录筛选电影、电视剧、综艺、动漫、纪录片，排除短剧及普通短视频。DeepSeek 仅分类和识别官方候选，不生成链接。"
   },
   "servers": [

@@ -1,7 +1,6 @@
 import { bounded, type Env, type Fetcher } from './types';
 import { md5 } from '@noble/hashes/legacy.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
-import { allowedBilibiliUrl } from './gateway-policy';
 
 export class UpstreamError extends Error {}
 const UA = 'Mozilla/5.0 (compatible; CNVideoSearch/1.0)';
@@ -11,16 +10,7 @@ export async function request(url: string, env: Env, fetcher: Fetcher, init: Req
   const timer = setTimeout(() => controller.abort(), bounded(env.UPSTREAM_TIMEOUT_MS, 6000, 1000, 10000));
   try {
     const headers = { 'User-Agent': UA, 'Accept-Language': 'zh-CN,zh;q=0.9', ...init.headers };
-    let r: Response;
-    if(env.BILIBILI_GATEWAY_URL && allowedBilibiliUrl(url)) {
-      const gateway=new URL(env.BILIBILI_GATEWAY_URL);
-      if(gateway.protocol!=='https:'||gateway.username||gateway.password||gateway.port||!env.BILIBILI_GATEWAY_TOKEN)throw new UpstreamError('LOCAL_GATEWAY_NOT_CONFIGURED');
-      if(init.method && init.method!=='GET')throw new UpstreamError('LOCAL_GATEWAY_METHOD_NOT_ALLOWED');
-      r=await fetcher(new URL('/fetch',gateway).href,{method:'POST',redirect:'manual',signal:controller.signal,
-        headers:{'Content-Type':'application/json',Authorization:`Bearer ${env.BILIBILI_GATEWAY_TOKEN}`},body:JSON.stringify({url,headers})});
-      const gatewayError=r.headers.get('X-Official-Gateway-Error');
-      if(gatewayError){await r.body?.cancel();throw new UpstreamError(`LOCAL_GATEWAY_${gatewayError}`);}
-    } else r = await fetcher(url, { ...init, redirect: 'manual', signal: controller.signal, headers });
+    const r = await fetcher(url, { ...init, redirect: 'manual', signal: controller.signal, headers });
     if (!r.ok) { await r.body?.cancel(); throw new UpstreamError(`HTTP_${r.status}`); }
     if (Number(r.headers.get('content-length')) > MAX_BYTES) { await r.body?.cancel(); throw new UpstreamError('RESPONSE_TOO_LARGE'); }
     const reader = r.body?.getReader();

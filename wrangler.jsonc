@@ -9,7 +9,6 @@
     { "pattern": "videosearch.webber.qzz.io", "custom_domain": true }
   ],
   "vars": {
-    "BILIBILI_GATEWAY_URL": "https://bili-origin.webber.qzz.io",
     "CORS_ORIGIN": "*",
     "CACHE_TTL_SECONDS": "300",
     "UPSTREAM_TIMEOUT_MS": "10000",

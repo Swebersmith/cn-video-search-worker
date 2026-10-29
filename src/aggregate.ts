@@ -1,6 +1,6 @@
 import { PLATFORMS, type Platform } from './types';
 
-export const VERSION = '2.0.0';
+export const VERSION = '2.0.1';
 export const CAPABILITIES = Object.fromEntries(
   Object.entries(PLATFORMS).map(([id, p]) => [
     id,
