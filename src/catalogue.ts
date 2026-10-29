@@ -265,6 +265,28 @@ function fromYouku(payload: unknown, query: string): Seed[] {
   }
   return out;
 }
+function fromBilibili(rows: unknown, query: string): Seed[] {
+  return arr(rows).flatMap((raw) => {
+    const v = obj(raw),
+      id = `ss${string(v.season_id)}`;
+    if (!validSeriesId('bilibili', id)) return [];
+    return [
+      {
+        series: summary(
+          'bilibili',
+          id,
+          v.title,
+          query,
+          v.ep_size,
+          '',
+          `https://www.bilibili.com/bangumi/play/${id}`,
+          text(v.season_type_name),
+        ),
+        preview: [],
+      },
+    ];
+  });
+}
 async function freshDiscovery(
   platform: Platform,
   query: string,
@@ -328,32 +350,32 @@ async function freshDiscovery(
         const data = obj(d.data);
         if (!Array.isArray(data.result) && Number(data.numResults) !== 0)
           throw new UpstreamError('SCHEMA_CHANGED');
-        return arr(data.result).flatMap((raw) => {
-          const v = obj(raw),
-            id = `ss${string(v.season_id)}`;
-          if (!validSeriesId(platform, id)) return [];
-          return [
-            {
-              series: summary(
-                platform,
-                id,
-                v.title,
-                query,
-                null,
-                '',
-                `https://www.bilibili.com/bangumi/play/${id}`,
-                text(v.season_type_name),
-              ),
-              preview: [],
-            },
-          ];
-        });
+        return fromBilibili(data.result, query);
       }),
     );
     for (const p of pages)
       if (p.status === 'fulfilled') records.push(...p.value);
       else warnings.push(p.reason instanceof UpstreamError ? p.reason.message : 'UPSTREAM_ERROR');
-    if (!records.length && warnings.length) throw new UpstreamError(warnings[0]);
+    if (!records.length && warnings.length) {
+      // The public all-search route can remain available when category endpoints are restricted.
+      const r = obj(
+        json(
+          await request(
+            `https://api.bilibili.com/x/web-interface/search/all/v2?keyword=${q}&page=1`,
+            env,
+            fetcher,
+            { headers: { Referer: 'https://www.bilibili.com/' } },
+          ),
+        ),
+      );
+      if (r.code !== 0 || !Array.isArray(obj(r.data).result)) throw new UpstreamError(warnings[0]);
+      for (const raw of arr(obj(r.data).result)) {
+        const group = obj(raw);
+        if (['media_bangumi', 'media_ft'].includes(string(group.result_type)))
+          records.push(...fromBilibili(group.data, query));
+      }
+      warnings.push('DISCOVERY_FROM_BILIBILI_ALL');
+    }
   } else {
     try {
       const d = obj(
@@ -446,7 +468,9 @@ export async function searchSeries(
       platform,
       status: d.warnings.some((w) => !w.startsWith('DISCOVERY_'))
         ? 'degraded'
-        : d.records.length ? 'ok' : 'empty',
+        : d.records.length
+          ? 'ok'
+          : 'empty',
       total: d.records.length,
       count: Math.min(limit, d.records.length),
       truncated: d.records.length > limit,
@@ -628,26 +652,66 @@ export async function seriesCatalogue(
       verified = seed.preview_verified === true;
       source = 'youku_ssr_catalogue';
     } else if (platform === 'bilibili') {
-      const r = obj(
-        json(
-          await request(
-            `https://api.bilibili.com/pgc/view/web/season?season_id=${id.slice(2)}`,
-            env,
-            fetcher,
-            { headers: { Referer: 'https://www.bilibili.com/' } },
+      let data: Obj;
+      try {
+        const r = obj(
+          json(
+            await request(
+              `https://api.bilibili.com/pgc/view/web/season?season_id=${id.slice(2)}`,
+              env,
+              fetcher,
+              { headers: { Referer: 'https://www.bilibili.com/' } },
+            ),
           ),
-        ),
-      );
-      const data = obj(r.result);
-      if (r.code !== 0 || `ss${string(data.season_id)}` !== id || !Array.isArray(data.episodes))
-        throw new UpstreamError('SEASON_SCHEMA_CHANGED');
+        );
+        data = obj(r.result);
+        if (r.code !== 0 || `ss${string(data.season_id)}` !== id || !Array.isArray(data.episodes))
+          throw new UpstreamError('SEASON_SCHEMA_CHANGED');
+      } catch (e) {
+        warnings.push(`season:${e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR'}`);
+        let metadata: Obj = {};
+        if (!seed) {
+          const html = await request(`https://www.bilibili.com/bangumi/play/${id}`, env, fetcher, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+          });
+          const raw = html.match(/<script\b[^>]*\bid=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i)?.[1];
+          if (!raw) throw new UpstreamError('SEASON_SCHEMA_CHANGED');
+          const candidates = objects(json(raw));
+          metadata = candidates.find((v) => `ss${string(v.season_id)}` === id && v.total && v.positive) || {};
+          if (!metadata.season_id) throw new UpstreamError('SEASON_ID_MISMATCH');
+        }
+        const r = obj(
+          json(
+            await request(
+              `https://api.bilibili.com/pgc/web/season/section?season_id=${id.slice(2)}`,
+              env,
+              fetcher,
+              { headers: { Referer: 'https://www.bilibili.com/' } },
+            ),
+          ),
+        );
+        const main = obj(obj(r.result).main_section);
+        if (
+          r.code !== 0 ||
+          !Array.isArray(main.episodes) ||
+          (obj(metadata.positive).id && main.id !== obj(metadata.positive).id)
+        )
+          throw new UpstreamError('SECTION_SCHEMA_CHANGED');
+        data = {
+          season_id: id.slice(2),
+          title: metadata.title || meta.title,
+          total: metadata.total || expected,
+          episodes: arr(main.episodes).map((v) => ({ ...obj(v), section_type: 0, link: obj(v).share_url })),
+        };
+        source = 'bilibili_section';
+      }
       meta = {
         ...meta,
         title: text(data.title) || meta.title,
         url: `https://www.bilibili.com/bangumi/play/${id}`,
       };
       expected = num(data.total) || expected;
-      for (const raw of data.episodes) {
+      for (const raw of arr(data.episodes)) {
         const v = obj(raw);
         if (
           (v.section_type !== undefined && v.section_type !== 0) ||

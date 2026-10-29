@@ -1,0 +1,74 @@
+{
+  "code": 0,
+  "result": {
+    "main_section": {
+      "id": 97763,
+      "title": "正片",
+      "episodes": [
+        {
+          "id": 829431,
+          "title": "1",
+          "long_title": "",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep829431",
+          "badge": ""
+        },
+        {
+          "id": 829432,
+          "title": "2",
+          "long_title": "",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep829432",
+          "badge": "会员"
+        },
+        {
+          "id": 829433,
+          "title": "3",
+          "long_title": "",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep829433",
+          "badge": "会员"
+        },
+        {
+          "id": 829434,
+          "title": "4",
+          "long_title": "",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep829434",
+          "badge": "会员"
+        },
+        {
+          "id": 829435,
+          "title": "5",
+          "long_title": "",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep829435",
+          "badge": "会员"
+        },
+        {
+          "id": 829436,
+          "title": "6",
+          "long_title": "",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep829436",
+          "badge": "会员"
+        },
+        {
+          "id": 829437,
+          "title": "7",
+          "long_title": "",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep829437",
+          "badge": "会员"
+        },
+        {
+          "id": 829438,
+          "title": "8",
+          "long_title": "",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep829438",
+          "badge": "会员"
+        },
+        {
+          "id": 829439,
+          "title": "9",
+          "long_title": "",
+          "share_url": "https://www.bilibili.com/bangumi/play/ep829439",
+          "badge": "会员"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "code": 0,
+  "data": {
+    "result": [
+      {
+        "result_type": "media_bangumi",
+        "data": [
+          {
+            "season_id": 45975,
+            "title": "我的<em class=\"keyword\">三体</em> 第四季",
+            "ep_size": 9,
+            "season_type_name": "国创"
+          },
+          {
+            "season_id": 4657,
+            "title": "我的<em class=\"keyword\">三体</em>之罗辑传",
+            "ep_size": 11,
+            "season_type_name": "国创"
+          }
+        ]
+      },
+      {
+        "result_type": "media_ft",
+        "data": []
+      }
+    ]
+  }
+}

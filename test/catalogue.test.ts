@@ -338,3 +338,54 @@ test('trimmed official payloads preserve Youku show boundaries and Bilibili prev
   assert.equal(b.complete, true);
   assert.ok(b.episodes.every((e: any) => !e.title.includes('预告')));
 });
+
+test('Bilibili public all-search and section fallbacks retain exact season and complete main episodes', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const all = await readFile('test/fixtures/bilibili-all-search.json', 'utf8');
+  const section = await readFile('test/fixtures/bilibili-section.json', 'utf8');
+  const handler = createHandler(async (url) => {
+    if (url.includes('/search/all/v2')) return new Response(all);
+    if (url.includes('/season/section?')) return new Response(section);
+    return new Response('', { status: 412 });
+  });
+  const results = (await (await handler(request('/v1/bilibili/search?q=三体'))).json()) as any;
+  assert.ok(results.total >= 1);
+  assert.equal(results.partial, true);
+  assert.ok(results.providers[0].warnings.includes('DISCOVERY_FROM_BILIBILI_ALL'));
+  const selected = results.results.find((r: any) => r.id === 'ss45975');
+  assert.ok(selected);
+  const r = await handler(request(selected.detail_url)),
+    d = (await r.json()) as any;
+  assert.equal(r.status, 200);
+  assert.equal(d.source, 'bilibili_section');
+  assert.equal(d.complete, true);
+  assert.equal(d.total, 9);
+  assert.equal(d.series.id, 'ss45975');
+  assert.ok(d.warnings.includes('season:HTTP_412'));
+  assert.deepEqual(
+    d.episodes.map((e: any) => e.episode_number),
+    [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  );
+});
+
+test('cold Bilibili section fallback checks SSR season metadata and section ID', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const page = await readFile('test/fixtures/bilibili-page.html', 'utf8');
+  const section = await readFile('test/fixtures/bilibili-section.json', 'utf8');
+  const handler = createHandler(async (url) =>
+    url.includes('www.bilibili.com/bangumi/play/')
+      ? new Response(page)
+      : url.includes('/season/section?')
+        ? new Response(section)
+        : new Response('', { status: 412 }),
+  );
+  const d = (await (await handler(request('/v1/bilibili/series/ss45975'))).json()) as any;
+  assert.equal(d.complete, true);
+  assert.equal(d.total, 9);
+  assert.equal(d.series.title, '我的三体 第四季');
+  const r = await handler(request('/v1/bilibili/series/ss99999'));
+  const wrong = (await r.json()) as any;
+  assert.equal(r.status, 503);
+  assert.equal(wrong.total, 0);
+  assert.ok(wrong.warnings.includes('SEASON_ID_MISMATCH'));
+});
