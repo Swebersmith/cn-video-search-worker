@@ -1,6 +1,5 @@
 import { PLATFORMS, bounded, type CacheStore, type Env, type Fetcher, type Platform, type ProviderResult } from './types';
-import { braveSearch, nativeSearch, UpstreamError, PartialUpstreamError, type IqiyiSearchLoader } from './providers';
-import { ranked } from './normalize';
+import { nativeSearch, UpstreamError, PartialUpstreamError, type IqiyiSearchLoader } from './providers';
 
 const errorCode = (e: unknown) => e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR';
 
@@ -8,7 +7,7 @@ export async function searchPlatform(platform: Platform, query: string, env: Env
   const fresh = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   const staleTtl = Math.max(fresh, bounded(env.STALE_TTL_SECONDS, 86400, 30, 604800));
   // Include backend configuration but never credentials in cache keys. This origin is internal to Cache API.
-  const key = new Request(`https://cn-video-search.internal/v3/${platform}?q=${encodeURIComponent(query)}&fallback=${Boolean(env.BRAVE_SEARCH_API_KEY)}`);
+  const key = new Request(`https://cn-video-search.internal/native-only/v4/${platform}?q=${encodeURIComponent(query)}`);
   let saved: ProviderResult | undefined;
   if (cache) {
     try {
@@ -22,22 +21,18 @@ export async function searchPlatform(platform: Platform, query: string, env: Env
     } catch { /* Cache failures must never prevent live searches. */ }
   }
   const warnings: string[] = [];
-  let nativeOk = false, fallbackOk = false;
+  let nativeOk = false;
   let results: ProviderResult['results'] = [];
   try { results = await nativeSearch(platform, query, env, fetcher, loadIqiyi); nativeOk = true; }
   catch (e) {
     warnings.push(`native:${errorCode(e)}`);
     if (e instanceof PartialUpstreamError) results = e.results;
   }
-  if ((!results.length || !nativeOk) && env.BRAVE_SEARCH_API_KEY) {
-    try { results = ranked([...results, ...await braveSearch(platform, query, env, fetcher)]); fallbackOk = true; }
-    catch (e) { warnings.push(`brave:${errorCode(e)}`); }
-  } else if (!nativeOk && !env.BRAVE_SEARCH_API_KEY) warnings.push('BRAVE_SEARCH_API_KEY_NOT_CONFIGURED');
 
   if (!results.length && !nativeOk && saved?.results.length) {
     return { ...saved, status: 'stale', warnings: [...new Set([...saved.warnings, ...warnings, 'STALE_RESULTS_NOT_REVALIDATED'])], cached: true };
   }
-  const status: ProviderResult['status'] = !nativeOk && !fallbackOk && !results.length ? 'unavailable'
+  const status: ProviderResult['status'] = !nativeOk && !results.length ? 'unavailable'
     : !nativeOk ? 'degraded' : results.length ? 'ok' : 'empty';
   const result: ProviderResult = {
     platform, status, results, warnings, cached: false, fetched_at: new Date().toISOString(),

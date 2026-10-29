@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "国内五大影视平台统一查询 API",
-    "version": "1.3.2",
-    "description": "两层查询：搜索返回各站剧集摘要，跟随 detail_url 获取所选作品的分集目录。五站均有目录适配，上游限制会标注不完整。仅返回官方播放页。"
+    "version": "1.4.0",
+    "description": "两层查询：搜索返回各站剧集摘要，跟随 detail_url 获取所选作品的分集目录。默认返回各平台官网未登录综合搜索本页卡片与原始响应。目录模式另行筛选影视作品，上游限制会如实标注。"
   },
   "servers": [
     {
@@ -71,8 +71,7 @@
           "source": {
             "type": "string",
             "enum": [
-              "native",
-              "brave"
+              "native"
             ]
           },
           "content_type": {
@@ -89,6 +88,38 @@
           },
           "series_title": {
             "type": "string"
+          }
+        }
+      },
+      "OfficialResult": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "platform_name": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "integer"
+          },
+          "content_type": {
+            "const": "official"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type_name": {
+            "type": "string"
+          },
+          "raw": {
+            "description": "未经相关度过滤或去重的完整官网卡片。"
           }
         }
       },
@@ -293,9 +324,16 @@
           },
           "view": {
             "enum": [
+              "official",
               "series",
               "videos"
             ]
+          },
+          "page": {
+            "type": "integer"
+          },
+          "source_policy": {
+            "const": "same_platform_official_only"
           },
           "mode": {
             "enum": [
@@ -309,7 +347,7 @@
           },
           "total": {
             "type": "integer",
-            "description": "本次返回的剧集摘要数（videos 模式为链接数）。"
+            "description": "本页返回卡片数；series 为筛选后的剧集摘要数，videos 为链接数。"
           },
           "limit": {
             "type": "integer",
@@ -327,6 +365,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/Video"
+                },
+                {
+                  "$ref": "#/components/schemas/OfficialResult"
                 }
               ]
             }
@@ -336,6 +377,33 @@
             "items": {
               "type": "object",
               "properties": {
+                "source": {
+                  "const": "official"
+                },
+                "total": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "source_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "has_more": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "upstream": {
+                  "description": "该平台本页原始官网响应，包含全部类型和其他模块。"
+                },
                 "platform": {
                   "type": "string"
                 },
@@ -672,8 +740,8 @@
     },
     "/v1/search": {
       "get": {
-        "summary": "聚合五站剧集列表，点击后读取目录",
-        "description": "默认 view=series，results 是剧集摘要，通过 detail_url 获取特定版本的目录。view=videos 保留旧版扁平结果；显式 mode 参数隐式选择 videos。配置 API_KEY 后必须认证。partial=true 时检查 providers 状态。",
+        "summary": "聚合五站官网综合搜索，保留原始卡片与分页",
+        "description": "默认 view=official，保留所选官网本页的综合结果与原始顺序，page 分页，不按 limit 截断。view=series 另提供影视目录摘要，通过 detail_url 获取特定版本的目录。view=videos 保留旧版扁平结果；显式 mode 参数隐式选择 videos。配置 API_KEY 后必须认证。partial=true 时检查 providers 状态。",
         "security": [
           {
             "bearerAuth": []
@@ -704,7 +772,18 @@
                 "series",
                 "videos"
               ],
-              "default": "series"
+              "default": "official"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "仅 official 模式；从 1 开始，每次取官网一页，不抓取全站。",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1
             }
           },
           {
@@ -807,7 +886,7 @@
     "/v1/tencent/search": {
       "get": {
         "summary": "腾讯视频单站统一查询",
-        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 tencent 的内容。",
+        "description": "默认返回本站官网综合搜索结果，page 分页；view=series 另提供可展开的影视目录摘要。 与聚合接口共用业务逻辑，只返回 tencent 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -838,7 +917,18 @@
                 "series",
                 "videos"
               ],
-              "default": "series"
+              "default": "official"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "仅 official 模式；从 1 开始，每次取官网一页，不抓取全站。",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1
             }
           },
           {
@@ -932,7 +1022,7 @@
     "/v1/iqiyi/search": {
       "get": {
         "summary": "爱奇艺单站统一查询",
-        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 iqiyi 的内容。",
+        "description": "默认返回本站官网综合搜索结果，page 分页；view=series 另提供可展开的影视目录摘要。 与聚合接口共用业务逻辑，只返回 iqiyi 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -963,7 +1053,18 @@
                 "series",
                 "videos"
               ],
-              "default": "series"
+              "default": "official"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "仅 official 模式；从 1 开始，每次取官网一页，不抓取全站。",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1
             }
           },
           {
@@ -1057,7 +1158,7 @@
     "/v1/youku/search": {
       "get": {
         "summary": "优酷单站统一查询",
-        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 youku 的内容。",
+        "description": "默认返回本站官网综合搜索结果，page 分页；view=series 另提供可展开的影视目录摘要。 与聚合接口共用业务逻辑，只返回 youku 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -1088,7 +1189,18 @@
                 "series",
                 "videos"
               ],
-              "default": "series"
+              "default": "official"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "仅 official 模式；从 1 开始，每次取官网一页，不抓取全站。",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1
             }
           },
           {
@@ -1182,7 +1294,7 @@
     "/v1/mango/search": {
       "get": {
         "summary": "芒果 TV单站统一查询",
-        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 mango 的内容。",
+        "description": "默认返回本站官网综合搜索结果，page 分页；view=series 另提供可展开的影视目录摘要。 与聚合接口共用业务逻辑，只返回 mango 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -1213,7 +1325,18 @@
                 "series",
                 "videos"
               ],
-              "default": "series"
+              "default": "official"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "仅 official 模式；从 1 开始，每次取官网一页，不抓取全站。",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1
             }
           },
           {
@@ -1307,7 +1430,7 @@
     "/v1/bilibili/search": {
       "get": {
         "summary": "哔哩哔哩单站统一查询",
-        "description": "先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。 与聚合接口共用业务逻辑，只返回 bilibili 的内容。",
+        "description": "默认返回本站官网综合搜索结果，page 分页；view=series 另提供可展开的影视目录摘要。 与聚合接口共用业务逻辑，只返回 bilibili 的内容。",
         "security": [
           {
             "bearerAuth": []
@@ -1338,7 +1461,18 @@
                 "series",
                 "videos"
               ],
-              "default": "series"
+              "default": "official"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "仅 official 模式；从 1 开始，每次取官网一页，不抓取全站。",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1
             }
           },
           {

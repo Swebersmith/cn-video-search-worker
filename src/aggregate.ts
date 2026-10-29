@@ -4,12 +4,12 @@ import { iqiyiEpisodes, SeriesNotFound, type EpisodesResult } from './episodes';
 import { iqiyiSearchData, UpstreamError } from './providers';
 import { score } from './normalize';
 
-export const VERSION = '1.3.2';
+export const VERSION = '1.4.0';
 export type Mode = 'all' | 'search' | 'episodes';
 export const CAPABILITIES = Object.fromEntries(Object.entries(PLATFORMS).map(([id, p]) => [id, {
   id, name: p.name, domain: p.domain, endpoint: `/v1/${id}/search`, search: true, series: true, episodes: true,
   detail_endpoint: `/v1/${id}/series/{id}`, legacy_inline_episodes: id === 'iqiyi',
-  note: '先返回剧集列表，再按 detail_url 获取所选剧集的目录；上游限制和不完整目录会明确标注。',
+  note: '默认返回本站官网综合搜索结果，page 分页；view=series 另提供可展开的影视目录摘要。',
 }])) as Record<Platform, { id: string; name: string; domain: string; endpoint: string; search: boolean; series: boolean; episodes: boolean; detail_endpoint: string; legacy_inline_episodes: boolean; note: string }>;
 
 type OperationStatus = ProviderResult['status'] | 'unsupported' | 'skipped';

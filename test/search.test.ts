@@ -109,22 +109,13 @@ test('upstream logical API errors are unavailable, not successful empty results'
   const r = await createHandler(async () => response({ data: { errcode: -300, normalList: { itemList: [] } } }))(req('q=三体&platforms=tencent'));
   assert.equal(r.status, 503);
 });
-test('Brave fallback returns only valid official playback pages and marks degradation', async () => {
-  const fetcher: Fetcher = async (url, init) => {
-    if (!url.includes('api.search.brave.com')) return failing(url, init);
-    assert.equal((init?.headers as Record<string, string>)['X-Subscription-Token'], 'not-logged');
-    return response({ web: { results: [
-      { title: '三体', url: 'https://www.mgtv.com/b/123/456.html' },
-      { title: '三体', url: 'https://evil.test/b/123/456.html' },
-      { title: '三体', url: 'https://so.mgtv.com/so?k=三体' },
-    ] } });
-  };
-  const r = await createHandler(fetcher)(req('q=三体&platforms=mango'), { BRAVE_SEARCH_API_KEY: 'not-logged' });
-  const body = await r.text(), d = JSON.parse(body);
-  assert.equal(d.results.length, 1); assert.equal(d.results[0].source, 'brave');
-  assert.equal(d.providers[0].status, 'degraded'); assert.equal(d.partial, true);
-  assert.ok(!body.includes('not-logged'));
+test('failed native searches never contact third-party or other-platform sources', async () => {
+  const calls: string[] = [];
+  const r = await createHandler(async url => {calls.push(url);return new Response('',{status:403});})(req('q=三体&platforms=mango'));
+  assert.equal(r.status,503);
+  assert.ok(calls.length > 0 && calls.every(u => new URL(u).hostname === 'mobileso.bz.mgtv.com'));
 });
+
 test('fresh cache suppresses repeated network requests', async () => {
   const cache = new MemoryCache(); let calls = 0;
   const fetcher: Fetcher = async (url, init) => { calls++; return native(url, init); };
@@ -152,10 +143,10 @@ test('expired stale cache is discarded and stale data never overrides a genuine 
   const out = await searchPlatform('iqiyi', '三体', {}, async () => response({ data: { templates: [] } }), cache);
   assert.equal(out.status, 'empty'); assert.equal(out.results.length, 0);
 });
-test('Brave rate limits stay visible and are never cached as healthy empty results', async () => {
+test('native rate limits stay visible and are never cached as healthy empty results', async () => {
   const cache = new MemoryCache();
-  const out = await searchPlatform('mango', '三体', { BRAVE_SEARCH_API_KEY: 'secret' }, async () => new Response('', { status: 429 }), cache);
-  assert.equal(out.status, 'unavailable'); assert.ok(out.warnings.includes('brave:HTTP_429'));
+  const out = await searchPlatform('mango', '三体', {}, async () => new Response('', { status: 429 }), cache);
+  assert.equal(out.status, 'unavailable'); assert.ok(out.warnings.includes('native:HTTP_429'));
   assert.equal(cache.values.size, 0);
 });
 test('upstream body limits and deadlines terminate requests', async () => {

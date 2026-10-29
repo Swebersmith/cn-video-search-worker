@@ -1,6 +1,6 @@
 {
   "name": "cn-video-search-worker",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "private": true,
   "type": "module",
   "description": "国内五大影视平台官方播放页 URL 模糊搜索 API，运行于 Cloudflare Workers",
@@ -11,6 +11,7 @@
     "test": "tsx --test test/*.test.ts",
     "test:runtime": "npm run build && tsx --test test/runtime/*.test.ts",
     "smoke": "tsx scripts/smoke.ts",
+    "smoke:official": "tsx scripts/official-smoke.ts",
     "docs": "tsx scripts/openapi.ts",
     "build": "wrangler deploy --dry-run --outdir dist"
   },
@@ -22,5 +23,8 @@
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
     "wrangler": "^4.0.0"
+  },
+  "dependencies": {
+    "@noble/hashes": "2.4.0"
   }
 }

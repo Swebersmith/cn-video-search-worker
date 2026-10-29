@@ -7,3 +7,5 @@ dist/
 !.env.example
 coverage/
 smoke-results.json
+
+official-smoke-results.json

@@ -14,7 +14,7 @@ const send = (url: URL) => process.env.API_BASE_URL
 const report = [];
 for (const platform of Object.keys(PLATFORMS) as (keyof typeof PLATFORMS)[]) {
   const url = new URL(`/v1/${platform}/search`, base);
-  url.searchParams.set('q', probes[platform]); url.searchParams.set('limit', '2');
+  url.searchParams.set('q', probes[platform]); url.searchParams.set('limit', '2'); url.searchParams.set('view', 'series');
   try {
     const r = await send(url), d = await r.json() as any;
     let catalogue: any, detailStatus: number | null = null;

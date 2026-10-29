@@ -43,7 +43,7 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     assert.equal(unified.mode, 'all'); assert.equal(unified.providers.length, 1);
     assert.equal(unified.results.filter((e: any) => e.content_type === 'episode').length, 24);
     assert.equal(unified.providers[0].catalog.complete, true); assert.equal(outboundCalls, 3);
-    const discovery = await (await mf.dispatchFetch('https://example.test/v1/iqiyi/search?q=%E7%8B%82%E9%A3%99', { headers })).json() as any;
+    const discovery = await (await mf.dispatchFetch('https://example.test/v1/iqiyi/search?view=series&q=%E7%8B%82%E9%A3%99', { headers })).json() as any;
     assert.equal(discovery.view, 'series'); assert.equal(discovery.total, 1); assert.equal(discovery.results[0].id, '12345');
     const detailUrl = 'https://example.test' + discovery.results[0].detail_url;
     assert.equal((await mf.dispatchFetch(detailUrl)).status, 401);
@@ -54,5 +54,14 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     const docs = await mf.dispatchFetch('https://example.test/');
     assert.equal(docs.status, 200); assert.match(await docs.text(), /总接口与单站接口/);
     assert.equal((await mf.dispatchFetch('https://example.test/assets/docs.js')).status, 200);
+    const officialUrl='https://example.test/v1/iqiyi/search?q=%E7%8B%82%E9%A3%99';
+    const beforeOfficial=outboundCalls;
+    for(let i=0;i<2;i++) {
+      const official=await (await mf.dispatchFetch(officialUrl,{headers})).json() as any;
+      assert.equal(official.view,'official');
+      assert.equal(official.providers[0].upstream.data.templates[0].albumInfo.title,'狂飙');
+      assert.equal(official.providers[0].cached,false);
+    }
+    assert.equal(outboundCalls,beforeOfficial+2);
   } finally { await mf.dispose(); }
 });

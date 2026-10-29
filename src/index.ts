@@ -5,6 +5,7 @@ import { UpstreamError } from './providers';
 import { CAPABILITIES, queryPlatform, VERSION, type Mode } from './aggregate';
 import { DOCS_HTML, DOCS_CSS, DOCS_JS } from './documentation';
 import { searchSeries, seriesCatalogue, validSeriesId } from './catalogue';
+import { officialSearch } from './official';
 
 export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
   return async (request: Request, env: Env = {}): Promise<Response> => {
@@ -29,7 +30,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     if (path === '/health') return reply({ ok: true, service: 'cn-video-search', version: VERSION, upstream_checked: false });
     if (path === '/openapi.json') return reply(openapi);
     if (path === '/v1/platforms') return reply({ ok: true, platforms: Object.values(CAPABILITIES) });
-    if (path === '/v1') return reply({ version: VERSION, aggregate: '/v1/search', default_view: 'series', views: ['series', 'videos'], platforms: Object.values(CAPABILITIES), docs: '/', openapi: '/openapi.json' });
+    if (path === '/v1') return reply({ version: VERSION, aggregate: '/v1/search', default_view: 'official', views: ['official', 'series', 'videos'], platforms: Object.values(CAPABILITIES), docs: '/', openapi: '/openapi.json' });
     const singleId = path.match(/^\/v1\/([a-z]+)\/search$/)?.[1];
     const single = singleId && Object.hasOwn(PLATFORMS, singleId) ? singleId as Platform : undefined;
     const legacyEpisodes = path === '/v1/episodes';
@@ -40,7 +41,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       const supplied = request.headers.get('X-API-Key') || request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
       if (!supplied || supplied !== env.API_KEY) return fail('UNAUTHORIZED', 'Missing or invalid API key.', 401);
     }
-    const allowed = new Set(detailPlatform ? ['q'] : legacyEpisodes ? ['q', 'platform', 'album_id'] : single ? ['q', 'view', 'mode', 'limit', 'album_id'] : ['q', 'view', 'mode', 'platforms', 'limit', 'album_id']);
+    const allowed = new Set(detailPlatform ? ['q'] : legacyEpisodes ? ['q', 'platform', 'album_id'] : single ? ['q', 'view', 'mode', 'limit', 'album_id', 'page'] : ['q', 'view', 'mode', 'platforms', 'limit', 'album_id', 'page']);
     for (const name of url.searchParams.keys()) {
       if (!allowed.has(name) || url.searchParams.getAll(name).length !== 1) return fail('INVALID_PARAMETER', `Unknown or repeated parameter: ${name}`, 400);
     }
@@ -72,8 +73,19 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     const ids = single ? [single] : selection === 'all' ? Object.keys(PLATFORMS) : selection.split(',').map(s => s.trim());
     if (!ids.length || ids.some(id => !Object.hasOwn(PLATFORMS, id))) return fail('INVALID_PLATFORMS', `platforms must be all or a subset of ${Object.keys(PLATFORMS).join(',')}.`, 400);
     const platforms = [...new Set(ids)] as Platform[];
-    const view = url.searchParams.get('view') ?? (url.searchParams.has('mode') ? 'videos' : 'series');
-    if (!['series', 'videos'].includes(view)) return fail('INVALID_VIEW', 'view must be series or videos.', 400);
+    const view = url.searchParams.get('view') ?? (url.searchParams.has('mode') ? 'videos' : 'official');
+    if (!['official', 'series', 'videos'].includes(view)) return fail('INVALID_VIEW', 'view must be official, series or videos.', 400);
+    if (view === 'official') {
+      if (albumId || url.searchParams.has('mode')) return fail('INVALID_PARAMETER', 'Official search uses q, page and platforms.', 400);
+      const page = url.searchParams.get('page') ?? '1';
+      if (!/^\d+$/.test(page) || Number(page) < 1 || Number(page) > 1000) return fail('INVALID_PAGE', 'page must be an integer from 1 to 1000.', 400);
+      const providers = await Promise.all(platforms.map(p => officialSearch(p, query, Number(page), env, fetcher)));
+      const results = providers.flatMap(p => p.results), unavailable = providers.every(p => p.status === 'unavailable');
+      return reply({ok:!unavailable,query,view,page:Number(page),source_policy:'same_platform_official_only',
+        partial:providers.some(p => p.status === 'unavailable'),total:results.length,took_ms:Date.now()-started,results,
+        providers:providers.map(({results:_r,...p})=>p)},unavailable?503:200);
+    }
+    if (url.searchParams.has('page')) return fail('INVALID_PARAMETER', 'page is available for official search only.', 400);
     if (view === 'series') {
       if (albumId || url.searchParams.has('mode')) return fail('INVALID_PARAMETER', 'Series discovery uses q, limit and platforms. Follow detail_url to retrieve episodes.', 400);
       const providers = await Promise.all(platforms.map(p => searchSeries(p, query, Number(limit), env, fetcher, cache)));

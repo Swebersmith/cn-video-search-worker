@@ -68,7 +68,7 @@ test('Youku official JSON search and episode API recover from web challenges wit
       }
       return json(search);
     });
-    const response = await handler(request('/v1/youku/search?q=甄嬛传'));
+    const response = await handler(request('/v1/youku/search?view=series&q=甄嬛传'));
     const d = await response.json() as any;
     assert.equal(response.status, 200);
     assert.equal(d.results[0].id, full.showId);
@@ -93,7 +93,7 @@ test('Youku JSON search rejects third-party-only shows and malformed payloads', 
     ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, k === 'isYouku' || k === 'hasYouku' ? 0 : replace(v)])) : x;
   for (const [payload, expectedStatus] of [[replace(data), 200], [{message:'error'}, 503]] as const) {
     const h = createHandler(async (url) => url.includes('so.youku.com') ? new Response('', {status:403}) : json(payload));
-    const r = await h(request('/v1/youku/search?q=甄嬛传'));
+    const r = await h(request('/v1/youku/search?view=series&q=甄嬛传'));
     assert.equal(r.status, expectedStatus);
     assert.equal((await r.json() as any).total, 0);
   }
@@ -278,13 +278,13 @@ const upstream: Fetcher = async (url, init) => {
 
 test('default aggregate returns multiple series per site, and each selected detail stays within its exact ID', async () => {
   const handler = createHandler(upstream);
-  const aggregate = (await (await handler(request('/v1/search?q=同名剧'))).json()) as any;
+  const aggregate = (await (await handler(request('/v1/search?view=series&q=同名剧'))).json()) as any;
   assert.equal(aggregate.view, 'series');
   assert.equal(aggregate.total, 10);
   assert.equal(aggregate.partial, false);
   assert.ok(aggregate.results.every((r: any) => r.content_type === 'series' && !('episode_number' in r)));
   for (const platform of Object.keys(PLATFORMS) as Platform[]) {
-    const r = await handler(request(`/v1/${platform}/search?q=同名剧`)),
+    const r = await handler(request(`/v1/${platform}/search?view=series&q=同名剧`)),
       d = (await r.json()) as any;
     assert.equal(r.status, 200, platform);
     assert.equal(d.total, 2, platform);
@@ -333,8 +333,8 @@ test('detail validates authentication, platform IDs and parameters before making
     '/v1/youku/series/..%2Fevil?q=同名剧',
     '/v1/mango/series/123?q=同名剧',
     '/v1/bilibili/series/ss1?q=同名剧&url=https://evil.test',
-    '/v1/search?q=同名剧&view=series&mode=all',
-    '/v1/search?q=同名剧&view=invalid',
+    '/v1/search?view=series&q=同名剧&view=series&mode=all',
+    '/v1/search?view=series&q=同名剧&view=invalid',
   ])
     assert.equal((await handler(request(path))).status, 400, path);
   assert.equal((await handler(request('/v1/iqiyi/series/101?q=同名剧'), { API_KEY: 'secret' })).status, 401);
@@ -401,7 +401,7 @@ test('complete detail caches independently and query limits never truncate a sel
     calls++;
     return upstream(url, init);
   }, cache);
-  const s = (await (await handler(request('/v1/iqiyi/search?q=同名剧&limit=1'))).json()) as any;
+  const s = (await (await handler(request('/v1/iqiyi/search?view=series&q=同名剧&limit=1'))).json()) as any;
   assert.equal(s.total, 1);
   assert.equal(s.providers[0].truncated, true);
   const first = (await (await handler(request(s.results[0].detail_url))).json()) as any;
@@ -443,7 +443,7 @@ test('Bilibili public all-search and section fallbacks retain exact season and c
     if (url.includes('/season/section?')) return new Response(section);
     return new Response('', { status: 412 });
   });
-  const results = (await (await handler(request('/v1/bilibili/search?q=三体'))).json()) as any;
+  const results = (await (await handler(request('/v1/bilibili/search?view=series&q=三体'))).json()) as any;
   assert.ok(results.total >= 1);
   assert.equal(results.partial, true);
   assert.ok(results.providers[0].warnings.includes('DISCOVERY_FROM_BILIBILI_ALL'));

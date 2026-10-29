@@ -7,6 +7,35 @@ import { CAPABILITIES } from '../src/aggregate';
 
 const tick = () => new Promise<void>(resolve => setImmediate(resolve));
 
+test('official explorer sends native page without local result limit and renders raw cards as inert text', async () => {
+  const {window,document}=parseHTML(DOCS_HTML);
+  for (const [id,value] of [['platform','all'],['mode','official']])Object.defineProperty(document.getElementById(id)!,'value',{value,writable:true});
+  Object.assign(window,{location:{origin:'https://example.test'}});
+  Object.assign(document.getElementById('query-form')!,{reportValidity:()=>true});
+  document.getElementById('search-page')!.setAttribute('value','2');
+  const calls: string[]=[];
+  const fetcher=async(url:string)=>{
+    if(url==='/v1/platforms')return new Response(JSON.stringify({platforms:Object.values(CAPABILITIES)}));
+    calls.push(url);
+    return new Response(JSON.stringify({view:'official',total:2,results:[
+      {platform:'bilibili',title:'作者',url:'https://space.bilibili.com/123',raw:{title:'<img src=x onerror=alert(1)>'}},
+      {platform:'bilibili',title:'未知模板',url:null,raw:{custom:'全部保留'}},
+    ]}));
+  };
+  new Script(DOCS_JS).runInNewContext({window,document,fetch:fetcher,URL,AbortSignal,navigator:{},setTimeout:()=>0});
+  document.getElementById('query-form')!.dispatchEvent(new window.Event('submit',{cancelable:true}));
+  await tick();await tick();
+  const u=new URL(calls[0]);
+  assert.equal(u.searchParams.get('view'),'official');
+  assert.equal(u.searchParams.get('page'),'2');
+  assert.equal(u.searchParams.has('mode'),false);
+  assert.equal(u.searchParams.has('limit'),false);
+  assert.equal(document.querySelectorAll('.result-row').length,2);
+  assert.equal(document.querySelectorAll('#result-list details').length,2);
+  assert.equal(document.querySelectorAll('#result-list img').length,0);
+  assert.match(document.getElementById('result-list')!.textContent||'',/<img/);
+});
+
 test('documentation explorer sends the chosen single-site query, renders safe links and keeps secrets out of copied commands', async () => {
   const { window, document } = parseHTML(DOCS_HTML);
   const calls: { url: string; authorization?: string }[] = [], copied: string[] = [];
