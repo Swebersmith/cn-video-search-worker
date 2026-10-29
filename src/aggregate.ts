@@ -4,7 +4,7 @@ import { iqiyiEpisodes, SeriesNotFound, type EpisodesResult } from './episodes';
 import { iqiyiSearchData, UpstreamError } from './providers';
 import { score } from './normalize';
 
-export const VERSION = '1.4.0';
+export const VERSION = '1.4.1';
 export type Mode = 'all' | 'search' | 'episodes';
 export const CAPABILITIES = Object.fromEntries(Object.entries(PLATFORMS).map(([id, p]) => [id, {
   id, name: p.name, domain: p.domain, endpoint: `/v1/${id}/search`, search: true, series: true, episodes: true,

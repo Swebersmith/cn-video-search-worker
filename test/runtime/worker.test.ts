@@ -11,6 +11,7 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     bindings: { API_KEY: 'runtime-test-secret' },
     outboundService: async (request: Request) => {
       outboundCalls++;
+      if(request.url.startsWith('https://search.bilibili.com/all?'))return new Response('<script>window.__pinia=(function(a){return {searchResponse:{searchAllResponse:{page:1,numPages:2,result:[{result_type:"video",data:[{title:a,arcurl:"https://www.bilibili.com/video/BV123"}]}]}}}}("官网投稿"))</script>');
       assert.ok(request.url.startsWith('https://mesh.if.iqiyi.com/') || request.url.startsWith('https://pcw-api.iqiyi.com/'));
       const data = request.url.includes('pcw-api')
         ? { code: 'A00000', data: { albumId: '12345', total: 24, epsodelist: Array.from({ length: 24 }, (_, i) => ({ order: i + 1, name: `狂飙第${i + 1}集`, playUrl: `https://www.iqiyi.com/v_ep${i + 1}.html`, contentType: 1 })) } }
@@ -63,5 +64,9 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
       assert.equal(official.providers[0].cached,false);
     }
     assert.equal(outboundCalls,beforeOfficial+2);
+    const bili=await (await mf.dispatchFetch('https://example.test/v1/bilibili/search?q=三体',{headers})).json() as any;
+    assert.equal(bili.results[0].title,'官网投稿');
+    assert.ok(bili.providers[0].source_url.startsWith('https://search.bilibili.com/all?'));
+    assert.equal(bili.providers[0].upstream.data.page,1);
   } finally { await mf.dispose(); }
 });
