@@ -1,5 +1,13 @@
 # 验证记录
 
+## 2026-10-29 · 优酷官方 JSON 备用入口修复
+
+旧版 `so.youku.com` 网页在本次实测中返回验证页。新版官方页面 `https://search.youku.com/search_video?keyword=甄嬛传` 的公开脚本使用 `/api/search`，完整选集参数为 `appScene=show_episode`、`appCaller=h5`、`showIds` 和 `keyword`。已接入这些官方入口：网页失败时发现作品，预览不完整时再按准确 showId 加载正片。跨站作品、错 showId、缺集均不能标为完整。旧版扁平搜索也支持官方 JSON 播放链接备用源。
+
+修复代码通过本机 Node.js 网络出口执行 `npm run smoke`，五站均返回搜索结果及 `complete=true` 的目录，退出码为 0：腾讯《三体》40 条（30 集正片、10 个彩蛋），爱奇艺《海市蜃楼》24 集，优酷《甄嬛传》76 集，芒果《歌手2025》70 条（含加更、不同版本），哔哩哔哩首个匹配作品 15 集。原始时间、作品 ID、状态和 warnings 见 [五站真实实测](five-provider-smoke-2026-10-29.json)。优酷、芒果与哔哩哔哩使用备用入口时仍保留 degraded 与原入口故障提示。
+
+本记录验证的是上述探测作品和本机出口；生产 Cloudflare 出口需要部署后重新执行 `API_BASE_URL=https://videosearch.webber.qzz.io npm run smoke`。本机通过不能替代生产实测，也不保证上游未来持续可用。
+
 源码首次验证日期：2026-10-28。Cloudflare 部署及线上验证日期：2026-10-29。
 
 ## 统一聚合、单站接口和说明页面（v1.2.0）

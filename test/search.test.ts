@@ -51,6 +51,17 @@ test('Youku HTML parser handles nested markup, HTML entities and rejects externa
   const out = extractHtml('<a href="//v.youku.com/video?vid=Xabc==&amp;spm=1"><em>三体</em> 第1集</a><a href="https://evil.test/video">三体</a>', 'youku', '三体');
   assert.equal(out.length, 1); assert.equal(out[0].title, '三体 第1集');
 });
+
+test('legacy Youku search uses official JSON playback actions when its web entry is blocked', async () => {
+  const h = createHandler(async (url) => url.includes('so.youku.com')
+    ? new Response('', {status:403})
+    : response({message:'success', originNodes:[{data:{tempTitle:'甄嬛传', leftButtonDTO:{action:{value:'https://v.youku.com/v_show/id_Xabc.html'}}}}]}));
+  const r = await h(new Request('https://example.test/v1/youku/search?q=甄嬛传&mode=search'));
+  const d = await r.json() as any;
+  assert.equal(r.status, 200);
+  assert.equal(d.results[0].title, '甄嬛传');
+  assert.equal(d.results[0].url, 'https://v.youku.com/v_show/id_Xabc.html');
+});
 test('unified API returns all five provider results with CORS and per-provider limits', async () => {
   const r = await createHandler(native)(req('q=三体&limit=1'));
   const d = await r.json() as any;

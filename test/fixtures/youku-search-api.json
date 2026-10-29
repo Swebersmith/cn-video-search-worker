@@ -1,0 +1,90 @@
+{
+  "message": "success",
+  "originNodes": [
+    {
+      "data": {},
+      "nodes": [
+        {
+          "nodes": [
+            {
+              "data": {
+                "hasYouku": 1,
+                "episodeTotal": 76,
+                "showId": "cbff984c962411de83b1",
+                "feature": "2011 · 电视剧 · 中国 · 76集全(完结)",
+                "tempTitle": "甄嬛传",
+                "isYouku": 1
+              }
+            }
+          ]
+        },
+        {
+          "data": {
+            "hasYouku": 1,
+            "episodeTotal": 76,
+            "showId": "cbff984c962411de83b1",
+            "feature": "2011 · 电视剧 · 中国 · 76集全(完结)",
+            "tempTitle": "甄嬛传",
+            "isYouku": 1
+          },
+          "nodes": [
+            {
+              "data": {
+                "chapterName": "正片",
+                "showId": null,
+                "videoId": "XMzcxNDY5ODQ4",
+                "title": "甄嬛传 01",
+                "orderId": 1
+              }
+            },
+            {
+              "data": {
+                "chapterName": "正片",
+                "showId": null,
+                "videoId": "XMzcxNDg0ODQw",
+                "title": "甄嬛传 02",
+                "orderId": 2
+              }
+            },
+            {
+              "data": {
+                "chapterName": null,
+                "showId": null,
+                "videoId": null,
+                "title": "更多",
+                "orderId": null
+              }
+            },
+            {
+              "data": {
+                "chapterName": "正片",
+                "showId": null,
+                "videoId": "XMzcyNDM4MTky",
+                "title": "甄嬛传 74",
+                "orderId": 74
+              }
+            },
+            {
+              "data": {
+                "chapterName": "正片",
+                "showId": null,
+                "videoId": "XMzcyNDUwMzc2",
+                "title": "甄嬛传 75",
+                "orderId": 75
+              }
+            },
+            {
+              "data": {
+                "chapterName": "正片",
+                "showId": null,
+                "videoId": "XMzcyNDY3NTQw",
+                "title": "甄嬛传 76",
+                "orderId": 76
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

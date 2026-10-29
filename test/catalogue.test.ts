@@ -3,6 +3,51 @@ import { test } from 'node:test';
 import { createHandler } from '../src/index';
 import { embeddedJson } from '../src/catalogue';
 import { type CacheStore, type Fetcher, type Platform, PLATFORMS } from '../src/types';
+import { readFile } from 'node:fs/promises';
+
+test('Youku official JSON search and episode API recover from web challenges without mixing shows', async () => {
+  const search = JSON.parse(await readFile('test/fixtures/youku-search-api.json', 'utf8'));
+  const full = JSON.parse(await readFile('test/fixtures/youku-episode-api.json', 'utf8'));
+  for (const wrongId of [false, true]) {
+    const handler = createHandler(async (url) => {
+      if (url.includes('so.youku.com')) return new Response('verification');
+      const u = new URL(url);
+      if (u.searchParams.get('appScene') === 'show_episode') {
+        assert.equal(u.searchParams.get('showIds'), full.showId);
+        return json({ ...full, showId: wrongId ? 'differentShow' : full.showId });
+      }
+      return json(search);
+    });
+    const response = await handler(request('/v1/youku/search?q=甄嬛传'));
+    const d = await response.json() as any;
+    assert.equal(response.status, 200);
+    assert.equal(d.results[0].id, full.showId);
+    assert.equal(d.results[0].year, '2011');
+    const result = await handler(request(d.results[0].detail_url));
+    const catalogue = await result.json() as any;
+    assert.equal(catalogue.complete, !wrongId);
+    if (!wrongId) {
+      assert.equal(catalogue.source, 'youku_episode_api');
+      assert.equal(catalogue.total, 76);
+      assert.deepEqual(catalogue.episodes.map((e: any) => e.episode_number), Array.from({length:76}, (_, i) => i + 1));
+    } else {
+      assert.ok(catalogue.warnings.includes('YOUKU_CATALOGUE_SCHEMA_CHANGED'));
+      assert.equal(catalogue.total, 5);
+    }
+  }
+});
+
+test('Youku JSON search rejects third-party-only shows and malformed payloads', async () => {
+  const data = JSON.parse(await readFile('test/fixtures/youku-search-api.json', 'utf8'));
+  const replace = (x: unknown): unknown => Array.isArray(x) ? x.map(replace) : x && typeof x === 'object'
+    ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, k === 'isYouku' || k === 'hasYouku' ? 0 : replace(v)])) : x;
+  for (const [payload, expectedStatus] of [[replace(data), 200], [{message:'error'}, 503]] as const) {
+    const h = createHandler(async (url) => url.includes('so.youku.com') ? new Response('', {status:403}) : json(payload));
+    const r = await h(request('/v1/youku/search?q=甄嬛传'));
+    assert.equal(r.status, expectedStatus);
+    assert.equal((await r.json() as any).total, 0);
+  }
+});
 
 const json = (x: unknown) => new Response(JSON.stringify(x));
 const request = (path: string) => new Request('https://example.test' + path);

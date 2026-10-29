@@ -1,6 +1,6 @@
 import { canonical, score, text } from './normalize';
 import { bounded, PLATFORMS, type CacheStore, type Env, type Fetcher, type Platform } from './types';
-import { iqiyiSearchData, json, request, tencentSearchData, UpstreamError } from './providers';
+import { iqiyiSearchData, json, request, tencentSearchData, youkuSearchData, UpstreamError } from './providers';
 
 type Obj = Record<string, unknown>;
 const obj = (x: unknown): Obj => (x && typeof x === 'object' && !Array.isArray(x) ? (x as Obj) : {});
@@ -233,6 +233,7 @@ function fromYouku(payload: unknown, query: string): Seed[] {
     const nodes = objects(group),
       show = nodes.find((o) => o.showId && o.episodeTotal && o.tempTitle);
     if (!show) continue;
+    if (show.isYouku === 0 || show.hasYouku === 0) continue;
     const id = string(show.showId);
     if (!validSeriesId('youku', id)) continue;
     const title = text(show.tempTitle || obj(show.titleDTO).displayName);
@@ -247,7 +248,7 @@ function fromYouku(payload: unknown, query: string): Seed[] {
       );
       return ep ? [ep] : [];
     });
-    const feature = text(obj(show.featureDTO).text);
+    const feature = text(obj(show.featureDTO).text || show.feature);
     out.push({
       series: summary(
         'youku',
@@ -323,17 +324,23 @@ async function freshDiscovery(
     }
   } else if (platform === 'tencent')
     records = fromTencent(await tencentSearchData(query, env, fetcher), platform, query);
-  else if (platform === 'youku')
-    records = fromYouku(
-      embeddedJson(
-        await request(`https://so.youku.com/search_video/q_${q}`, env, fetcher, {
-          headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'text/html' },
-        }),
-        'window.__INITIAL_DATA__',
-      ),
-      query,
-    );
-  else if (platform === 'bilibili') {
+  else if (platform === 'youku') {
+    try {
+      records = fromYouku(
+        embeddedJson(
+          await request(`https://so.youku.com/search_video/q_${q}`, env, fetcher, {
+            headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'text/html' },
+          }),
+          'window.__INITIAL_DATA__',
+        ),
+        query,
+      );
+    } catch (e) {
+      warnings.push(`web:${e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR'}`);
+      records = fromYouku(await youkuSearchData(query, env, fetcher), query);
+      warnings.push('DISCOVERY_FROM_YOUKU_API');
+    }
+  } else if (platform === 'bilibili') {
     const pages = await Promise.allSettled(
       ['media_bangumi', 'media_ft'].map(async (type) => {
         const d = obj(
@@ -651,6 +658,22 @@ export async function seriesCatalogue(
       episodes = seed.preview;
       verified = seed.preview_verified === true;
       source = 'youku_ssr_catalogue';
+      if (new Set(episodes.map((e) => e.url)).size !== expected) {
+        const data = obj(json(await request(
+          `https://search.youku.com/api/search?appScene=show_episode&appCaller=h5&showIds=${id}&keyword=${encodeURIComponent(meta.title)}`,
+          env, fetcher,
+        )));
+        if (data.message !== 'success' || string(data.showId) !== id || Number(data.isYouku) !== 1 || !Array.isArray(data.serisesList))
+          throw new UpstreamError('YOUKU_CATALOGUE_SCHEMA_CHANGED');
+        episodes = data.serisesList.flatMap((raw) => {
+          const v = obj(raw), vid = string(v.videoId);
+          if (!/^[a-z\d=]+$/i.test(vid) || (v.showId && string(v.showId) !== id) || v.chapterName !== '正片') return [];
+          const e = episode(platform, v.orderId, v.title, `https://v.youku.com/v_show/id_${vid}.html`);
+          return e ? [e] : [];
+        });
+        verified = true;
+        source = 'youku_episode_api';
+      }
     } else if (platform === 'bilibili') {
       let data: Obj;
       try {
