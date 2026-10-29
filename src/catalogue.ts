@@ -87,6 +87,7 @@ export interface CatalogueResult {
   series: SeriesSummary;
   total: number;
   expected_total: number | null;
+  update_notice?: string;
   main_total: number;
   extra_total: number;
   complete: boolean;
@@ -225,6 +226,21 @@ function fromTencent(payload: unknown, platform: Platform, query: string): Seed[
   }
   return out;
 }
+function youkuEpisode(v: Obj, id: string, title: string): CatalogueEpisode | undefined {
+  const vid = string(v.videoId), order = num(v.orderId);
+  const extra = /^(番外|彩蛋|特辑|加更)/.test(text(v.displayName)) || /^(番外|彩蛋|特辑|加更)/.test(text(v.chapterName));
+  if (!/^[a-z\d=]+$/i.test(vid) || (!order && !extra) || (v.showId && string(v.showId) !== id) ||
+      (v.chapterName && v.chapterName !== '正片' && !extra) || Number(v.peripheryVideoType || 0) !== 0 ||
+      v.isTrailer === true || v.isTrailer === 1) return;
+  const action = string(obj(v.action).value);
+  if (action) {
+    try {
+      const u = new URL(action), show = u.searchParams.get('showid'), video = u.searchParams.get('vid');
+      if ((show && show !== id) || (video && video !== vid)) return;
+    } catch { return; }
+  }
+  return episode('youku', extra ? null : order, v.title || `${title} 第${order}集`, `https://v.youku.com/v_show/id_${vid}.html`, extra);
+}
 function fromYouku(payload: unknown, query: string): Seed[] {
   const out: Seed[] = [];
   const groups = obj(obj(payload).data).nodes;
@@ -238,14 +254,7 @@ function fromYouku(payload: unknown, query: string): Seed[] {
     if (!validSeriesId('youku', id)) continue;
     const title = text(show.tempTitle || obj(show.titleDTO).displayName);
     const eps = nodes.flatMap((v) => {
-      const vid = string(v.videoId);
-      if (!/^[a-z\d=]+$/i.test(vid) || !v.orderId || (v.chapterName && v.chapterName !== '正片')) return [];
-      const ep = episode(
-        'youku',
-        v.orderId,
-        v.title || `${title} 第${v.orderId}集`,
-        `https://v.youku.com/v_show/id_${vid}.html`,
-      );
+      const ep = youkuEpisode(v, id, title);
       return ep ? [ep] : [];
     });
     const feature = text(obj(show.featureDTO).text || show.feature);
@@ -510,7 +519,7 @@ export async function seriesCatalogue(
   cache?: CacheStore,
 ): Promise<CatalogueResult> {
   const key = new Request(
-      `https://cn-video-search.internal/catalogue/v1/${platform}/${id}?q=${encodeURIComponent(query)}`,
+      `https://cn-video-search.internal/catalogue/v2/${platform}/${id}?q=${encodeURIComponent(query)}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -535,6 +544,7 @@ export async function seriesCatalogue(
     verified = false,
     allPages = true;
   let source: string = platform;
+  let updateNotice = '';
   let episodes: CatalogueEpisode[] = [];
   try {
     if (platform === 'iqiyi') {
@@ -658,7 +668,7 @@ export async function seriesCatalogue(
       episodes = seed.preview;
       verified = seed.preview_verified === true;
       source = 'youku_ssr_catalogue';
-      if (new Set(episodes.map((e) => e.url)).size !== expected) {
+      if (new Set(episodes.filter((e) => e.episode_type === 'main').map((e) => e.url)).size !== expected) {
         const data = obj(json(await request(
           `https://search.youku.com/api/search?appScene=show_episode&appCaller=h5&showIds=${id}&keyword=${encodeURIComponent(meta.title)}`,
           env, fetcher,
@@ -666,14 +676,23 @@ export async function seriesCatalogue(
         if (data.message !== 'success' || string(data.showId) !== id || Number(data.isYouku) !== 1 || !Array.isArray(data.serisesList))
           throw new UpstreamError('YOUKU_CATALOGUE_SCHEMA_CHANGED');
         episodes = data.serisesList.flatMap((raw) => {
-          const v = obj(raw), vid = string(v.videoId);
-          if (!/^[a-z\d=]+$/i.test(vid) || (v.showId && string(v.showId) !== id) || v.chapterName !== '正片') return [];
-          const e = episode(platform, v.orderId, v.title, `https://v.youku.com/v_show/id_${vid}.html`);
+          const e = youkuEpisode(obj(raw), id, meta.title);
           return e ? [e] : [];
         });
+        updateNotice = text(data.updateNotice);
+        const released = updateNotice.match(/更新至\s*(\d+)\s*[/／]\s*(\d+)\s*[集期]/);
+        if (released && num(released[1]) && num(released[2]) && Number(released[1]) <= Number(released[2])) {
+          if (expected !== null && Number(released[2]) !== expected) warnings.push('UPDATE_TOTAL_MISMATCH');
+          else {
+            // The planned finale is not a missing episode. Preserve genuine gaps within the published range.
+            const available = Math.max(Number(released[1]), ...episodes.filter((e) => e.episode_type === 'main').map((e) => e.episode_number || 0));
+            if (available <= Number(released[2])) expected = available;
+          }
+        }
+        if (expected !== null) expected += new Set(episodes.filter((e) => e.episode_type === 'extra').map((e) => e.url)).size;
         verified = true;
         source = 'youku_episode_api';
-      }
+      } else if (expected !== null) expected += new Set(episodes.filter((e) => e.episode_type === 'extra').map((e) => e.url)).size;
     } else if (platform === 'bilibili') {
       let data: Obj;
       try {
@@ -824,7 +843,8 @@ export async function seriesCatalogue(
     episodes.length === expected &&
     !missing.length &&
     !conflicts &&
-    !warnings.includes('EPISODE_TOTAL_MISMATCH');
+    !warnings.includes('EPISODE_TOTAL_MISMATCH') &&
+    !warnings.includes('UPDATE_TOTAL_MISMATCH');
   if (!complete) warnings.push('EPISODE_LIST_INCOMPLETE');
   const result: CatalogueResult = {
     ok: episodes.length > 0,
@@ -834,6 +854,7 @@ export async function seriesCatalogue(
     main_total: main.length,
     extra_total: episodes.length - main.length,
     expected_total: expected,
+    ...(updateNotice ? { update_notice: updateNotice } : {}),
     complete,
     partial: !complete,
     missing_episode_numbers: missing,

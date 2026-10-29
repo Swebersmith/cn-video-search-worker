@@ -1,0 +1,284 @@
+{
+  "message": "success",
+  "showId": "bcaa87c7834c46f99e7b",
+  "isYouku": 1,
+  "updateNotice": "更新至22/30集（优酷VIP会员10月29日至11月3日每天更新1集，11月7日至11月10日每天更新1集，SVIP每个更新日提前多看1集，11月3日收官礼直通大结局）",
+  "serisesList": [
+    {
+      "videoId": "XNjU3MzkyOTA0NA==",
+      "orderId": 1,
+      "title": "嫁金钗 01",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3MzkyOTA0NA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3MzkzMjAwOA==",
+      "orderId": 2,
+      "title": "嫁金钗 02",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3MzkzMjAwOA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3Mzk1MzQ4OA==",
+      "orderId": 3,
+      "title": "嫁金钗 03",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3Mzk1MzQ4OA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2NDc1NzQxMg==",
+      "orderId": 4,
+      "title": "嫁金钗 04",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2NDc1NzQxMg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2NTIyMTIyMA==",
+      "orderId": 5,
+      "title": "嫁金钗 05",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2NTIyMTIyMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3NDY1MjAyNA==",
+      "orderId": 6,
+      "title": "嫁金钗 06",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3NDY1MjAyNA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2NTQ2OTE3Mg==",
+      "orderId": 7,
+      "title": "嫁金钗 07",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2NTQ2OTE3Mg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2NTQ4MzM4NA==",
+      "orderId": 8,
+      "title": "嫁金钗 08",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2NTQ4MzM4NA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2NTUzMzEwNA==",
+      "orderId": 9,
+      "title": "嫁金钗 09",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2NTUzMzEwNA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2NjcyMzc0MA==",
+      "orderId": 10,
+      "title": "嫁金钗 10",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2NjcyMzc0MA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2NTY3MjI3Mg==",
+      "orderId": 11,
+      "title": "嫁金钗 11",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2NTY3MjI3Mg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2NjYxNjU5Mg==",
+      "orderId": 12,
+      "title": "嫁金钗 12",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2NjYxNjU5Mg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2NjA3Mzk5Ng==",
+      "orderId": 13,
+      "title": "嫁金钗 13",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2NjA3Mzk5Ng==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3NTgxODgwMA==",
+      "orderId": 14,
+      "title": "嫁金钗 14",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3NTgxODgwMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3NTU2NjA1Ng==",
+      "orderId": 15,
+      "title": "嫁金钗 15",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3NTU2NjA1Ng==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3NzU3OTE2NA==",
+      "orderId": 16,
+      "title": "嫁金钗 16",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3NzU3OTE2NA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3NjgxNTU1Mg==",
+      "orderId": 17,
+      "title": "嫁金钗 17",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3NjgxNTU1Mg==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2ODIwOTgyNA==",
+      "orderId": 18,
+      "title": "嫁金钗 18",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2ODIwOTgyNA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3Njk4MDE4NA==",
+      "orderId": 19,
+      "title": "嫁金钗 19",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3Njk4MDE4NA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3NzAwMzAwMA==",
+      "orderId": 20,
+      "title": "嫁金钗 20",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3NzAwMzAwMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2Nzg0NDkyMA==",
+      "orderId": 21,
+      "title": "嫁金钗 21",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2Nzg0NDkyMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2ODk3OTY0OA==",
+      "orderId": null,
+      "title": "红线姑娘遇险，魏娆不顾阻挠离席施救",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2ODk3OTY0OA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3ODQwNjQwMA==",
+      "orderId": null,
+      "title": "红线姑娘危在旦夕，魏娆对峙太子妃请求放人",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3ODQwNjQwMA==&showid=bcaa87c7834c46f99e7b&politicsSensitive=false&searchKey=%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    }
+  ]
+}

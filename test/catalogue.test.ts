@@ -5,6 +5,56 @@ import { embeddedJson } from '../src/catalogue';
 import { type CacheStore, type Fetcher, type Platform, PLATFORMS } from '../src/types';
 import { readFile } from 'node:fs/promises';
 
+test('Youku nullable chapter labels retain published episodes, exclude previews and do not invent future gaps', async () => {
+  for (const [id, title, planned, available, released] of [
+    ['bcaa87c7834c46f99e7b', '嫁金钗', 30, 21, 22],
+    ['cdfe86fe91ec49fa9b46', '酷陪看·嫁金钗', 10, 4, 4],
+  ] as const) {
+    const full = JSON.parse(await readFile(`test/fixtures/youku-${id}.json`, 'utf8'));
+    const handler = createHandler(async (url) => {
+      if (url.includes('so.youku.com')) return new Response('verification');
+      if (new URL(url).searchParams.get('appScene') === 'show_episode') return json(full);
+      return json({message:'success',originNodes:[{data:{showId:id,tempTitle:title,episodeTotal:planned}}]});
+    });
+    const response = await handler(request(`/v1/youku/series/${id}?q=${encodeURIComponent(title)}`));
+    const d = await response.json() as any;
+    assert.equal(response.status, 200);
+    assert.equal(d.total, available);
+    assert.equal(d.expected_total, released);
+    assert.equal(d.series.total_episodes, planned);
+    assert.equal(d.update_notice, full.updateNotice);
+    assert.equal(d.complete, available === released);
+    assert.deepEqual(d.missing_episode_numbers, available === released ? [] : [22]);
+    assert.ok(d.episodes.every((e: any) => e.episode_number && e.episode_number <= available));
+  }
+});
+
+test('Youku labelled bonus episodes remain separate from the numbered main series', async () => {
+  const full = JSON.parse(await readFile('test/fixtures/youku-extra-api.json', 'utf8'));
+  const h = createHandler(async url => url.includes('so.youku.com') ? new Response('verification')
+    : json(new URL(url).searchParams.has('appScene') ? full : {message:'success',originNodes:[{data:{showId:full.showId,tempTitle:'长安二十四计',episodeTotal:28}}]}));
+  const d = await (await h(request(`/v1/youku/series/${full.showId}?q=长安二十四计`))).json() as any;
+  assert.equal(d.complete, true);
+  assert.equal(d.main_total, 28);
+  assert.equal(d.extra_total, 1);
+  assert.equal(d.expected_total, 29);
+  assert.equal(d.episodes[28].episode_type, 'extra');
+  assert.equal(d.episodes[28].episode_number, null);
+});
+
+test('Youku nullable chapters still reject wrong shows, extras and gaps in the released range', async () => {
+  const full = JSON.parse(await readFile('test/fixtures/youku-cdfe86fe91ec49fa9b46.json', 'utf8'));
+  full.serisesList[1].action.value = full.serisesList[1].action.value.replace(full.showId, 'otherShow');
+  full.serisesList[2].chapterName = '预告';
+  full.serisesList[3].peripheryVideoType = 1;
+  const h = createHandler(async url => url.includes('so.youku.com') ? new Response('verification')
+    : json(new URL(url).searchParams.has('appScene') ? full : {message:'success',originNodes:[{data:{showId:full.showId,tempTitle:'酷陪看·嫁金钗',episodeTotal:10}}]}));
+  const d = await (await h(request(`/v1/youku/series/${full.showId}?q=嫁金钗`))).json() as any;
+  assert.equal(d.total, 1);
+  assert.equal(d.complete, false);
+  assert.deepEqual(d.missing_episode_numbers, [2,3,4]);
+});
+
 test('Youku official JSON search and episode API recover from web challenges without mixing shows', async () => {
   const search = JSON.parse(await readFile('test/fixtures/youku-search-api.json', 'utf8'));
   const full = JSON.parse(await readFile('test/fixtures/youku-episode-api.json', 'utf8'));
