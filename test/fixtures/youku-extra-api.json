@@ -1,0 +1,239 @@
+{
+  "message": "success",
+  "showId": "beecc45b903b4ea9b19a",
+  "isYouku": 1,
+  "serisesList": [
+    {
+      "videoId": "XNjUxMzU5NjI3Mg==",
+      "orderId": 1,
+      "title": "长安二十四计 01",
+      "chapterName": null,
+      "displayName": "1",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNjMyNjY0MA==",
+      "orderId": 2,
+      "title": "长安二十四计 02",
+      "chapterName": null,
+      "displayName": "2",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNDYzMTQzNg==",
+      "orderId": 3,
+      "title": "长安二十四计 03",
+      "chapterName": null,
+      "displayName": "3",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNDEwMzYyOA==",
+      "orderId": 4,
+      "title": "长安二十四计 04",
+      "chapterName": null,
+      "displayName": "4",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNDEwMzYzMg==",
+      "orderId": 5,
+      "title": "长安二十四计 05",
+      "chapterName": null,
+      "displayName": "5",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNDEwMzYzNg==",
+      "orderId": 6,
+      "title": "长安二十四计 06",
+      "chapterName": null,
+      "displayName": "6",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNDEwMDY2OA==",
+      "orderId": 7,
+      "title": "长安二十四计 07",
+      "chapterName": null,
+      "displayName": "7",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNTE5OTU4NA==",
+      "orderId": 8,
+      "title": "长安二十四计 08",
+      "chapterName": null,
+      "displayName": "8",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNjkzNjY2OA==",
+      "orderId": 9,
+      "title": "长安二十四计 09",
+      "chapterName": null,
+      "displayName": "9",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNTIwOTI5Ng==",
+      "orderId": 10,
+      "title": "长安二十四计 10",
+      "chapterName": null,
+      "displayName": "10",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNjk0NDQwOA==",
+      "orderId": 11,
+      "title": "长安二十四计 11",
+      "chapterName": null,
+      "displayName": "11",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNzEzNDU1Mg==",
+      "orderId": 12,
+      "title": "长安二十四计 12",
+      "chapterName": null,
+      "displayName": "12",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNTQyMDYyOA==",
+      "orderId": 13,
+      "title": "长安二十四计 13",
+      "chapterName": null,
+      "displayName": "13",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNTcwODM5Ng==",
+      "orderId": 14,
+      "title": "长安二十四计 14",
+      "chapterName": null,
+      "displayName": "14",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNzM5Mzg1Mg==",
+      "orderId": 15,
+      "title": "长安二十四计 15",
+      "chapterName": null,
+      "displayName": "15",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNzM5NzMzNg==",
+      "orderId": 16,
+      "title": "长安二十四计 16",
+      "chapterName": null,
+      "displayName": "16",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNzQ4NjY1Ng==",
+      "orderId": 17,
+      "title": "长安二十四计 17",
+      "chapterName": null,
+      "displayName": "17",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNTk1MTU5Mg==",
+      "orderId": 18,
+      "title": "长安二十四计 18",
+      "chapterName": null,
+      "displayName": "18",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNjAyODU5Mg==",
+      "orderId": 19,
+      "title": "长安二十四计 19",
+      "chapterName": null,
+      "displayName": "19",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNjE1NjQ3Ng==",
+      "orderId": 20,
+      "title": "长安二十四计 20",
+      "chapterName": null,
+      "displayName": "20",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNzkyMzIxMg==",
+      "orderId": 21,
+      "title": "长安二十四计 21",
+      "chapterName": null,
+      "displayName": "21",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNjIwNDY0MA==",
+      "orderId": 22,
+      "title": "长安二十四计 22",
+      "chapterName": null,
+      "displayName": "22",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNjQ5MjEzNg==",
+      "orderId": 23,
+      "title": "长安二十四计 23",
+      "chapterName": null,
+      "displayName": "23",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNjUwNjkwNA==",
+      "orderId": 24,
+      "title": "长安二十四计 24",
+      "chapterName": null,
+      "displayName": "24",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNTg3ODI2OA==",
+      "orderId": 25,
+      "title": "长安二十四计 25",
+      "chapterName": null,
+      "displayName": "25",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNzU2NzA1Mg==",
+      "orderId": 26,
+      "title": "长安二十四计 26",
+      "chapterName": null,
+      "displayName": "26",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNzU2OTgxMg==",
+      "orderId": 27,
+      "title": "长安二十四计 27",
+      "chapterName": null,
+      "displayName": "27",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUxNTg4MTIzMg==",
+      "orderId": 28,
+      "title": "长安二十四计 28",
+      "chapterName": null,
+      "displayName": "28",
+      "peripheryVideoType": 0
+    },
+    {
+      "videoId": "XNjUwNzk0NDIwNA==",
+      "orderId": 29,
+      "title": "神秘人现身局势大反转",
+      "chapterName": null,
+      "displayName": "番外",
+      "peripheryVideoType": 0
+    }
+  ]
+}

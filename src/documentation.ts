@@ -42,7 +42,8 @@ function render(data,http){
     var u;try{u=new URL(r.detail_url,window.location.origin);if(u.origin!==window.location.origin||u.pathname!=='/v1/'+r.platform+'/series/'+encodeURIComponent(r.id))throw Error('目录地址无效');}catch(e){panel.hidden=false;panel.textContent='目录地址无效';return;}
     button.disabled=true;button.textContent='读取目录…';panel.hidden=false;panel.textContent='正在读取所选版本的分集目录…';
     try{var headers={};if(key.value)headers.Authorization='Bearer '+key.value;var response=await fetch(u.href,{headers:headers,signal:AbortSignal.timeout(45000)}),d=await response.json();panel.replaceChildren();document.getElementById('json-output').textContent=JSON.stringify(d,null,2);
-     panel.append(el('p','HTTP '+response.status+' · '+d.total+' 条 · 主目录 '+(d.main_total||0)+' / 附加 '+(d.extra_total||0)+' · '+(d.complete?'目录完整':'目录未取齐'),d.complete?'catalogue-state':'catalogue-state warn'));
+     panel.append(el('p','HTTP '+response.status+' · '+d.total+' 条 · 主目录 '+(d.main_total||0)+' / 附加 '+(d.extra_total||0)+' · '+(d.complete?'当前目录完整':'当前目录未取齐'),d.complete?'catalogue-state':'catalogue-state warn'));
+     if(d.update_notice)panel.append(el('p',d.update_notice,'hint'));
      if(d.warnings&&d.warnings.length)panel.append(el('p',d.warnings.join(' / '),'hint'));
      if(d.missing_episode_numbers&&d.missing_episode_numbers.length)panel.append(el('p','缺集编号：'+d.missing_episode_numbers.join(', '),'hint'));
      (d.episodes||[]).forEach(function(ep){panel.append(episodeRow(ep));});

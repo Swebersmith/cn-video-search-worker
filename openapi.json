@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "国内五大影视平台统一查询 API",
-    "version": "1.3.1",
+    "version": "1.3.2",
     "description": "两层查询：搜索返回各站剧集摘要，跟随 detail_url 获取所选作品的分集目录。五站均有目录适配，上游限制会标注不完整。仅返回官方播放页。"
   },
   "servers": [
@@ -159,6 +159,10 @@
       "Catalogue": {
         "type": "object",
         "properties": {
+          "update_notice": {
+            "type": "string",
+            "description": "上游原始更新说明（若提供）。连载作品的计划总集数见 series.total_episodes，expected_total 按当前更新范围核对；未播集数不列为缺集。"
+          },
           "ok": {
             "type": "boolean"
           },

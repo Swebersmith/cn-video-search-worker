@@ -1,0 +1,56 @@
+{
+  "message": "success",
+  "showId": "cdfe86fe91ec49fa9b46",
+  "isYouku": 1,
+  "updateNotice": "更新至4/10集",
+  "serisesList": [
+    {
+      "videoId": "XNjU2OTEzNDQyMA==",
+      "orderId": 1,
+      "title": "精准拿捏！魏娆可以出书了",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2OTEzNDQyMA==&showid=cdfe86fe91ec49fa9b46&politicsSensitive=false&searchKey=%E9%85%B7%E9%99%AA%E7%9C%8B%C2%B7%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU2OTEzNDQyOA==",
+      "orderId": 2,
+      "title": "名场面！田曦薇水下缠斗戏幕后爆料",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU2OTEzNDQyOA==&showid=cdfe86fe91ec49fa9b46&politicsSensitive=false&searchKey=%E9%85%B7%E9%99%AA%E7%9C%8B%C2%B7%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3ODU2MTEyMA==",
+      "orderId": 3,
+      "title": "“魏娆”顽强生命力看哭田曦薇",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3ODU2MTEyMA==&showid=cdfe86fe91ec49fa9b46&politicsSensitive=false&searchKey=%E9%85%B7%E9%99%AA%E7%9C%8B%C2%B7%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    },
+    {
+      "videoId": "XNjU3ODU2MTEyNA==",
+      "orderId": 4,
+      "title": "爱情这道难题魏娆也难解",
+      "chapterName": null,
+      "showId": null,
+      "type": 0,
+      "peripheryVideoType": 0,
+      "action": {
+        "value": "youku://play?source=search&vid=XNjU3ODU2MTEyNA==&showid=cdfe86fe91ec49fa9b46&politicsSensitive=false&searchKey=%E9%85%B7%E9%99%AA%E7%9C%8B%C2%B7%E5%AB%81%E9%87%91%E9%92%97"
+      }
+    }
+  ]
+}
