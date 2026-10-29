@@ -82,7 +82,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       const providers = await Promise.all(platforms.map(p => officialSearch(p, query, Number(page), env, fetcher)));
       const results = providers.flatMap(p => p.results), unavailable = providers.every(p => p.status === 'unavailable');
       return reply({ok:!unavailable,query,view,page:Number(page),source_policy:'same_platform_official_only',
-        partial:providers.some(p => p.status === 'unavailable'),total:results.length,took_ms:Date.now()-started,results,
+        partial:providers.some(p => ['unavailable','degraded'].includes(p.status)),total:results.length,took_ms:Date.now()-started,results,
         providers:providers.map(({results:_r,...p})=>p)},unavailable?503:200);
     }
     if (url.searchParams.has('page')) return fail('INVALID_PARAMETER', 'page is available for official search only.', 400);
