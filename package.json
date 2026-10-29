@@ -1,6 +1,6 @@
 {
   "name": "cn-video-search-worker",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "private": true,
   "type": "module",
   "description": "国内五大影视平台官方播放页 URL 模糊搜索 API，运行于 Cloudflare Workers",

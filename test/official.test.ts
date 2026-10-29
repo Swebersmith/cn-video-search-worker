@@ -22,9 +22,11 @@ test('default official search preserves every category, duplicate, unranked and 
     if (url.includes('MbSearch')) {assert.equal(JSON.parse(String(init?.body)).pagenum,1);return json(data.tencent);}
     if (url.includes('search.youku.com')) {assert.equal(new URL(url).searchParams.get('pg'),'2');return json(data.youku);}
     if (url.includes('mobileso')) {assert.equal(new URL(url).searchParams.get('pn'),'2');assert.ok(new URL(url).searchParams.get('signature'));return json(data.mango);}
-    assert.ok(url.startsWith('https://search.bilibili.com/all?'));
+    assert.ok(url.startsWith('https://api.bilibili.com/x/web-interface/search/all/v2?'));
     assert.equal(new URL(url).searchParams.get('page'),'2');
-    return new Response('<script>window.__pinia=(function(){return '+JSON.stringify({searchResponse:{searchAllResponse:data.bilibili.data}})+'}())</script>');
+    assert.equal(new URL(url).searchParams.get('platform'),'pc');
+    assert.equal(new URL(url).searchParams.get('page_size'),'42');
+    return json(data.bilibili);
   };
   const r = await createHandler(f)(new Request('https://test/v1/search?q=不相关关键词&page=2&limit=1'));
   const d = await r.json() as any;

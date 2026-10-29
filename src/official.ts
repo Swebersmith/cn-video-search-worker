@@ -84,7 +84,7 @@ export async function officialSearch(platform: Platform, query: string, page: nu
     } else {
       let ssr = false;
       const pageUrl = `https://search.bilibili.com/all?keyword=${encodeURIComponent(query)}&page=${page}`;
-      try {
+      if(page===1)try {
         const html = await request(pageUrl,env,fetcher,{headers:{Referer:'https://www.bilibili.com/','User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36'}});
         const state = piniaData(html), data = state.searchResponse?.searchAllResponse;
         if (!Array.isArray(data?.result) || Number(data.page) !== page) throw new UpstreamError('OFFICIAL_SSR_PAGE_MISMATCH');
@@ -93,7 +93,8 @@ export async function officialSearch(platform: Platform, query: string, page: nu
         ssr = true;
       } catch(e) { warnings.push(`ssr:${e instanceof UpstreamError?e.message:'UPSTREAM_ERROR'}`); }
       if (!ssr) {
-      sourceUrl = `https://api.bilibili.com/x/web-interface/search/all/v2?keyword=${encodeURIComponent(query)}&page=${page}`;
+      // The desktop website hydrates only page 1; later pages use its PC search request.
+      sourceUrl = `https://api.bilibili.com/x/web-interface/search/all/v2?keyword=${encodeURIComponent(query)}&page=${page}&page_size=42&platform=pc&highlight=1&single_column=0&web_location=1430654`;
       const headers: Record<string,string> = {Referer:'https://search.bilibili.com/','User-Agent':'Mozilla/5.0'};
       try { payload = json(await request(sourceUrl, env, fetcher, {headers})); }
       catch (e) {
