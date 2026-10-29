@@ -1,9 +1,9 @@
 {
   "worker_name": "cn-video-search",
   "base_url": "https://videosearch.webber.qzz.io",
-  "source_commit": "2c80783d28b48528cc7614ec5f6565556ada7724",
-  "deployed_at": "2026-10-29T02:52:50.174063Z",
-  "deployment_id": "46b0704f916a4ad2a4eb9300555476e8",
+  "source_commit": "4af9876e252f0e106c555ee1cda7bc683efbf2cd",
+  "deployed_at": "2026-10-29T03:13:52.274203Z",
+  "deployment_id": "e9baa179a28440eb85d9c9dad55832f3",
   "workers_dev_enabled": true,
   "preview_urls_enabled": false,
   "api_key_configured": false,
@@ -12,7 +12,8 @@
     "/health",
     "/openapi.json",
     "/v1/platforms",
-    "/v1/search?q=三体&platforms=tencent,iqiyi&limit=1"
+    "/v1/search?q=三体&platforms=tencent,iqiyi&limit=1",
+    "/v1/episodes?q=海市蜃楼"
   ],
   "workers_dev_url": "https://cn-video-search.382990094xwb.workers.dev",
   "custom_domain": {
@@ -20,5 +21,6 @@
     "domain_id": "ff83e73713c36dc1ca1fce608a131b29c9177405",
     "enabled": true,
     "https_verified_at": "2026-10-29T03:01:08.955346+00:00"
-  }
+  },
+  "version": "1.1.0"
 }

@@ -1,0 +1,251 @@
+{
+  "base_url": "https://videosearch.webber.qzz.io",
+  "checked_at": "2026-10-29T03:14:08.688Z",
+  "http_status": 200,
+  "response": {
+    "ok": true,
+    "query": "海市蜃楼",
+    "platform": "iqiyi",
+    "series": {
+      "album_id": "6244560312265801",
+      "title": "海市蜃楼",
+      "year": "2025",
+      "total_episodes": 24
+    },
+    "series_candidates": [
+      {
+        "album_id": "6244560312265801",
+        "title": "海市蜃楼",
+        "year": "2025",
+        "total_episodes": 24
+      }
+    ],
+    "total": 24,
+    "expected_total": 24,
+    "complete": true,
+    "partial": false,
+    "missing_episode_numbers": [],
+    "results": [
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 1,
+        "title": "海市蜃楼第1集",
+        "url": "https://www.iqiyi.com/v_27puk4z5uko.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 2,
+        "title": "海市蜃楼第2集",
+        "url": "https://www.iqiyi.com/v_2d6x3xiebhg.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 3,
+        "title": "海市蜃楼第3集",
+        "url": "https://www.iqiyi.com/v_12qtaxsjayw.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 4,
+        "title": "海市蜃楼第4集",
+        "url": "https://www.iqiyi.com/v_1higiumc6x0.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 5,
+        "title": "海市蜃楼第5集",
+        "url": "https://www.iqiyi.com/v_2autwntch60.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 6,
+        "title": "海市蜃楼第6集",
+        "url": "https://www.iqiyi.com/v_lz3vp8ybho.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 7,
+        "title": "海市蜃楼第7集",
+        "url": "https://www.iqiyi.com/v_1toe1h9lmk4.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 8,
+        "title": "海市蜃楼第8集",
+        "url": "https://www.iqiyi.com/v_2erlg6v9ql4.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 9,
+        "title": "海市蜃楼第9集",
+        "url": "https://www.iqiyi.com/v_1niazpvlhbs.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 10,
+        "title": "海市蜃楼第10集",
+        "url": "https://www.iqiyi.com/v_1ktpscertyk.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 11,
+        "title": "海市蜃楼第11集",
+        "url": "https://www.iqiyi.com/v_1tvy8yclu0g.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 12,
+        "title": "海市蜃楼第12集",
+        "url": "https://www.iqiyi.com/v_1feqidundp4.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 13,
+        "title": "海市蜃楼第13集",
+        "url": "https://www.iqiyi.com/v_1udb7uu3ks8.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 14,
+        "title": "海市蜃楼第14集",
+        "url": "https://www.iqiyi.com/v_1vcoydk3dt8.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 15,
+        "title": "海市蜃楼第15集",
+        "url": "https://www.iqiyi.com/v_nz4pxxkris.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 16,
+        "title": "海市蜃楼第16集",
+        "url": "https://www.iqiyi.com/v_tkbglnb4gk.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 17,
+        "title": "海市蜃楼第17集",
+        "url": "https://www.iqiyi.com/v_iykqn77bvo.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 18,
+        "title": "海市蜃楼第18集",
+        "url": "https://www.iqiyi.com/v_kyiwopx7b0.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 19,
+        "title": "海市蜃楼第19集",
+        "url": "https://www.iqiyi.com/v_viirov4z7g.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 20,
+        "title": "海市蜃楼第20集",
+        "url": "https://www.iqiyi.com/v_1ggzg4b2pc8.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 21,
+        "title": "海市蜃楼第21集",
+        "url": "https://www.iqiyi.com/v_243daniwzs8.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 22,
+        "title": "海市蜃楼第22集",
+        "url": "https://www.iqiyi.com/v_143aygl8ht0.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 23,
+        "title": "海市蜃楼第23集",
+        "url": "https://www.iqiyi.com/v_gtuthzs5n4.html",
+        "kind": "video",
+        "source": "native"
+      },
+      {
+        "platform": "iqiyi",
+        "platform_name": "爱奇艺",
+        "episode_number": 24,
+        "title": "海市蜃楼第24集",
+        "url": "https://www.iqiyi.com/v_wrzrjad2qo.html",
+        "kind": "video",
+        "source": "native"
+      }
+    ],
+    "warnings": [],
+    "cached": false,
+    "fetched_at": "2026-10-29T03:14:08.640Z",
+    "took_ms": 3660
+  }
+}

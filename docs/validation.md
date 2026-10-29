@@ -2,6 +2,24 @@
 
 源码首次验证日期：2026-10-28。Cloudflare 部署及线上验证日期：2026-10-29。
 
+## 爱奇艺完整分集目录验证（v1.1.0）
+
+用户反馈《海市蜃楼》为 24 集，但搜索只显示 6 条。复现确认，旧搜索默认每站 `limit=5`，截图的 6 条由爱奇艺 5 条和腾讯 1 条组成，且搜索按相关度排序。爱奇艺上游搜索自身提供了 24 集，原接口输出被截断，不是该剧缺集。
+
+新增 `/v1/episodes?q=海市蜃楼`，先选择电视剧专辑，再读取官方正片目录；同名电影、预告、花絮不会合入。线上以 `https://videosearch.webber.qzz.io` 调用，实际结果为：
+
+- HTTP 200，电视剧专辑 `6244560312265801`，年份为 2025。
+- `total=24`、`expected_total=24`、`complete=true`。
+- 分集编号恰为 1—24，`missing_episode_numbers=[]`，`warnings=[]`。
+- 第 1 集：`https://www.iqiyi.com/v_27puk4z5uko.html`。
+- 第 24 集：`https://www.iqiyi.com/v_wrzrjad2qo.html`。
+
+原始线上响应见 [iqiyi-episodes-2026-10-29.json](iqiyi-episodes-2026-10-29.json)。这证明目录完整，不代表会员或地区限制被解除。
+
+普通搜索保留默认 `limit=5`，新增 `available_count` 和 `truncated`。同一关键词的线上爱奇艺搜索观察到 41 条候选、实际输出 5 条、`truncated=true`；候选还含相关片段，不应当作总集数。
+
+本次类型检查、30 项离线回归测试、1 项 workerd 运行时测试及 Worker 打包均通过；代码提交 `4af9876e252f0e106c555ee1cda7bc683efbf2cd` 的 [GitHub CI](https://github.com/Swebersmith/cn-video-search-worker/actions/runs/40810898901) 已通过。新测试涵盖数字排序、同名电影排除、分页、缺集、重复/冲突链接、访问认证、故障降级、缓存和最多 500 集的请求上限。
+
 ## 自定义域名验证（2026-10-29）
 
 `videosearch.webber.qzz.io` 已通过 Cloudflare Workers Custom Domain 绑定至 `cn-video-search`，Cloudflare 自动管理 DNS 与 HTTPS 证书。现以 `https://videosearch.webber.qzz.io` 为正式接入地址，原 `workers.dev` 地址保留。
@@ -10,7 +28,7 @@
 
 ## Cloudflare 线上验证（2026-10-29）
 
-正式地址：`https://cn-video-search.382990094xwb.workers.dev`。部署的业务源码提交为 `2c80783d28b48528cc7614ec5f6565556ada7724`；部署标识见 [deployment.json](deployment.json)。当前没有配置 `API_KEY` 和 `BRAVE_SEARCH_API_KEY`。
+首版部署地址：`https://cn-video-search.382990094xwb.workers.dev`，当时业务源码提交为 `2c80783d28b48528cc7614ec5f6565556ada7724`；最新部署标识见 [deployment.json](deployment.json)。当前没有配置 `API_KEY` 和 `BRAVE_SEARCH_API_KEY`。
 
 - `/health` 返回 HTTP 200，`ok=true`。
 - `/openapi.json` 返回 HTTP 200，OpenAPI 版本为 3.1.0。
@@ -31,7 +49,7 @@
 
 Python `urllib` 默认 User-Agent 访问该 `workers.dev` 域名时观察到 Cloudflare 1010；Node 客户端正常返回。可按照 [官方说明](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/) 设置识别应用的描述性 User-Agent。
 
-## 代码验证
+## 首版代码验证
 
 - `npm run check`：TypeScript 检查。
 - `npm test`：19 项回归测试，包括参数校验、五站适配、URL 白名单、模糊排序、认证、超时、故障隔离、备用源过滤和缓存回退。
