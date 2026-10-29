@@ -34,7 +34,8 @@ function fields(raw: unknown, platform: Platform): {title: string; url: string |
 
 export async function officialSearch(platform: Platform, query: string, page: number, env: Env, fetcher: Fetcher) {
   const search_url = PLATFORMS[platform].search + encodeURIComponent(query);
-  const base = {platform, page, search_url, source:'official' as const, cached:false, fetched_at:new Date().toISOString()};
+  const base = {platform, page, search_url, source:'official' as const,
+    execution:platform==='bilibili'&&env.BILIBILI_GATEWAY_URL?'self_hosted_local_origin':'worker',cached:false, fetched_at:new Date().toISOString()};
   const warnings: string[] = [];
   try {
     let payload: any, rows: {raw: unknown; type: string}[] = [], total: number | null = null, hasMore: boolean | null = null, sourceUrl = '';
