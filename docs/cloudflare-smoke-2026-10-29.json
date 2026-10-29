@@ -1,0 +1,56 @@
+{
+  "checked_at": "2026-10-29T02:53:15.258Z",
+  "providers": [
+    {
+      "platform": "tencent",
+      "http_status": 200,
+      "status": "ok",
+      "count": 2,
+      "warnings": [],
+      "example": "https://v.qq.com/x/cover/mzc002007knmh3g/d0045caapwc.html"
+    },
+    {
+      "platform": "iqiyi",
+      "http_status": 200,
+      "status": "ok",
+      "count": 2,
+      "warnings": [],
+      "example": "https://www.iqiyi.com/v_xkt6z3z798.html"
+    },
+    {
+      "platform": "youku",
+      "http_status": 503,
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "native:SCHEMA_OR_CHALLENGE",
+        "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+      ],
+      "example": null
+    },
+    {
+      "platform": "mango",
+      "http_status": 503,
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "native:HTTP_401",
+        "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+      ],
+      "example": null
+    },
+    {
+      "platform": "bilibili",
+      "http_status": 503,
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "native:HTTP_412",
+        "BRAVE_SEARCH_API_KEY_NOT_CONFIGURED"
+      ],
+      "example": null
+    }
+  ],
+  "base_url": "https://cn-video-search.382990094xwb.workers.dev",
+  "source_commit": "2c80783d28b48528cc7614ec5f6565556ada7724"
+}

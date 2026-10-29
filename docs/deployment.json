@@ -1,0 +1,17 @@
+{
+  "worker_name": "cn-video-search",
+  "base_url": "https://cn-video-search.382990094xwb.workers.dev",
+  "source_commit": "2c80783d28b48528cc7614ec5f6565556ada7724",
+  "deployed_at": "2026-10-29T02:52:50.174063Z",
+  "deployment_id": "46b0704f916a4ad2a4eb9300555476e8",
+  "workers_dev_enabled": true,
+  "preview_urls_enabled": false,
+  "api_key_configured": false,
+  "brave_search_configured": false,
+  "verified_routes": [
+    "/health",
+    "/openapi.json",
+    "/v1/platforms",
+    "/v1/search?q=三体&platforms=tencent,iqiyi&limit=1"
+  ]
+}

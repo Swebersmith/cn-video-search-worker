@@ -2,7 +2,13 @@
 
 运行于 **Cloudflare Workers** 的统一 JSON 搜索接口，通过不完整片名、关键词搜索腾讯视频、爱奇艺、优酷、芒果 TV、哔哩哔哩的**官方网页播放地址**。
 
-仓库包含 Worker 源码、OpenAPI 3.1 文档、自动测试、手动部署工作流和每周实测工作流。本次交付仅创建源码仓库，**尚未部署到 Cloudflare，也没有线上 API 域名**。
+仓库包含 Worker 源码、OpenAPI 3.1 文档、自动测试、手动部署工作流和每周实测工作流。已部署到 Cloudflare Workers：
+
+- 接口地址：`https://cn-video-search.382990094xwb.workers.dev`
+- [搜索示例](https://cn-video-search.382990094xwb.workers.dev/v1/search?q=%E4%B8%89%E4%BD%93&platforms=tencent,iqiyi&limit=5)
+- [OpenAPI 文档](https://cn-video-search.382990094xwb.workers.dev/openapi.json) · [健康检查](https://cn-video-search.382990094xwb.workers.dev/health)
+
+当前部署未设置访问密钥，可直接调用；备用搜索密钥尚未配置。Cloudflare 出口实测腾讯视频、爱奇艺返回结果，优酷、芒果 TV、哔哩哔哩受到上游限制；请检查响应的 `providers` 状态。
 
 ## 可用性说明
 
@@ -17,7 +23,7 @@
 - 中文标题片段匹配、字符和双字片段相似度排序、URL 去重。不是语义检索，不保证所有错别字、同义词或跨语种名称都能匹配。
 - 返回各站状态、来源、抓取时间和错误码；接口不把上游故障伪装成正常无结果。
 
-最近一次环境实测见 [docs/validation.md](docs/validation.md)。实测只是该环境和时间的快照，不能代表 Cloudflare 出口或未来可用性。**无备用密钥时，当前不能保证五站全可用。** 备用源也会受索引覆盖、配额和服务状态影响；索引到的播放页可能已经下架。
+最近一次 Cloudflare 出口实测见 [docs/validation.md](docs/validation.md)。实测只是该环境和时间的快照，不能代表未来可用性。**无备用密钥时，当前不能保证五站全可用。** 备用源也会受索引覆盖、配额和服务状态影响；索引到的播放页可能已经下架。
 
 仅做播放页链接发现，不解析 m3u8/mp4，不绕过付费或登录限制。访问链接时仍遵循平台的会员、版权和地区规则。结果可能包含预告、花絮、解说及不同版本，不保证均为正片。
 
@@ -72,9 +78,11 @@ npm run deploy
 
 无浏览器的部署环境可以配置 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`。Token 需具有目标账户的 `Workers Scripts: Edit` 和 `Account Settings: Read` 权限。不要将 Token 写入配置文件或源码。Worker 默认名称是 `cn-video-search`，如账户内已有同名服务，请先修改 [wrangler.jsonc](wrangler.jsonc)。
 
-部署命令成功后会打印真实的 `workers.dev` 地址；后续示例中的 `https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev` 都是占位符。
+部署命令成功后会打印实际的 `workers.dev` 地址。当前实例使用上文的正式地址；复制部署到你自己的账户时，请替换为命令返回的地址。
 
 ### GitHub Actions
+
+当前实例通过已授权的 Cloudflare 连接完成部署；GitHub Actions 的部署密钥和 `API_BASE_URL` 变量未自动配置，按以下步骤设置后可使用仓库内的工作流。
 
 1. 在仓库 **Settings → Secrets and variables → Actions** 配置 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID` 两个 Secrets。
 2. 在 **Actions → Deploy Worker → Run workflow** 手动运行部署。工作流先执行类型检查、测试和构建。
@@ -154,7 +162,7 @@ npm run deploy
 
 ```js
 // 含密钥的请求建议由你的后端发起；不要在公开前端代码中写入共享密钥。
-const base = 'https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
+const base = 'https://cn-video-search.382990094xwb.workers.dev';
 const params = new URLSearchParams({ q: '三体', platforms: 'all', limit: '5' });
 const response = await fetch(`${base}/v1/search?${params}`, {
   headers: { Authorization: `Bearer ${process.env.VIDEO_SEARCH_API_KEY}` },
@@ -191,5 +199,7 @@ npm run docs        # 根据源码重新生成静态 openapi.json
 实测已部署的服务时设置 `API_BASE_URL` 和可选 `API_KEY`。受控代理环境运行 Node 实测时，可使用 `NODE_USE_ENV_PROXY=1 npm run smoke`；正常网络无需设置。
 
 常见错误码：`HTTP_403` / `HTTP_401` 表示上游拒绝访问；`HTTP_412` 常见于风控；`HTTP_429` 表示配额或限流；`TIMEOUT` 表示超时；`SCHEMA_CHANGED` / `SCHEMA_OR_CHALLENGE` 表示响应结构变化或验证页。适配器位于 [src/providers.ts](src/providers.ts)，修改后应执行回归测试和真实实测。缓存中的旧 URL 不代表上游已恢复。
+
+若调用整个接口时收到 `403` 且正文为 `error code: 1010`，可能是 `workers.dev` 对客户端默认 User-Agent 的检查，尚未进入本接口。Python `urllib` 等客户端请设置可识别应用的请求头，例如 `User-Agent: CNVideoSearchClient/1.0`。参见 [Cloudflare 1010 官方说明](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/)。
 
 MIT License.
