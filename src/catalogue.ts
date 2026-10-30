@@ -114,6 +114,7 @@ export interface CatalogueResult {
   update_notice?: string;
   main_total: number;
   extra_total: number;
+  preview_total: number;
   complete: boolean;
   partial: boolean;
   missing_episode_numbers: number[];
@@ -607,7 +608,7 @@ export async function seriesCatalogue(
   cache?: CacheStore,
 ): Promise<CatalogueResult> {
   const key = new Request(
-      `https://cn-video-search.internal/catalogue/long-ai/v5/${platform}/${id}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
+      `https://cn-video-search.internal/catalogue/long-ai/v6/${platform}/${id}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -1018,20 +1019,32 @@ export async function seriesCatalogue(
     !warnings.includes('UPDATE_TOTAL_MISMATCH');
   if (unavailable.length) warnings.push('EPISODE_MAIN_UNAVAILABLE');
   if (!complete) warnings.push('EPISODE_LIST_INCOMPLETE');
+  // The public episode list includes trailers in episode order. Published-content
+  // completeness above deliberately uses only main and extra entries.
+  const combined = new Map<string, CatalogueEpisode>();
+  for (const e of [...episodes, ...previews]) combined.set(e.url, e);
+  const allEpisodes = [...combined.values()].sort(
+    (a, b) =>
+      Number(a.episode_type === 'extra') - Number(b.episode_type === 'extra') ||
+      (a.episode_number ?? 100000) - (b.episode_number ?? 100000) ||
+      Number(a.episode_type === 'preview') - Number(b.episode_type === 'preview'),
+  );
+  const previewEntries = allEpisodes.filter((e) => e.episode_type === 'preview');
   const result: CatalogueResult = {
-    ok: episodes.length > 0,
+    ok: allEpisodes.length > 0,
     platform,
     series: meta,
-    total: episodes.length,
+    total: allEpisodes.length,
     main_total: main.length,
-    extra_total: episodes.length - main.length,
+    extra_total: episodes.filter((e) => e.episode_type === 'extra').length,
+    preview_total: previewEntries.length,
     expected_total: expected,
     ...(updateNotice ? { update_notice: updateNotice } : {}),
     complete,
     partial: !complete,
     missing_episode_numbers: missing,
-    episodes,
-    previews,
+    episodes: allEpisodes,
+    previews: previewEntries,
     unavailable_episode_numbers: unavailable,
     ai,
     warnings: [...new Set(warnings)],

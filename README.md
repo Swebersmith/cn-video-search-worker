@@ -36,16 +36,16 @@ GET /v1/youku/series/bcaa87c7834c46f99e7b?q=嫁金钗
 
 目录详情包含：
 
-- `episodes[]`：正片及附加内容，带 `episode_number`、`title`、官方 `url`、`episode_type`（main / extra）。
-- `previews[]`：预告链接，`episode_type=preview`，不计入正片或目录总条数。
-- `total` / `main_total` / `extra_total`：实际目录条数。综艺保留上下、加更等原始标题，不将排序号伪装成期数。
-- `expected_total`：官方当前发布范围对应的目录条数；计划全集数仍在 `series.total_episodes`。
+- `episodes[]`：正片、预告及附加内容统一按集数展示，带 `episode_number`、`title`、官方 `url`、`episode_type`（main / preview / extra）。
+- `previews[]`：`episodes` 中预告条目的便捷子集，`episode_type=preview`。页面直接在分集列表标注预告，不另行隐藏；客户端无需重复拼接。
+- `total` / `main_total` / `preview_total` / `extra_total`：全部链接、正片、预告、附加内容的实际条数。预告计入 total，但不计入正片完整性。综艺保留上下、加更等原始标题，不将排序号伪装成期数。
+- `expected_total`：官方当前发布范围对应的正片及附加条数，不含预告；计划全集数仍在 `series.total_episodes`。
 - `missing_episode_numbers`：当前已发布范围内没有找到链接的编号。
 - `unavailable_episode_numbers`：已找到预告，但正片尚未确认的编号；与缺失链接分开显示。
 - `update_notice`：官方更新说明。`complete` / `partial` / `warnings` 表明本次目录是否取齐、是否存在上游限制。
 - `ai`：AI 状态、模型、分类数、实际补充条数和错误代码。
 
-例如本次《嫁金钗》官方更新说明写 22/30 集，但目录只提供 1—21 集正片，第 22、23 个候选明确标“预告”。服务会提供预告链接，并将第 22 集标为“正片待确认”；不会用预告替代正片，也不会把尚未发布的 23—30 集列为缺失。
+例如本次《嫁金钗》官方更新说明写 22/30 集，但目录只提供 1—21 集正片，第 22、23 个候选明确标“预告”。服务会在 episodes 中按集数展示这两个预告链接，标注“预告”，并将第 22 集标为“正片待确认”；不会用预告替代正片，也不会把尚未发布的 23—30 集列为缺失。
 
 `complete=true` 要求来源、分页、当前条数和编号校验通过，不表示全剧完结、免会员或每页必然可播放。
 

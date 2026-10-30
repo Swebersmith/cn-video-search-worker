@@ -5,7 +5,7 @@ import { embeddedJson } from '../src/catalogue';
 import { type CacheStore, type Fetcher, type Platform, PLATFORMS } from '../src/types';
 import { readFile } from 'node:fs/promises';
 
-test('Youku nullable chapter labels retain published episodes, exclude previews and do not invent future gaps', async () => {
+test('Youku nullable chapter labels retain published episodes and inline previews and do not invent future gaps', async () => {
   for (const [id, title, planned, available, released] of [
     ['bcaa87c7834c46f99e7b', '嫁金钗', 30, 21, 22],
   ] as const) {
@@ -18,7 +18,10 @@ test('Youku nullable chapter labels retain published episodes, exclude previews 
     const response = await handler(request(`/v1/youku/series/${id}?q=${encodeURIComponent(title)}`));
     const d = await response.json() as any;
     assert.equal(response.status, 200);
-    assert.equal(d.total, available);
+    assert.equal(d.total, 23);
+    assert.equal(d.main_total, available);
+    assert.equal(d.preview_total,2);
+    assert.equal(d.extra_total,0);
     assert.equal(d.expected_total, released);
     assert.equal(d.series.total_episodes, planned);
     assert.equal(d.update_notice, full.updateNotice);
@@ -26,7 +29,10 @@ test('Youku nullable chapter labels retain published episodes, exclude previews 
     assert.deepEqual(d.missing_episode_numbers, []);
     assert.deepEqual(d.unavailable_episode_numbers,[22]);
     assert.ok(d.previews.some((e:any)=>e.episode_number===22));
-    assert.ok(d.episodes.every((e: any) => e.episode_number && e.episode_number <= available));
+    assert.ok(d.episodes.filter((e:any)=>e.episode_type==='main').every((e: any) => e.episode_number && e.episode_number <= available));
+    assert.deepEqual(d.episodes.map((e:any)=>e.episode_number),Array.from({length:23},(_,i)=>i+1));
+    assert.deepEqual(d.episodes.slice(-2).map((e:any)=>e.episode_type),['preview','preview']);
+    assert.equal(new Set(d.episodes.map((e:any)=>e.url)).size,d.total);
   }
 });
 
@@ -52,7 +58,9 @@ test('Youku nullable chapters still reject wrong shows, extras and gaps in the r
   const h = createHandler(async url => url.includes('so.youku.com') ? new Response('verification')
     : json(new URL(url).searchParams.has('appScene') ? full : {message:'success',originNodes:[{data:{showId:full.showId,tempTitle:'嫁金钗',episodeTotal:30,featureDTO:{text:'电视剧'}}}]}));
   const d = await (await h(request(`/v1/youku/series/${full.showId}?q=嫁金钗`))).json() as any;
-  assert.equal(d.total, 1);
+  assert.equal(d.total, 2);
+  assert.equal(d.main_total,1);
+  assert.equal(d.preview_total,1);
   assert.equal(d.complete, false);
   assert.deepEqual(d.missing_episode_numbers, [2,4]);
   assert.deepEqual(d.unavailable_episode_numbers,[3]);
@@ -423,9 +431,12 @@ test('trimmed official payloads preserve Youku show boundaries and Bilibili prev
   assert.equal(y.complete, true);
   assert.equal(y.episodes[75].episode_number, 76);
   const b = (await (await handler(request('/v1/bilibili/series/ss45975'))).json()) as any;
-  assert.equal(b.total, 9);
+  assert.equal(b.total, 17);
+  assert.equal(b.main_total, 9);
+  assert.equal(b.preview_total, 8);
   assert.equal(b.complete, true);
-  assert.ok(b.episodes.every((e: any) => !e.title.includes('预告')));
+  assert.ok(b.episodes.filter((e:any)=>e.episode_type==='main').every((e: any) => !e.title.includes('预告')));
+  assert.deepEqual(b.episodes.filter((e:any)=>e.episode_type==='preview'),b.previews);
 });
 
 test('Bilibili public all-search and section fallbacks retain exact season and complete main episodes', async () => {
@@ -477,4 +488,14 @@ test('cold Bilibili section fallback checks SSR season metadata and section ID',
   assert.equal(r.status, 503);
   assert.equal(wrong.total, 0);
   assert.ok(wrong.warnings.includes('SEASON_ID_MISMATCH'));
+});
+
+test('a verified catalogue with only previews still returns them inline as usable episode links', async () => {
+  const full=JSON.parse(await readFile('test/fixtures/youku-bcaa87c7834c46f99e7b.json','utf8'));
+  full.serisesList=full.serisesList.slice(-2);
+  const h=createHandler(async url=>url.includes('so.youku.com')?new Response('challenge'):
+    json(new URL(url).searchParams.has('appScene')?full:{message:'success',originNodes:[{data:{showId:full.showId,tempTitle:'嫁金钗',episodeTotal:30,featureDTO:{text:'电视剧'}}}]}));
+  const response=await h(request(`/v1/youku/series/${full.showId}?q=嫁金钗`));const d=await response.json() as any;
+  assert.equal(response.status,200);assert.equal(d.ok,true);assert.equal(d.total,2);assert.equal(d.main_total,0);assert.equal(d.extra_total,0);assert.equal(d.preview_total,2);assert.equal(d.complete,false);
+  assert.deepEqual(d.episodes.map((e:any)=>[e.episode_number,e.episode_type]),[[22,'preview'],[23,'preview']]);
 });

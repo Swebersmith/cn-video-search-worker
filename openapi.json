@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "五站官网搜索与 AI 影视目录",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "description": "仅 official、series 两种模式。目录筛选电影、电视剧、综艺、动漫、纪录片，排除短剧及普通短视频。DeepSeek 仅分类和识别官方候选，不生成链接。"
   },
   "servers": [
@@ -223,7 +223,8 @@
             "$ref": "#/components/schemas/Series"
           },
           "total": {
-            "type": "integer"
+            "type": "integer",
+            "description": "episodes 中所有唯一链接数量，包含预告。"
           },
           "main_total": {
             "type": "integer"
@@ -231,11 +232,16 @@
           "extra_total": {
             "type": "integer"
           },
+          "preview_total": {
+            "type": "integer",
+            "description": "预告数量，不计入正片完整性。"
+          },
           "expected_total": {
             "type": [
               "integer",
               "null"
-            ]
+            ],
+            "description": "正片及附加内容的当前预期条数，不含预告。"
           },
           "update_notice": {
             "type": "string"
@@ -266,14 +272,14 @@
             "items": {
               "$ref": "#/components/schemas/Episode"
             },
-            "description": "正片与附加目录。"
+            "description": "正片、预告及附加内容。预告按集数插入，episode_type=preview。"
           },
           "previews": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Episode"
             },
-            "description": "明确标为预告的官方链接，与正片分开。"
+            "description": "episodes 中预告条目的便捷子集；客户端展示 episodes 时不应重复拼接。"
           },
           "ai": {
             "$ref": "#/components/schemas/AI"
