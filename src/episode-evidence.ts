@@ -9,7 +9,7 @@ function episodeNumber(v: unknown): number | null {
   const s = String(v).trim(),
     match =
       s.match(/^0*(\d{1,4})$/) ||
-      s.match(/第\s*(\d{1,4})\s*[集期话]/) ||
+      s.match(/(?:第\s*)?0*(\d{1,4})\s*[集期话]/) ||
       s.match(/(?:\s|[集期话])0*(\d{1,4})$/);
   const n = match ? Number(match[1]) : 0;
   return n > 0 && n <= 10000 ? n : null;
@@ -24,10 +24,10 @@ export function episodeCandidates(
 ): EpisodeCandidate[] {
   const result = new Map<string, EpisodeCandidate>();
   let visited = 0;
-  function walk(value: unknown, path: string, title = '', depth = 0) {
+  function walk(value: unknown, path: string, title = '', depth = 0, context = '') {
     if (depth > 22 || ++visited > 18000 || result.size >= 600 || !value || typeof value !== 'object') return;
     if (Array.isArray(value)) {
-      value.forEach((v, i) => walk(v, `${path}[${i}]`, title, depth + 1));
+      value.forEach((v, i) => walk(v, `${path}[${i}]`, title, depth + 1, context));
       return;
     }
     const v = obj(value);
@@ -47,7 +47,15 @@ export function episodeCandidates(
       String(foreign) !== (platform === 'bilibili' ? id.slice(2) : id)
     )
       return;
-    const ownTitle = text(v.title || v.name || v.t2 || v.long_title || v.displayName || v.label) || title;
+    const ownTitle = text(v.play_title || v.title || v.name || v.t2 || v.long_title || v.displayName || v.label) || title;
+    const section = [context, v.chapterName, v.section_title].map(text).filter(Boolean).join(' ').slice(0, 350);
+    const tags: string[] = [];
+    for (const raw of [v.uni_imgtag, v.imgtag_all]) {
+      try {
+        const parsed = typeof raw === 'string' && raw.length < 16000 ? obj(JSON.parse(raw)) : obj(raw);
+        tags.push(...Object.values(parsed).map((tag) => text(obj(tag).text)));
+      } catch { /* Malformed optional tags are not evidence. */ }
+    }
     const label = [
       v.displayName,
       v.chapterName,
@@ -56,6 +64,11 @@ export function episodeCandidates(
       v.showVideoStage,
       v.t3,
       v.label,
+      v.c_title_output,
+      v.play_title,
+      v.union_title,
+      section,
+      ...tags,
     ]
       .map(text)
       .filter(Boolean)
@@ -65,6 +78,10 @@ export function episodeCandidates(
       /预告|先导片|试看|PV\b/i.test(label + ' ' + ownTitle) ||
       v.isTrailer === true ||
       v.isTrailer === 1 ||
+      v.isTrailer === '1' ||
+      v.is_trailer === true ||
+      v.is_trailer === 1 ||
+      v.is_trailer === '1' ||
       (v.section_type !== undefined && Number(v.section_type) !== 0);
     const extra =
       /番外|彩蛋|花絮|特辑|加更|纯享|陪看|直拍|精讲/.test(label + ' ' + ownTitle) ||
@@ -80,6 +97,7 @@ export function episodeCandidates(
         v.displayName,
         v.showVideoStage,
         v.label,
+        v.c_title_output,
         ownTitle,
       ]
         .map(episodeNumber)
@@ -118,6 +136,8 @@ export function episodeCandidates(
     }
     if (platform === 'youku' && typeof v.videoId === 'string' && /^[a-z\d=]+$/i.test(v.videoId))
       urls.push(`https://v.youku.com/v_show/id_${v.videoId}.html`);
+    if (platform === 'tencent' && v.cid === id && typeof v.vid === 'string' && /^[a-z\d]+$/i.test(v.vid))
+      urls.push(`https://v.qq.com/x/cover/${id}/${v.vid}.html`);
     for (const raw of urls) {
       const c = canonical(raw, platform);
       if (!c || c.kind === 'series') continue;
@@ -144,7 +164,7 @@ export function episodeCandidates(
         old.number_hint ??= n;
       }
     }
-    for (const [k, child] of Object.entries(v)) walk(child, `${path}.${k}`, ownTitle, depth + 1);
+    for (const [k, child] of Object.entries(v)) walk(child, `${path}.${k}`, ownTitle, depth + 1, section);
   }
   walk(payload, '$');
   return [...result.values()].map((c, i) => ({ ...c, ref: `c${i + 1}` }));

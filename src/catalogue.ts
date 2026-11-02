@@ -247,6 +247,7 @@ function fromTencent(payload: unknown, platform: Platform, query: string): Seed[
             kind,
           ),
           preview: previews,
+          candidates: episodeCandidates(entries.map((raw) => ({ ...obj(raw), url: redirectTarget(obj(raw).url) })), platform, id, 'tencent_search'),
         });
         break;
       }
@@ -608,7 +609,7 @@ export async function seriesCatalogue(
   cache?: CacheStore,
 ): Promise<CatalogueResult> {
   const key = new Request(
-      `https://cn-video-search.internal/catalogue/long-ai/v6/${platform}/${id}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
+      `https://cn-video-search.internal/catalogue/long-ai/v7/${platform}/${id}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -742,13 +743,13 @@ export async function seriesCatalogue(
           const p = obj(v.item_params);
           if (p.cid !== id || !p.vid || !/^[a-z\d]+$/i.test(string(p.vid))) continue;
           const n = num(p.title) || num(p.c_title_output),
-            label = text(p.c_title_output || p.title);
+            label = text(p.play_title || p.c_title_output || p.title);
           if (!label) continue;
           const extra = meta.kind !== 'movie' && !n;
           const e = episode(
             platform,
             n,
-            n ? `${seed?.series.title || '第'} ${n}集` : label,
+            label,
             `https://v.qq.com/x/cover/${id}/${p.vid}.html`,
             extra,
           );
@@ -939,7 +940,10 @@ export async function seriesCatalogue(
       warnings.push('SEARCH_PREVIEW_FALLBACK');
     }
   }
-  // Preserve source-labelled previews, then ask AI only about ambiguous/unparsed candidates.
+  // Keep original source evidence even for structured entries and fallback search links.
+  for (const e of episodes) {
+    collect({ ...e, title: e.title, order: e.episode_number }, 'parsed_episode');
+  }
   const candidateMap = new Map<string, EpisodeCandidate>();
   for (const c of candidates) {
     const old = candidateMap.get(c.url);
@@ -948,6 +952,9 @@ export async function seriesCatalogue(
       old.preview ||= c.preview;
       old.extra ||= c.extra;
       old.number_hint ??= c.number_hint;
+      old.duration_seconds ??= c.duration_seconds;
+      if (c.title.length > old.title.length) old.title = c.title;
+      old.label = [...new Set([old.label, c.label])].filter(Boolean).join(' ').slice(0, 700);
     }
   }
   candidates = [...candidateMap.values()].map((c, i) => ({ ...c, ref: `c${i + 1}` }));
@@ -963,17 +970,29 @@ export async function seriesCatalogue(
     }));
   const previewUrls = new Set(previews.map((e) => e.url));
   episodes = episodes.filter((e) => !previewUrls.has(e.url));
-  const unknown = candidates.filter((c) => !episodes.some((e) => e.url === c.url));
-  const mainNumbers = new Set(episodes.filter((e) => e.episode_type === 'main').map((e) => e.episode_number));
-  const hasGap =
-    expected !== null &&
-    Array.from({ length: Math.min(expected, 10000) }, (_, i) => i + 1).some((n) => !mainNumbers.has(n));
-  if (unknown.length && (hasGap || unknown.some((c) => !c.preview && !c.extra))) {
-    const recognized = await recognizeEpisodes(meta, unknown, episodes, expected, env, fetcher);
+  episodes = episodes.map((e) => candidateMap.get(e.url)?.extra ? { ...e, episode_type: 'extra' as const } : e);
+  const counts = new Map<number, Set<string>>();
+  for (const e of episodes) if (e.episode_type === 'main' && e.episode_number !== null) {
+    const urls = counts.get(e.episode_number) || new Set<string>();
+    urls.add(e.url); counts.set(e.episode_number, urls);
+  }
+  const suspicious = candidates.filter((c) => !c.preview && !c.extra && episodes.some((e) => e.url === c.url && e.episode_type === 'main') &&
+    ((c.number_hint !== null && (counts.get(c.number_hint)?.size || 0) > 1) ||
+     (c.duration_seconds !== null && c.duration_seconds < 180 && /电视剧|电影/.test(meta.type_name))));
+  const unknown = candidates.filter((c) => !c.preview && !c.extra && !episodes.some((e) => e.url === c.url));
+  if (suspicious.length || unknown.length) {
+    const review = [...suspicious, ...unknown];
+    const recognized = await recognizeEpisodes(meta, review, episodes, expected, env, fetcher, suspicious.length ? 'audit' : 'recover');
     ai = recognized.ai;
     warnings.push(...ai.warnings);
     const oldUrls = new Set([...episodes, ...previews].map((e) => e.url));
     ai.recovered = recognized.episodes.filter((e) => !oldUrls.has(e.url)).length;
+    const replaced = new Set(recognized.episodes.map((e) => e.url));
+    for (const ref of recognized.rejected_refs) {
+      const c = review.find((c) => c.ref === ref);
+      if (c) replaced.add(c.url);
+    }
+    episodes = episodes.filter((e) => !replaced.has(e.url));
     for (const e of recognized.episodes) {
       if (e.episode_type === 'preview') {
         if (!previews.some((v) => v.url === e.url)) previews.push({ ...e, recognition: 'ai' });
@@ -983,6 +1002,18 @@ export async function seriesCatalogue(
   const seen = new Map<string, CatalogueEpisode>();
   for (const e of episodes) seen.set(e.url, e);
   episodes = [...seen.values()];
+  // An unresolved collision is not evidence for choosing either URL. Keep it out of the main list.
+  // Variety programmes may legitimately split one issue into multiple parts.
+  let unresolvedConflict = false;
+  if (meta.category !== 'variety' && platform !== 'mango') {
+    const groups = new Map<number, CatalogueEpisode[]>();
+    for (const e of episodes) if (e.episode_type === 'main' && e.episode_number !== null) {
+      const group = groups.get(e.episode_number) || []; group.push(e); groups.set(e.episode_number, group);
+    }
+    const ambiguous = new Set([...groups.values()].filter((g) => g.length > 1).flat().map((e) => e.url));
+    unresolvedConflict = ambiguous.size > 0;
+    episodes = episodes.filter((e) => !ambiguous.has(e.url));
+  }
   episodes.sort(
     (a, b) =>
       Number(a.episode_type === 'extra') - Number(b.episode_type === 'extra') ||
@@ -990,12 +1021,19 @@ export async function seriesCatalogue(
   );
   const main = episodes.filter((e) => e.episode_type === 'main'),
     numbers = new Set(main.map((e) => e.episode_number).filter((n): n is number => n !== null));
+  // Tencent's search count includes preview slots, including previews of already published episodes.
+  // Normalize only when the count is fully explained by the verified returned entries.
+  if (platform === 'tencent' && verified && allPages && !unresolvedConflict &&
+      expected === new Set([...episodes, ...previews].map((e) => e.url)).size) {
+    const previewOnly = new Set(previews.map((e) => e.episode_number).filter((n): n is number => n !== null && !numbers.has(n)));
+    expected = episodes.length + previewOnly.size;
+  }
   const numeric = meta.kind !== 'movie' && platform !== 'mango';
   // Tencent search totals include extras. When entries are missing, only report provable gaps,
   // rather than inventing trailing episode numbers from an ambiguous total.
   const numberedExpected =
     platform === 'tencent' && episodes.length !== expected
-      ? Math.max(0, ...numbers)
+      ? Math.max(0, ...numbers, ...previews.map((e) => e.episode_number || 0))
       : expected === null
         ? null
         : expected - (episodes.length - main.length);
@@ -1005,7 +1043,7 @@ export async function seriesCatalogue(
       : [];
   const unavailable = gaps.filter((n) => previews.some((e) => e.episode_number === n));
   const missing = gaps.filter((n) => !unavailable.includes(n));
-  const conflicts = numeric && main.length !== numbers.size;
+  const conflicts = unresolvedConflict || (numeric && main.length !== numbers.size);
   if (conflicts) warnings.push('CONFLICTING_EPISODE_NUMBERS');
   const complete =
     verified &&
@@ -1019,32 +1057,21 @@ export async function seriesCatalogue(
     !warnings.includes('UPDATE_TOTAL_MISMATCH');
   if (unavailable.length) warnings.push('EPISODE_MAIN_UNAVAILABLE');
   if (!complete) warnings.push('EPISODE_LIST_INCOMPLETE');
-  // The public episode list includes trailers in episode order. Published-content
-  // completeness above deliberately uses only main and extra entries.
-  const combined = new Map<string, CatalogueEpisode>();
-  for (const e of [...episodes, ...previews]) combined.set(e.url, e);
-  const allEpisodes = [...combined.values()].sort(
-    (a, b) =>
-      Number(a.episode_type === 'extra') - Number(b.episode_type === 'extra') ||
-      (a.episode_number ?? 100000) - (b.episode_number ?? 100000) ||
-      Number(a.episode_type === 'preview') - Number(b.episode_type === 'preview'),
-  );
-  const previewEntries = allEpisodes.filter((e) => e.episode_type === 'preview');
   const result: CatalogueResult = {
-    ok: allEpisodes.length > 0,
+    ok: episodes.length > 0,
     platform,
     series: meta,
-    total: allEpisodes.length,
+    total: episodes.length,
     main_total: main.length,
-    extra_total: episodes.filter((e) => e.episode_type === 'extra').length,
-    preview_total: previewEntries.length,
+    extra_total: episodes.length - main.length,
+    preview_total: previews.length,
     expected_total: expected,
     ...(updateNotice ? { update_notice: updateNotice } : {}),
     complete,
     partial: !complete,
     missing_episode_numbers: missing,
-    episodes: allEpisodes,
-    previews: previewEntries,
+    episodes,
+    previews,
     unavailable_episode_numbers: unavailable,
     ai,
     warnings: [...new Set(warnings)],
