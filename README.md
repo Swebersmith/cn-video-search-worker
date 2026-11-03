@@ -2,23 +2,39 @@
 
 正式地址：<https://videosearch.webber.qzz.io/> · [OpenAPI](https://videosearch.webber.qzz.io/openapi.json)
 
-官网接口保留官网综合搜索、影视目录两种视图。另提供独立官采资源站搜索，来源与官网结果分别展示。
+共有三种使用方式：官网综合搜索、影视目录、第三方官采资源站。官网前两种使用 view 参数；第三方使用独立路径。在线文档的[模式使用指南](https://videosearch.webber.qzz.io/#modes)分别说明调用步骤、参数与结果读取方式。
 
 | 模式 | 请求示例 | 行为 |
 | --- | --- | --- |
 | 官网综合搜索 | `/v1/search?q=嫁金钗&view=official&page=1` | 默认模式，保留官网本页全部卡片和顺序，以及原始响应。 |
-| 影视目录 | `/v1/search?q=嫁金钗&view=series&limit=5` | 筛选电影、长电视剧、综艺、动漫、纪录片；DeepSeek 辅助分类，排除短剧、陪看、解说、花絮、路透和普通短视频。 |
+| 影视目录 | `/v1/search?q=嫁金钗&view=series&limit=5` | 先返回电影、长电视剧、综艺、动漫、纪录片摘要，选择后请求 detail_url 读取分集；AI 辅助分类和识别，排除短剧与普通短视频。 |
+| 官采资源站 | `/v1/resources/search?q=三体&sources=all&page=1` | 独立搜索 KV 中已启用的第三方来源；返回条目与线路，详情使用该结果的 detail_url。 |
 
 单站路径为 `/v1/{platform}/search`，平台标识：`tencent`、`iqiyi`、`youku`、`mango`、`bilibili`。例如：
 
 ```text
-GET /v1/youku/search?q=嫁金钗&view=series
-→ 选择 results[] 中的作品，直接跟随 detail_url
-GET /v1/youku/series/bcaa87c7834c46f99e7b?q=嫁金钗
-→ 该作品的正片目录、预告和完整性状态
+GET /v1/youku/search?q=嫁金钗&view=series&limit=5
+→ 用 results[] 中的 platform、id、year、type_name 展示作品选项
+→ 用户选择后，原样请求该条 detail_url（保留它的 q 参数）
+→ 详情读取 all_episodes 获取正片、附加内容和预告的完整合并列表
 ```
 
-2.0 删除了旧版扁平链接模式、三个兼容选项和旧爱奇艺专辑选择接口；旧参数请求返回 400，已移除的路由返回 404。新接入只使用上面两种模式和 `detail_url`。
+`results[]` 中搜索到 6 个条目不表示电视剧只有 6 集。官网综合搜索返回本页卡片，影视目录搜索返回作品摘要，都不是完整分集。需要分集时先用 `view=series` 选作品，再请求 `detail_url`。第三方搜索条目可已有 `lines[]`，详情条目位于 `item`，分集在 `item.lines[].episodes`，预告在 `item.lines[].previews`。
+
+例如，只查看爱奇艺官网第 2 页可请求 `/v1/iqiyi/search?q=三体&view=official&page=2`；只查腾讯与优酷可请求 `/v1/search?q=三体&view=official&platforms=tencent,youku&page=1`。第三方只查金蝉使用 `/v1/resources/search?q=三体&sources=jinchan&page=1`，来源 ID 通过 `/v1/resources` 获取。
+
+以下命令可直接调用；片名由 curl 编码，后续更换关键词不需要手工拼接中文 URL：
+
+```bash
+curl --get 'https://videosearch.webber.qzz.io/v1/tencent/search' \
+  --data-urlencode 'q=三体' \
+  --data-urlencode 'view=series' \
+  --data-urlencode 'limit=5'
+```
+
+如已配置公共接口 API_KEY，追加 `-H 'Authorization: Bearer YOUR_API_KEY'`；不要使用管理密钥，也不要把密钥放进 URL。同一请求头也应传给详情请求。
+
+官网接口的 `view` 只允许 `official` / `series`；不要传 `view=resources`，请改用 `/v1/resources/search`。旧版链接模式和专辑选择接口已移除，旧参数返回 400，移除的路径返回 404。
 
 ## 参数与返回
 
@@ -26,9 +42,10 @@ GET /v1/youku/series/bcaa87c7834c46f99e7b?q=嫁金钗
 | --- | --- | --- |
 | `q` | 1—80 字符，搜索必填 | 模糊片名；目录请求保留 detail_url 中的关键词提示。 |
 | `view` | `official` / `series` | 默认 official。 |
-| `page` | 1—1000，默认 1 | 仅 official，每次读取官网一页。 |
+| `page` | 1—1000，默认 1 | official 及资源站搜索的上游页码；series 搜索携带会返回 400，详情不支持。 |
 | `limit` | 1—20，默认 5 | 仅 series，限制每站作品数，不截断展开的目录。official 忽略此参数。 |
-| `platforms` | all 或逗号分隔平台标识 | 仅聚合接口，用于选择平台子集。 |
+| `platforms` | all 或逗号分隔平台标识 | 仅官网总接口 /v1/search，单站和资源站不支持。 |
+| `sources` | all 或逗号分隔来源 ID | 仅 /v1/resources/search，默认为 KV 中全部启用来源。 |
 
 官网模式每次读取本页真实官网响应，不进行 AI 改写、相关度重排、去重或目录类型过滤。`results[].raw` 保留完整卡片，`providers[].upstream` 保留官方原始响应。官网自己收录的外站卡片仍保留为原始数据；本服务不会调用别站搜索代替该站。
 
@@ -49,6 +66,10 @@ GET /v1/youku/series/bcaa87c7834c46f99e7b?q=嫁金钗
 例如本次《嫁金钗》官方更新说明写 22/30 集，但目录只提供 1—21 集正片，第 22、23 个候选明确标“预告”。服务会提供预告链接，并将第 22 集标为“正片待确认”；不会用预告替代正片，也不会把尚未发布的 23—30 集列为缺失。
 
 `complete=true` 要求来源、分页、当前条数和编号校验通过，不表示全剧完结、免会员或每页必然可播放。
+
+搜索响应的 `total` 是本次返回条目数（卡片、作品摘要或第三方条目），不是全剧集数；`providers[].total` 是各上游自己的统计口径。官网详情的 `total` 是正片与附加内容链接数，不含预告；要包含预告的数量请读取 `all_total`。
+
+HTTP 200 后仍检查 `partial`、`warnings` 与 `providers[].status`。`empty` 表示无结果，`unavailable` 表示上游不可用，`degraded` 表示部分降级，不能将故障解释为没有作品。400 检查参数和来源启用状态，401 检查公共访问密钥，404 检查路径或资源站条目，503 查看响应体判断上游故障或 KV 配置不可读；临时故障采用退避重试。资源站详情没有官网目录的 `all_episodes` / `complete` 字段，按线路分别读取，不能套用官网目录的完整性判断。
 
 ## DeepSeek 辅助处理
 

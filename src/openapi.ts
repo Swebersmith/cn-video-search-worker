@@ -24,7 +24,7 @@ const searchParameters = [
     name: 'view',
     in: 'query',
     schema: { type: 'string', enum: ['official', 'series'], default: 'official' },
-    description: '官网综合搜索，或 AI 辅助筛选长影视作品的目录。',
+    description: 'official 默认保留官网本页卡片；series 返回长影视作品摘要，需再请求所选结果 detail_url 读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。',
   },
   {
     name: 'page',
@@ -36,7 +36,7 @@ const searchParameters = [
     name: 'platforms',
     in: 'query',
     schema: { type: 'string', default: 'all' },
-    description: '仅总接口：all 或逗号分隔平台标识。',
+    description: '仅官网总接口 /v1/search：all 或逗号分隔平台标识，如 tencent,youku；单站和资源站不支持。',
   },
   {
     name: 'limit',
@@ -102,7 +102,7 @@ export const openapi = {
       } },
       ResourceSearch: { type: 'object', properties: {
         ok: { type: 'boolean' }, view: { const: 'resources' }, query: { type: 'string' }, page: { type: 'integer' },
-        total: { type: 'integer' }, partial: { type: 'boolean' }, source_policy: { const: 'third_party_resource_sites' },
+        total: { type: 'integer', description: '本次第三方条目数，不是分集数量或所有上游总量。' }, partial: { type: 'boolean' }, source_policy: { const: 'third_party_resource_sites' },
         results: { type: 'array', items: ref('ResourceItem') }, providers: { type: 'array', items: { type: 'object', properties: {
           source_id: sourceId, source_name: { type: 'string' }, source: { const: 'third_party' },
           source_url: { type: 'string' }, status: { enum: ['ok', 'empty', 'unavailable'] }, count: { type: 'integer' },
@@ -268,7 +268,7 @@ export const openapi = {
     } },
     '/v1/resources': { get: { summary: 'KV 中已启用的第三方来源；登记不代表持续可用或官方授权', responses: { '200': { description: 'Configured resource sources' } } } },
     '/v1/resources/search': { get: {
-      summary: '独立搜索官采资源站（MacCMS JSON / XML）', security,
+      summary: '搜索已启用的第三方来源；results 为条目，detail_url 读取该条线路详情', security,
       parameters: [searchParameters[0], { name: 'sources', in: 'query', schema: { type: 'string', default: 'all' },
         description: 'all 为全部启用来源；或逗号分隔来源 ID，通过 /v1/resources 读取当前清单。' }, { ...searchParameters[2], description: '官采来源的上游页码。' }],
       responses: { '200': response('ResourceSearch', '第三方条目与各源状态；不代表可以播放'),
