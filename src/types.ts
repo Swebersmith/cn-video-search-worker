@@ -12,6 +12,7 @@ export interface Env {
   RESOURCE_ADMIN_KEY?: string;
   API_KEY?: string;
   DEEPSEEK_API_KEY?: string;
+  AI_ENABLED?: 'on' | 'off';
   DEEPSEEK_MODEL?: string;
   AI_TIMEOUT_MS?: string;
   CORS_ORIGIN?: string;

@@ -8,7 +8,7 @@ import type { Fetcher } from '../src/types';
 const id = 'mzc00200zsqz54y';
 const json = (v: unknown) => new Response(JSON.stringify(v));
 const fixture = async () => JSON.parse(await readFile('test/fixtures/tencent-zoushangren.json', 'utf8'));
-const path = `/v1/tencent/series/${id}?q=走马上任`;
+const path = `/v1/tencent/series/${id}?q=走马上任&ai=on`;
 const search = (total: number, firstUrl: string) => ({ ret: 0, data: { normalList: [{ videoInfo: {
   title: '走马上任', typeName: '电视剧', episodeSites: [{ totalEpisode: total,
     episodeInfoList: [{ title: '1', url: firstUrl }] }],
@@ -24,21 +24,23 @@ function upstream(data: unknown, total: number, model?: Fetcher): Fetcher {
 }
 const modelResponse = (v: unknown) => json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(v) } }] });
 
-test('real Tencent 走马上任 payload yields five unique mains and six previews, including unreleased 6/7', async () => {
+test('Tencent unified list keeps five mains and only previews for unreleased 6/7', async () => {
   const h = createHandler(upstream(await fixture(), 11));
   const d = await (await h(new Request('https://test' + path))).json() as any;
-  assert.deepEqual(d.episodes.map((e: any) => e.episode_number), [1, 2, 3, 4, 5]);
+  assert.deepEqual(d.episodes.map((e: any) => e.episode_number), [1, 2, 3, 4, 5, 6, 7]);
   assert.equal(d.main_total, 5);
-  assert.equal(d.total, 5);
-  assert.equal(d.previews.length, 6);
+  assert.equal(d.total, 7);
+  assert.equal(d.preview_total, 2);
   assert.equal(d.expected_total, 7);
   assert.deepEqual(d.unavailable_episode_numbers, [6, 7]);
   assert.deepEqual(d.missing_episode_numbers, []);
   assert.equal(d.complete, false);
   assert.equal(d.ai.status, 'not_needed');
   assert.ok(!d.warnings.includes('CONFLICTING_EPISODE_NUMBERS'));
-  assert.ok(d.episodes.every((e: any) => !/预告/.test(e.title)));
-  assert.ok(d.previews.every((e: any) => !d.episodes.some((m: any) => m.url === e.url)));
+  assert.ok(d.episodes.filter((e: any) => e.episode_type === 'main').every((e: any) => !/预告/.test(e.title)));
+  assert.ok(d.episodes.filter((e: any) => e.episode_type === 'preview').every((e: any) => e.episode_number > 5));
+  assert.ok(!('previews' in d));
+  assert.ok(!('all_episodes' in d));
 });
 
 test('Tencent evidence reads string trailer flags, full titles, JSON badges and exact cover ownership', () => {
@@ -77,7 +79,7 @@ test('AI cannot invent a hidden preview from duration or duplicate episode numbe
   assert.equal(audits, 1);
   assert.equal(d.main_total, 2);
   assert.ok(d.episodes.some((e: any) => /realvideo/.test(e.url)));
-  assert.equal(d.previews.length, 0);
+  assert.equal(d.preview_total, 0);
   assert.equal(d.ai.classified, 1);
   assert.equal(d.ai.recovered, 0);
 });
@@ -91,10 +93,10 @@ test('SVIP, early access, paid premieres and trial access are mains even for sho
   const data = { ret: 0, data: { has_next_page: false, module_list_datas: [{ items }] } };
   const d = await (await createHandler(upstream(data, 7))(new Request('https://test' + path))).json() as any;
   assert.deepEqual(d.episodes.map((e: any) => e.episode_number), [1, 2, 3, 4, 5, 6]);
-  assert.equal(d.previews.length, 1);
-  assert.equal(d.all_total, 7);
-  assert.equal(d.all_episodes.length, 7);
-  assert.equal(new Set(d.all_episodes.map((e: any) => e.url)).size, 7);
+  assert.equal(d.preview_total, 0);
+  assert.equal(d.total, 6);
+  assert.equal(d.episodes.length, 6);
+  assert.equal(new Set(d.episodes.map((e: any) => e.url)).size, 6);
   for (let i = 0; i < 6; i++) assert.ok(d.episodes.some((e: any) => e.url.includes(`premium${i}`)));
 });
 
@@ -104,7 +106,7 @@ test('official numbered URLs beyond AI candidate limits and stale expected total
   const data = { ret: 0, data: { has_next_page: false, module_list_datas: [{ items }] } };
   const d = await (await createHandler(upstream(data, 5))(new Request('https://test' + path))).json() as any;
   assert.equal(d.main_total, 70);
-  assert.equal(d.previews.length, 0);
+  assert.equal(d.preview_total, 0);
   assert.equal(d.episodes.at(-1).episode_number, 70);
 });
 

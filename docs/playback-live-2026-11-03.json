@@ -1,0 +1,493 @@
+{
+  "checked_at": "2026-11-03T08:56:22.833Z",
+  "base": "https://videosearch.webber.qzz.io",
+  "report": [
+    {
+      "platform": "youku",
+      "title": "嫁金钗",
+      "ai_mode": "off",
+      "ai_status": "not_needed",
+      "ok": true,
+      "status": 200,
+      "total": 31,
+      "main_total": 30,
+      "preview_total": 1,
+      "extra_total": 0,
+      "complete": true,
+      "source": "youku_episode_api+playback_page",
+      "warnings": [],
+      "badge_examples": [
+        {
+          "number": 27,
+          "title": "嫁金钗 第27集",
+          "badges": [
+            "收官礼"
+          ]
+        },
+        {
+          "number": 28,
+          "title": "嫁金钗 第28集",
+          "badges": [
+            "收官礼"
+          ]
+        },
+        {
+          "number": 29,
+          "title": "嫁金钗 第29集",
+          "badges": [
+            "收官礼"
+          ]
+        },
+        {
+          "number": 30,
+          "title": "嫁金钗 第30集",
+          "badges": [
+            "收官礼"
+          ]
+        },
+        {
+          "number": null,
+          "title": "嫁金钗 周预告",
+          "badges": [
+            "SVIP",
+            "预告"
+          ]
+        }
+      ],
+      "took_ms": 7303
+    },
+    {
+      "platform": "youku",
+      "title": "嫁金钗",
+      "ai_mode": "on",
+      "ai_status": "not_needed",
+      "ok": true,
+      "status": 200,
+      "total": 31,
+      "main_total": 30,
+      "preview_total": 1,
+      "extra_total": 0,
+      "complete": true,
+      "source": "youku_episode_api+playback_page",
+      "warnings": [],
+      "badge_examples": [
+        {
+          "number": 27,
+          "title": "嫁金钗 第27集",
+          "badges": [
+            "收官礼"
+          ]
+        },
+        {
+          "number": 28,
+          "title": "嫁金钗 第28集",
+          "badges": [
+            "收官礼"
+          ]
+        },
+        {
+          "number": 29,
+          "title": "嫁金钗 第29集",
+          "badges": [
+            "收官礼"
+          ]
+        },
+        {
+          "number": 30,
+          "title": "嫁金钗 第30集",
+          "badges": [
+            "收官礼"
+          ]
+        },
+        {
+          "number": null,
+          "title": "嫁金钗 周预告",
+          "badges": [
+            "SVIP",
+            "预告"
+          ]
+        }
+      ],
+      "took_ms": 24696
+    },
+    {
+      "platform": "tencent",
+      "title": "走马上任",
+      "ai_mode": "off",
+      "ai_status": "not_needed",
+      "ok": true,
+      "status": 200,
+      "total": 9,
+      "main_total": 7,
+      "preview_total": 2,
+      "extra_total": 0,
+      "complete": false,
+      "source": "tencent+playback_page",
+      "warnings": [
+        "EPISODE_MAIN_UNAVAILABLE",
+        "EPISODE_LIST_INCOMPLETE"
+      ],
+      "badge_examples": [
+        {
+          "number": 5,
+          "title": "走马上任 第05集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 6,
+          "title": "走马上任 第06集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 7,
+          "title": "走马上任 第07集",
+          "badges": [
+            "抢先看"
+          ]
+        },
+        {
+          "number": 8,
+          "title": "走马上任 08集预告",
+          "badges": [
+            "预告"
+          ]
+        },
+        {
+          "number": 9,
+          "title": "走马上任 09集预告",
+          "badges": [
+            "预告"
+          ]
+        }
+      ],
+      "took_ms": 4597
+    },
+    {
+      "platform": "tencent",
+      "title": "走马上任",
+      "ai_mode": "on",
+      "ai_status": "not_needed",
+      "ok": true,
+      "status": 200,
+      "total": 9,
+      "main_total": 7,
+      "preview_total": 2,
+      "extra_total": 0,
+      "complete": false,
+      "source": "tencent+playback_page",
+      "warnings": [
+        "EPISODE_MAIN_UNAVAILABLE",
+        "EPISODE_LIST_INCOMPLETE"
+      ],
+      "badge_examples": [
+        {
+          "number": 5,
+          "title": "走马上任 第05集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 6,
+          "title": "走马上任 第06集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 7,
+          "title": "走马上任 第07集",
+          "badges": [
+            "抢先看"
+          ]
+        },
+        {
+          "number": 8,
+          "title": "走马上任 08集预告",
+          "badges": [
+            "预告"
+          ]
+        },
+        {
+          "number": 9,
+          "title": "走马上任 09集预告",
+          "badges": [
+            "预告"
+          ]
+        }
+      ],
+      "took_ms": 5401
+    },
+    {
+      "platform": "iqiyi",
+      "title": "罚罪2",
+      "ai_mode": "off",
+      "ai_status": "not_needed",
+      "ok": true,
+      "status": 200,
+      "total": 40,
+      "main_total": 40,
+      "preview_total": 0,
+      "extra_total": 0,
+      "complete": true,
+      "source": "iqiyi",
+      "warnings": [
+        "playback:PLAYBACK_SCHEMA_CHANGED"
+      ],
+      "badge_examples": [
+        {
+          "number": 36,
+          "title": "罚罪2第36集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 37,
+          "title": "罚罪2第37集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 38,
+          "title": "罚罪2第38集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 39,
+          "title": "罚罪2第39集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 40,
+          "title": "罚罪2第40集",
+          "badges": [
+            "VIP"
+          ]
+        }
+      ],
+      "took_ms": 5505
+    },
+    {
+      "platform": "iqiyi",
+      "title": "罚罪2",
+      "ai_mode": "on",
+      "ai_status": "not_needed",
+      "ok": true,
+      "status": 200,
+      "total": 40,
+      "main_total": 40,
+      "preview_total": 0,
+      "extra_total": 0,
+      "complete": true,
+      "source": "iqiyi",
+      "warnings": [
+        "playback:PLAYBACK_SCHEMA_CHANGED"
+      ],
+      "badge_examples": [
+        {
+          "number": 36,
+          "title": "罚罪2第36集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 37,
+          "title": "罚罪2第37集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 38,
+          "title": "罚罪2第38集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 39,
+          "title": "罚罪2第39集",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": 40,
+          "title": "罚罪2第40集",
+          "badges": [
+            "VIP"
+          ]
+        }
+      ],
+      "took_ms": 22126
+    },
+    {
+      "platform": "mango",
+      "title": "歌手2025",
+      "ai_mode": "off",
+      "ai_status": "disabled",
+      "ok": true,
+      "status": 200,
+      "total": 75,
+      "main_total": 18,
+      "preview_total": 0,
+      "extra_total": 57,
+      "complete": false,
+      "source": "mgtv_episode_list+playback_page",
+      "warnings": [
+        "EPISODE_LIST_INCOMPLETE"
+      ],
+      "badge_examples": [
+        {
+          "number": null,
+          "title": "特别企划：米奇感性落泪",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": null,
+          "title": "纯享版：BENI《Lemon》神级现场",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": null,
+          "title": "纯享版：BENI热辣唱跳",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": null,
+          "title": "歌手舞台全纪录",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": null,
+          "title": "特别企划：李佳薇秀肌肉",
+          "badges": [
+            "VIP"
+          ]
+        }
+      ],
+      "took_ms": 10661
+    },
+    {
+      "platform": "mango",
+      "title": "歌手2025",
+      "ai_mode": "on",
+      "ai_status": "fallback",
+      "ok": true,
+      "status": 200,
+      "total": 75,
+      "main_total": 18,
+      "preview_total": 0,
+      "extra_total": 57,
+      "complete": false,
+      "source": "mgtv_episode_list+playback_page",
+      "warnings": [
+        "AI_HTTP_503",
+        "EPISODE_LIST_INCOMPLETE"
+      ],
+      "badge_examples": [
+        {
+          "number": null,
+          "title": "特别企划：米奇感性落泪",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": null,
+          "title": "纯享版：BENI《Lemon》神级现场",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": null,
+          "title": "纯享版：BENI热辣唱跳",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": null,
+          "title": "歌手舞台全纪录",
+          "badges": [
+            "VIP"
+          ]
+        },
+        {
+          "number": null,
+          "title": "特别企划：李佳薇秀肌肉",
+          "badges": [
+            "VIP"
+          ]
+        }
+      ],
+      "took_ms": 26540
+    },
+    {
+      "platform": "bilibili",
+      "title": "间谍过家家",
+      "ai_mode": "off",
+      "ai_status": "not_needed",
+      "ok": false,
+      "status": 503,
+      "total": 0,
+      "main_total": 0,
+      "preview_total": 0,
+      "extra_total": 0,
+      "complete": false,
+      "source": "bilibili",
+      "warnings": [
+        "discovery:HTTP_412",
+        "season:HTTP_412",
+        "HTTP_412",
+        "playback:HTTP_412",
+        "EPISODE_LIST_INCOMPLETE"
+      ],
+      "badge_examples": [],
+      "took_ms": 1486
+    },
+    {
+      "platform": "bilibili",
+      "title": "间谍过家家",
+      "ai_mode": "on",
+      "ai_status": "not_needed",
+      "ok": false,
+      "status": 503,
+      "total": 0,
+      "main_total": 0,
+      "preview_total": 0,
+      "extra_total": 0,
+      "complete": false,
+      "source": "bilibili",
+      "warnings": [
+        "discovery:HTTP_412",
+        "season:HTTP_412",
+        "HTTP_412",
+        "playback:HTTP_412",
+        "EPISODE_LIST_INCOMPLETE"
+      ],
+      "badge_examples": [],
+      "took_ms": 1324
+    }
+  ]
+}

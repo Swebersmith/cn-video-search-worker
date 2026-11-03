@@ -1,0 +1,1077 @@
+{
+  "pageMap": {
+    "extra": {
+      "showId": "bcaa87c7834c46f99e7b"
+    }
+  },
+  "moduleList": [
+    {
+      "components": [
+        {
+          "more": false,
+          "type": 10013,
+          "subtitle": "30集全，优酷VIP会员10月29日至11月3日每天更新1集，11月7日至11月10日每天更新1集，SVIP每个更新日提前多看1集，11月3日收官礼直通大结局",
+          "moreText": "30集全",
+          "lastStage": 30,
+          "pageSize": 60,
+          "pageIndex": 1,
+          "itemList": [
+            {
+              "title": "嫁金钗 第1集",
+              "stage": 1,
+              "episodeInfo": {
+                "benefitType": 0,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3MzkyOTA0NA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第2集",
+              "stage": 2,
+              "episodeInfo": {
+                "benefitType": 0,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3MzkzMjAwOA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第3集",
+              "stage": 3,
+              "episodeInfo": {
+                "benefitType": 0,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3Mzk1MzQ4OA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第4集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 4,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2NDc1NzQxMg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第5集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 5,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2NTIyMTIyMA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第6集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 6,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3NDY1MjAyNA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第7集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 7,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2NTQ2OTE3Mg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第8集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 8,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2NTQ4MzM4NA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第9集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 9,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2NTUzMzEwNA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第10集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 10,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2NjcyMzc0MA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第11集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 11,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2NTY3MjI3Mg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第12集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 12,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2NjYxNjU5Mg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第13集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 13,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2NjA3Mzk5Ng==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第14集",
+              "mark": {
+                "text": "限免",
+                "color": "RED",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 14,
+              "episodeInfo": {
+                "benefitType": 0,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3NTgxODgwMA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第15集",
+              "mark": {
+                "text": "限免",
+                "color": "RED",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 15,
+              "episodeInfo": {
+                "benefitType": 0,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3NTU2NjA1Ng==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第16集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 16,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3NzU3OTE2NA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第17集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 17,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3NjgxNTU1Mg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第18集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 18,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2ODIwOTgyNA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第19集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 19,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3Njk4MDE4NA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第20集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 20,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3NzAwMzAwMA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第21集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 21,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2Nzg0NDkyMA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第22集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 22,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2ODM3NjA5Ng==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第23集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 23,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3NjIyNjcxNg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第24集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 24,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2ODM3NjEwMA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第25集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 25,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2ODM3MDIzNg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第26集",
+              "mark": {
+                "text": "VIP",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 26,
+              "episodeInfo": {
+                "benefitType": 1,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3Nzg2OTczNg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第27集",
+              "mark": {
+                "text": "收官礼",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 27,
+              "episodeInfo": {
+                "benefitType": 4,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2ODM3MzE4NA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第28集",
+              "mark": {
+                "text": "收官礼",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 28,
+              "episodeInfo": {
+                "benefitType": null,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3Nzg2NjcyMA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第29集",
+              "mark": {
+                "text": "收官礼",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 29,
+              "episodeInfo": {
+                "benefitType": null,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2ODM3MDI2NA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 第30集",
+              "mark": {
+                "text": "收官礼",
+                "color": "GOLDEN",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 30,
+              "episodeInfo": {
+                "benefitType": null,
+                "isZp": true
+              },
+              "videoType": "正片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2ODM3MDI4MA==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "魏娆身份被揭露，欺君罪名危在旦夕",
+              "mark": {
+                "text": "预告",
+                "color": "BLUE",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 27,
+              "episodeInfo": {
+                "benefitType": 0,
+                "isZp": false
+              },
+              "videoType": "预告片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2ODk3ODI1Mg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "魏娆被做局凌迟上刑场，反杀成就get",
+              "mark": {
+                "text": "预告",
+                "color": "BLUE",
+                "iconfont": null,
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": 28,
+              "episodeInfo": {
+                "benefitType": 0,
+                "isZp": false
+              },
+              "videoType": "预告片",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU2ODk4MTA3Ng==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            },
+            {
+              "title": "嫁金钗 周预告",
+              "mark": {
+                "text": "",
+                "color": "SVIP_COLORFUL",
+                "iconfont": "SVIP",
+                "colorValue": null,
+                "img": null,
+                "img2": null,
+                "img3": null,
+                "ratio": null,
+                "token": null,
+                "imgList": null
+              },
+              "stage": "周预告",
+              "episodeInfo": {
+                "benefitType": 3,
+                "isZp": false
+              },
+              "videoType": "剧集看点",
+              "action": {
+                "type": "JUMP_TO_VIDEO",
+                "value": "XNjU3NTY1MzQzNg==",
+                "extra": {
+                  "showId": "bcaa87c7834c46f99e7b",
+                  "extraParams": {
+                    "allowMulti": false,
+                    "playMode": null
+                  },
+                  "playMode": null
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

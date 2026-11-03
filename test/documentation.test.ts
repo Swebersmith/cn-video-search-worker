@@ -7,6 +7,30 @@ import { CAPABILITIES } from '../src/aggregate';
 
 const tick = () => new Promise<void>(resolve => setImmediate(resolve));
 
+test('AI selector defaults to rules, sends selected mode and follows detail URLs from that search', async () => {
+  const {window,document}=parseHTML(DOCS_HTML);
+  for(const [id,value] of [['mode','series'],['platform','iqiyi'],['ai-mode','off']]) Object.defineProperty(document.getElementById(id)!,'value',{value,writable:true});
+  Object.assign(window,{location:{origin:'https://test'}});
+  Object.assign(document.getElementById('query-form')!,{reportValidity:()=>true});
+  const calls:string[]=[];
+  new Script(DOCS_JS).runInNewContext({window,document,URL,AbortSignal,navigator:{},setTimeout:()=>0,fetch:async(url:string)=>{
+    if(url==='/v1/platforms')return Response.json({platforms:[]});
+    calls.push(url);const u=new URL(url);const ai=u.searchParams.get('ai');
+    if(u.pathname.includes('/series/'))return Response.json({ok:true,complete:true,episodes:[],ai_mode:ai,ai:{status:'not_needed'}});
+    return Response.json({ai_mode:ai,results:[{content_type:'series',platform:'iqiyi',id:'123',title:'同名剧',detail_url:'/v1/iqiyi/series/123?q=剧&ai='+ai}]});
+  }});
+  for(const value of ['off','on']) {
+    (document.getElementById('ai-mode') as any).value=value;
+    document.getElementById('query-form')!.dispatchEvent(new window.Event('submit',{cancelable:true}));await tick();await tick();
+    assert.equal(new URL(calls.at(-1)!).searchParams.get('ai'),value);
+    document.querySelector('.series-card>button')!.dispatchEvent(new window.Event('click'));await tick();await tick();
+    assert.equal(new URL(calls.at(-1)!).searchParams.get('ai'),value);
+  }
+  (document.getElementById('mode') as any).value='official';document.getElementById('mode')!.dispatchEvent(new window.Event('change'));
+  assert.equal((document.getElementById('ai-mode') as any).disabled,true);
+  assert.equal(new URL(document.getElementById('request-url')!.textContent!).searchParams.has('ai'),false);
+});
+
 test('official explorer sends native page without local result limit and renders raw cards as inert text', async () => {
   const {window,document}=parseHTML(DOCS_HTML);
   for (const [id,value] of [['platform','all'],['mode','official']])Object.defineProperty(document.getElementById(id)!,'value',{value,writable:true});
@@ -111,14 +135,15 @@ test('documentation exposes official, series and independent resource modes, no 
   Object.assign(window,{location:{origin:'https://test'}});Object.assign(document.getElementById('query-form')!,{reportValidity:()=>true});
   new Script(DOCS_JS).runInNewContext({window,document,URL,AbortSignal,navigator:{},setTimeout:()=>0,fetch:async(url:string)=>{
     if(url==='/v1/platforms')return new Response(JSON.stringify({platforms:Object.values(CAPABILITIES)}));
-    if(url.includes('/series/'))return new Response(JSON.stringify({ok:true,total:21,main_total:21,complete:false,unavailable_episode_numbers:[22],missing_episode_numbers:[],ai:{status:'applied',recovered:0},episodes:[],previews:[{platform:'youku',title:'第22集预告',url:'https://v.youku.com/v_show/id_Xreal.html',episode_number:22,episode_type:'preview'}]}));
+    if(url.includes('/series/'))return new Response(JSON.stringify({ok:true,total:21,main_total:21,complete:false,unavailable_episode_numbers:[22],missing_episode_numbers:[],ai:{status:'applied',recovered:0},episodes:[{platform:'youku',title:'第22集预告',url:'https://v.youku.com/v_show/id_Xreal.html',episode_number:22,episode_type:'preview',badges:['SVIP','预告'] }]}));
     return new Response(JSON.stringify({results:[{platform:'youku',content_type:'series',id:'longSeries',title:'嫁金钗',detail_url:'/v1/youku/series/longSeries?q=嫁金钗'}]}));
   }});
   document.getElementById('query-form')!.dispatchEvent(new window.Event('submit',{cancelable:true}));await tick();await tick();
   document.querySelector('.series-card>button')!.dispatchEvent(new window.Event('click'));await tick();await tick();
   assert.match(document.querySelector('.catalogue-panel')!.textContent||'',/正片待确认/);assert.match(document.querySelector('.catalogue-panel')!.textContent||'',/DeepSeek/);
   assert.equal(document.querySelectorAll('.catalogue-panel details').length,0);
-  assert.equal(document.querySelectorAll('.preview-episodes a').length,1);
-  assert.equal(document.querySelectorAll('.main-episodes').length,1);
+  assert.equal(document.querySelectorAll('.episode-list a').length,1);
+  assert.equal(document.querySelectorAll('.preview-episodes,.main-episodes').length,0);
   assert.ok(!document.querySelector('.catalogue-panel')!.textContent?.includes('缺集编号'));
+  assert.deepEqual([...document.querySelectorAll('.episode-tags .episode-tag')].map(e=>e.textContent),['SVIP','预告']);
 });

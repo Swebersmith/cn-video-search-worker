@@ -11,6 +11,7 @@ export type ContentCategory =
   | 'other'
   | 'unknown';
 const allowed = new Set<ContentCategory>(['movie', 'tv', 'variety', 'anime', 'documentary']);
+export const aiEnabled = (env: Env): boolean => env.AI_ENABLED !== 'off' && Boolean(env.DEEPSEEK_API_KEY);
 export interface AIState {
   status: 'applied' | 'fallback' | 'disabled' | 'not_needed';
   model: string;
@@ -116,8 +117,8 @@ async function askAI(
 
 export async function classifySeries(series: SeriesSummary[], env: Env, fetcher: Fetcher) {
   const categories = new Map(series.map((s) => [s.id, knownCategory(s.title, s.type_name, s.kind)]));
-  const ai = aiState(env, !series.length ? 'not_needed' : env.DEEPSEEK_API_KEY ? 'applied' : 'disabled');
-  if (!series.length || !env.DEEPSEEK_API_KEY) return { categories, ai };
+  const ai = aiState(env, !series.length ? 'not_needed' : aiEnabled(env) ? 'applied' : 'disabled');
+  if (!series.length || !aiEnabled(env)) return { categories, ai };
   try {
     const response = await askAI(
       '将作品分为 movie电影、tv长电视剧、variety完整综艺、anime动漫、documentary纪录片、short_drama短剧/微短剧、other陪看/精讲/花絮/短视频/创作者等、unknown。只允许前五种进入长影视目录。短剧即使有很多集也必须排除。不要把酷陪看、解说、预告当正片作品。信息不足用 unknown。输出 {"items":[{"id":"原id","category":"tv","confidence":0.98}]}，每个输入 id 一项。',
@@ -168,6 +169,7 @@ export async function classifySeries(series: SeriesSummary[], env: Env, fetcher:
 }
 
 export interface EpisodeCandidate {
+  badges?: string[];
   ref: string;
   url: string;
   title: string;
@@ -189,12 +191,12 @@ export async function recognizeEpisodes(
 ) {
   const found: CatalogueEpisode[] = [],
     rejected_refs: string[] = [],
-    ai = aiState(env, env.DEEPSEEK_API_KEY ? 'applied' : 'disabled');
+    ai = aiState(env, aiEnabled(env) ? 'applied' : 'disabled');
   if (!candidates.length) {
     ai.status = 'not_needed';
     return { episodes: found, ai, rejected_refs };
   }
-  if (!env.DEEPSEEK_API_KEY) return { episodes: found, ai, rejected_refs };
+  if (!aiEnabled(env)) return { episodes: found, ai, rejected_refs };
   const selected = candidates.slice(0, 64);
   try {
     const response = await askAI(

@@ -7,12 +7,15 @@ const nullableInt = { type: ['integer', 'null'] };
 const numbers = { type: 'array', items: { type: 'integer' } };
 const strings = { type: 'array', items: { type: 'string' } };
 const security = [{ bearerAuth: [] }, { apiKey: [] }, {}];
+const aiParameter = { name: 'ai', in: 'query', schema: {type:'string',enum:['on','off'],default:'off'},
+  description: '仅影视目录搜索及详情。off 完全不调用 AI；on 使用配置的 DeepSeek 辅助分类/复核，异常时退回规则。detail_url 保留此选择。' };
 const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 const response = (name: string, description: string) => ({
   description,
   content: { 'application/json': { schema: ref(name) } },
 });
 const searchParameters = [
+  // Keep q first: resource query parameters share that contract.
   {
     name: 'q',
     in: 'query',
@@ -44,6 +47,7 @@ const searchParameters = [
     schema: { type: 'integer', minimum: 1, maximum: 20, default: 5 },
     description: '仅 series 的每站作品数，不限制详情目录；official 忽略。',
   },
+  aiParameter,
 ];
 const searchContract = {
   summary: '聚合五站官网搜索或长影视目录',
@@ -147,6 +151,7 @@ export const openapi = {
           url: { type: 'string', format: 'uri' },
           episode_type: { enum: ['main', 'extra', 'preview'] },
           recognition: { enum: ['structured', 'ai'] },
+          badges: { ...strings, description: '官网分集角标原文，例如 VIP、SVIP、预告、收官礼、超前点映；空数组表示没有文本角标。' },
         },
       },
       OfficialResult: {
@@ -171,7 +176,7 @@ export const openapi = {
           total: { type: 'integer' },
           main_total: { type: 'integer' },
           extra_total: { type: 'integer' },
-          preview_total: { type: 'integer', description: 'previews 中的预告数量，不计入 total 或正片完整性。' },
+          preview_total: { type: 'integer', description: '统一 episodes 列表中保留的预告数量，计入 total，不计入正片完整性。' },
           expected_total: nullableInt,
           update_notice: { type: 'string' },
           complete: {
@@ -184,14 +189,8 @@ export const openapi = {
             ...numbers,
             description: '发现预告链接但正片尚未确认的编号；不计入正片，也不重复列为缺失链接。',
           },
-          episodes: { type: 'array', items: ref('Episode'), description: '正片与附加目录。' },
-          all_episodes: { type: 'array', items: ref('Episode'), description: '全部链接，合并 episodes 与 previews 并按集数排列；预告带 episode_type=preview。需要一次取得所有分集及预告时读取此字段。' },
-          all_total: { type: 'integer', description: 'all_episodes 的链接总数，包含预告。' },
-          previews: {
-            type: 'array',
-            items: ref('Episode'),
-            description: '明确标为预告的官方链接，与正片分开。',
-          },
+          episodes: { type: 'array', items: ref('Episode'), description: '唯一分集列表，包含正片、附加内容和预告，按集数排序。同集已有正片时省略对应预告；无具体集号的预告保留。' },
+          ai_mode: {type:'string',enum:['on','off']},
           ai: ref('AI'),
           warnings: strings,
           cached: { type: 'boolean' },
@@ -206,6 +205,7 @@ export const openapi = {
           ok: { type: 'boolean' },
           query: { type: 'string' },
           view: { enum: ['official', 'series'] },
+          ai_mode: {type:'string',enum:['on','off']},
           page: { type: 'integer' },
           limit: { type: 'integer' },
           partial: { type: 'boolean' },
@@ -224,7 +224,8 @@ export const openapi = {
                 total: nullableInt,
                 truncated: { type: 'boolean' },
                 warnings: strings,
-                ai: ref('AI'),
+                ai_mode: {type:'string',enum:['on','off']},
+          ai: ref('AI'),
                 cached: { type: 'boolean' },
                 fetched_at: { type: 'string' },
                 page: { type: 'integer' },
@@ -311,9 +312,10 @@ for (const p of Object.values(CAPABILITIES)) {
         summary: `${p.name}指定作品目录与 AI 分集识别`,
         security,
         description:
-          '使用搜索返回的 detail_url。AI 仅选取已验证的官方候选，预告单列；缺少 Secret 或 AI 失败时使用规则处理并返回 ai 状态。',
+          '使用搜索返回的 detail_url。默认 ai=off 仅规则，可选 ai=on；正片、预告和附加内容统一返回 episodes，同集已有正片则省略预告。AI 失败时退回规则。',
         parameters: [
           { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          aiParameter,
           {
             name: 'q',
             in: 'query',

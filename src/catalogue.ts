@@ -5,11 +5,13 @@ import {
   isLongContent,
   recognizeEpisodes,
   aiState,
+  aiEnabled,
   type AIState,
   type ContentCategory,
   type EpisodeCandidate,
 } from './ai';
 import { episodeCandidates } from './episode-evidence';
+import { loadPlaybackCatalogue } from './playback';
 import { bounded, PLATFORMS, type CacheStore, type Env, type Fetcher, type Platform } from './types';
 import {
   iqiyiSearchData,
@@ -84,6 +86,7 @@ export interface SeriesSummary {
   content_type: 'series';
 }
 export interface CatalogueEpisode {
+  badges?: string[];
   episode_number: number | null;
   title: string;
   url: string;
@@ -119,9 +122,6 @@ export interface CatalogueResult {
   partial: boolean;
   missing_episode_numbers: number[];
   episodes: CatalogueEpisode[];
-  all_episodes: CatalogueEpisode[];
-  all_total: number;
-  previews: CatalogueEpisode[];
   unavailable_episode_numbers: number[];
   ai: AIState;
   warnings: string[];
@@ -386,7 +386,7 @@ async function freshDiscovery(
           String(a.channel).endsWith(',1') ? 1 : a.totalNumber,
           obj(a.year).value,
           c.url,
-          String(a.channel).split(',')[0],
+          String(a.channel).split(',')[0] + (a.isMiniDrama === true || a.isMiniDrama === 1 ? ' · 短剧' : ''),
           String(a.channel).endsWith(',1') ? 'movie' : 'series',
         ),
         preview: previews,
@@ -534,7 +534,7 @@ async function discovery(
   cache?: CacheStore,
 ): Promise<Discovery> {
   const key = new Request(
-      `https://cn-video-search.internal/series/long-ai/v5/${platform}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
+      `https://cn-video-search.internal/series/long-ai/v6/${platform}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(aiEnabled(env) ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}&mode=${env.AI_ENABLED === 'off' ? 'off' : 'on'}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -580,7 +580,9 @@ export async function searchSeries(
       total: d.records.length,
       count: Math.min(limit, d.records.length),
       truncated: d.records.length > limit,
-      results: d.records.slice(0, limit).map((r) => r.series),
+      results: d.records.slice(0, limit).map((r) => ({...r.series,
+        detail_url: `${r.series.detail_url}&ai=${env.AI_ENABLED === 'off' ? 'off' : 'on'}`,
+      })),
       warnings: d.warnings,
       cached: d.cached,
       ai: d.ai,
@@ -611,7 +613,7 @@ export async function seriesCatalogue(
   cache?: CacheStore,
 ): Promise<CatalogueResult> {
   const key = new Request(
-      `https://cn-video-search.internal/catalogue/long-ai/v8/${platform}/${id}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
+      `https://cn-video-search.internal/catalogue/long-ai/v10/${platform}/${id}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(aiEnabled(env) ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}&mode=${env.AI_ENABLED === 'off' ? 'off' : 'on'}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -942,6 +944,20 @@ export async function seriesCatalogue(
       warnings.push('SEARCH_PREVIEW_FALLBACK');
     }
   }
+  // Playback pages carry access tiers and premieres often absent from search catalogues.
+  // Keep the player's official catalogue APIs as fallback for client-rendered/challenged pages.
+  if (!excluded) try {
+    const playUrl = episodes.find(e => e.episode_type === 'main')?.url || seed?.preview[0]?.url || meta.url;
+    const page = await loadPlaybackCatalogue(platform, id, playUrl, env, fetcher);
+    if (page.candidates.length) {
+      candidates.push(...page.candidates);
+      if (page.update_notice) updateNotice = page.update_notice;
+      source += '+playback_page';
+      if (!verified) verified = true;
+    }
+  } catch (e) {
+    warnings.push(`playback:${e instanceof UpstreamError ? e.message : 'UPSTREAM_ERROR'}`);
+  }
   // Keep original source evidence even for structured entries and fallback search links.
   for (const e of episodes) {
     collect({ ...e, title: e.title, order: e.episode_number }, 'parsed_episode');
@@ -951,11 +967,21 @@ export async function seriesCatalogue(
     const old = candidateMap.get(c.url);
     if (!old) candidateMap.set(c.url, { ...c });
     else {
-      old.preview ||= c.preview;
-      old.extra ||= c.extra;
+      if (c.source.includes('_playback_page:')) {
+        old.preview = c.preview;
+        old.extra = c.extra;
+        old.source = c.source;
+        old.badges = c.badges || [];
+        old.number_hint = c.number_hint;
+        old.title = c.title;
+      } else if (!old.source.includes('_playback_page:')) {
+        old.preview ||= c.preview;
+        old.extra ||= c.extra;
+        old.badges = [...new Set([...(old.badges || []), ...(c.badges || [])])];
+      }
       old.number_hint ??= c.number_hint;
       old.duration_seconds ??= c.duration_seconds;
-      if (c.title.length > old.title.length) old.title = c.title;
+      if (!old.source.includes('_playback_page:') && c.title.length > old.title.length) old.title = c.title;
       old.label = [...new Set([old.label, c.label])].filter(Boolean).join(' ').slice(0, 700);
     }
   }
@@ -977,9 +1003,9 @@ export async function seriesCatalogue(
   // duplicate episode numbers or a stale search total. The model cannot hide these URLs.
   const includedUrls = new Set(episodes.map((e) => e.url));
   for (const c of candidates) {
-    if (!c.preview && !c.extra && c.number_hint !== null && !includedUrls.has(c.url)) {
-      episodes.push({ platform, episode_number: c.number_hint, title: c.title, url: c.url,
-        episode_type: 'main', recognition: 'structured' });
+    if (!c.preview && (c.extra ? c.source.includes('_playback_page:') : c.number_hint !== null) && !includedUrls.has(c.url)) {
+      episodes.push({ platform, episode_number: c.extra ? null : c.number_hint, title: c.title, url: c.url,
+        episode_type: c.extra ? 'extra' : 'main', recognition: 'structured' });
       includedUrls.add(c.url);
     }
   }
@@ -1017,6 +1043,9 @@ export async function seriesCatalogue(
   );
   const main = episodes.filter((e) => e.episode_type === 'main'),
     numbers = new Set(main.map((e) => e.episode_number).filter((n): n is number => n !== null));
+  if (source.includes('+playback_page') && platform === 'youku' && expected !== null) {
+    expected = Math.max(expected, Math.max(0, ...numbers) + episodes.length - main.length);
+  }
   // Tencent's search count includes preview slots, including previews of already published episodes.
   // Normalize only when the count is fully explained by the verified returned entries.
   if (platform === 'tencent' && verified && allPages &&
@@ -1053,26 +1082,28 @@ export async function seriesCatalogue(
     !warnings.includes('UPDATE_TOTAL_MISMATCH');
   if (unavailable.length) warnings.push('EPISODE_MAIN_UNAVAILABLE');
   if (!complete) warnings.push('EPISODE_LIST_INCOMPLETE');
-  const allEpisodes = [...episodes, ...previews].sort((a, b) =>
+  // A numbered main supersedes trailers for that episode; unnumbered trailers stay visible.
+  const visiblePreviews = previews.filter(e => e.episode_number === null || !numbers.has(e.episode_number));
+  const allEpisodes = [...episodes, ...visiblePreviews].map(e => ({ ...e,
+    badges: [...new Set([...(candidateMap.get(e.url)?.badges || []), ...(e.badges || []),
+      ...(e.episode_type === 'preview' ? ['预告'] : [])])],
+  })).sort((a, b) =>
     (a.episode_number ?? 100000) - (b.episode_number ?? 100000) ||
     Number(a.episode_type === 'preview') - Number(b.episode_type === 'preview'));
   const result: CatalogueResult = {
     ok: allEpisodes.length > 0,
     platform,
-    series: meta,
-    total: episodes.length,
+    series: {...meta, detail_url: `${meta.detail_url}&ai=${env.AI_ENABLED === 'off' ? 'off' : 'on'}`},
+    total: allEpisodes.length,
     main_total: main.length,
     extra_total: episodes.length - main.length,
-    preview_total: previews.length,
+    preview_total: visiblePreviews.length,
     expected_total: expected,
     ...(updateNotice ? { update_notice: updateNotice } : {}),
     complete,
     partial: !complete,
     missing_episode_numbers: missing,
-    episodes,
-    all_episodes: allEpisodes,
-    all_total: allEpisodes.length,
-    previews,
+    episodes: allEpisodes,
     unavailable_episode_numbers: unavailable,
     ai,
     warnings: [...new Set(warnings)],

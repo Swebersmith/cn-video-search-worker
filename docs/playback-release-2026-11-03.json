@@ -1,0 +1,29 @@
+{
+  "version": "2.3.1",
+  "status": "deployed",
+  "target": "https://videosearch.webber.qzz.io",
+  "worker": "cn-video-search",
+  "deployment_version_id": "425694c9-9b81-42d3-b026-95b2e1145c99",
+  "unit_tests_passed": 70,
+  "runtime_tests_passed": 1,
+  "typecheck": "passed",
+  "build": "passed",
+  "production_deployment_executed": true,
+  "ai_default": "off",
+  "ai_options": [
+    "off",
+    "on"
+  ],
+  "production_probe_successes": 8,
+  "production_probe_total": 10,
+  "upstream_limitations": [
+    "Bilibili returns HTTP 412 from Cloudflare despite genuine anonymous session initialization; reported as unavailable."
+  ],
+  "github_push": {
+    "status": "authorized_for_push",
+    "repository": "Swebersmith/cn-video-search-worker",
+    "public": true,
+    "reason": "User explicitly approved pushing this source and tests to the named public repository in the follow-up message.",
+    "user_approved_public_repository": true
+  }
+}

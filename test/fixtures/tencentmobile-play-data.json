@@ -1,0 +1,37 @@
+{
+  "global": {
+    "currentCid": "mzc00200zsqz54y"
+  },
+  "playlist": {
+    "playList": {
+      "highLight": [],
+      "list": [
+        [
+          {
+            "index": 0,
+            "page": 0,
+            "cid": "mzc00200zsqz54y",
+            "vid": "v4102cvlyfo",
+            "title": "1",
+            "pic": "https://vpic-cover.puui.qpic.cn/v4102cvlyfo/v4102cvlyfo_1793245174_hz.jpg/496",
+            "playTitle": "走马上任 第01集",
+            "aspect": "1.777778",
+            "uniImgTag": "{\"tag_2\":{\"text\":\"\",\"font_color\":\"\",\"background_color\":\"\",\"font_image_url\":\"\",\"mark_image_url\":\"\",\"params\":\"\",\"params_2\":\"\"},\"tag_3\":{\"text\":\"\",\"font_color\":\"\",\"background_color\":\"\",\"font_image_url\":\"\",\"mark_image_url\":\"\",\"params\":\"\",\"params_2\":\"\"},\"tag_4\":{\"text\":\"\",\"font_color\":\"\",\"background_color\":\"\",\"font_image_url\":\"\",\"mark_image_url\":\"\",\"params\":\"\",\"params_2\":\"\"},\"tag_1\":{\"text\":\"\",\"font_color\":\"\",\"background_color\":\"\",\"font_image_url\":\"\",\"mark_image_url\":\"\",\"params\":\"\",\"params_2\":\"\"}}",
+            "duration": "32:28",
+            "videoType": "正片",
+            "isVidTypeInspire": false
+          }
+        ]
+      ],
+      "tabs": [],
+      "fetched": true,
+      "hasTab": true,
+      "currentTabIndex": 0,
+      "nextPageNum": 1,
+      "prePageNum": -1,
+      "uiType": "NUM",
+      "varityTrivas": {},
+      "otherTriva": null
+    }
+  }
+}

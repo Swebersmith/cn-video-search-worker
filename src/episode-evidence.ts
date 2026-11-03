@@ -4,6 +4,28 @@ import type { EpisodeCandidate } from './ai';
 
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Obj) : {});
+// Preserve official text, including unfamiliar promotional labels; do not guess access from numeric codes.
+export function episodeBadges(v: Obj): string[] {
+  const labels: unknown[] = [v.badge, v.tagText, obj(v.mark).text, obj(v.mark).iconfont,
+    obj(v.iconCorner).tagText, obj(v.cornerLabelStyle).font, obj(v.corner).text];
+  // Current player tags supersede legacy image asset names such as "VIP-包月only-3.0".
+  const currentTag = v.uni_imgtag || v.uniImgTag;
+  for (const raw of [currentTag || v.imgtag_all]) {
+    try { labels.push(...Object.values(typeof raw === 'string' && raw.length < 16000 ? obj(JSON.parse(raw)) : obj(raw)).map(t => obj(t).text)); } catch {}
+  }
+  for (const raw of [v.corner, v.cornerLabel, v.badges, v.tags]) {
+    if (Array.isArray(raw)) labels.push(...raw.filter(t => !/down|bottom/i.test(String(obj(t).area || ''))).map(t => typeof t === 'string' ? t : obj(t).text || obj(t).font));
+  }
+  // iQiyi supplies the original VIP icon instead of text in its album player API.
+  if (typeof v.payMarkUrl === 'string' && /^https?:\/\/[^/]+\.iqiyipic\.com\//i.test(v.payMarkUrl)) {
+    if (/\/svip_[^/]+\.(?:png|webp)$/i.test(v.payMarkUrl)) labels.push('SVIP');
+    else if (/\/vip_[^/]+\.(?:png|webp)$/i.test(v.payMarkUrl)) labels.push('VIP');
+  }
+  for (const raw of [v.label, v.c_title_output, v.displayName]) {
+    if (typeof raw === 'string' && /^(?:S?VIP|预告|收官礼|超前点映|超前点播|抢先看|提前看|会员试看|付费|限免|免费|会员|大会员)$/i.test(raw.trim())) labels.push(raw);
+  }
+  return [...new Set(labels.map(text).filter(Boolean))].slice(0, 20);
+}
 function episodeNumber(v: unknown): number | null {
   if (typeof v !== 'string' && typeof v !== 'number') return null;
   const s = String(v).trim(),
@@ -70,6 +92,8 @@ export function episodeCandidates(
       v.title,
       v.name,
       v.long_title,
+      v.videoType,
+      ...episodeBadges(v),
       v.share_copy,
       section,
       ...tags,
@@ -87,13 +111,17 @@ export function episodeCandidates(
       v.is_trailer === 1 ||
       v.is_trailer === '1';
     const extra =
-      /番外|彩蛋|花絮|特辑|加更|纯享|陪看|直拍|精讲/.test(label + ' ' + ownTitle) ||
+      /番外|彩蛋|花絮|特辑|加更|纯享|陪看|直拍|精讲|超前营业|特别企划|Reaction/i.test(label + ' ' + ownTitle) ||
       Number(v.peripheryVideoType || 0) !== 0;
+    // iQiyi can append interviews/clips with their own ordering to an album response.
+    // Their list position is not an episode number in the main series.
+    if (platform === 'iqiyi' && v.contentType !== undefined && Number(v.contentType) !== 1 && !preview && !extra) return;
     const n =
       [
         v.orderId,
         v.order,
         v.orderStage,
+        v.stage,
         v.t1,
         v.episode_number,
         v.episodeNo,
@@ -158,6 +186,7 @@ export function episodeCandidates(
       if (!ownTitle || (n === null && !preview && !extra)) continue;
       const duration = Number(v.seconds || v.duration);
       const candidate: EpisodeCandidate = {
+        badges: episodeBadges(v),
         ref: '',
         url: c.url,
         title: ownTitle,
@@ -174,6 +203,7 @@ export function episodeCandidates(
         old.preview ||= preview;
         old.extra ||= extra;
         old.number_hint ??= n;
+        old.badges = [...new Set([...(old.badges || []), ...candidate.badges || []])];
       }
     }
     for (const [k, child] of Object.entries(v)) walk(child, `${path}.${k}`, ownTitle, depth + 1, section);

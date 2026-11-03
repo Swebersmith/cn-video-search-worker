@@ -8,6 +8,7 @@ import { searchResource, validResourceId } from './resources';
 import { loadResourceConfig, publicResourceSources } from './resource-config';
 import { RESOURCE_ADMIN_HTML, RESOURCE_ADMIN_CSS, RESOURCE_ADMIN_JS } from './resource-admin-ui';
 import { handleResourceAdmin } from './resource-admin';
+import { bilibiliSessionFetcher } from './providers';
 
 export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
   return async (request: Request, env: Env = {}): Promise<Response> => {
@@ -87,10 +88,10 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     }
     const allowed = new Set(
       resourceDetail ? [] : resourceSearch ? ['q', 'sources', 'page'] : detailPlatform
-        ? ['q']
+        ? ['q', 'ai']
         : single
-          ? ['q', 'view', 'limit', 'page']
-          : ['q', 'view', 'platforms', 'limit', 'page'],
+          ? ['q', 'view', 'limit', 'page', 'ai']
+          : ['q', 'view', 'platforms', 'limit', 'page', 'ai'],
     );
     for (const name of url.searchParams.keys()) {
       if (!allowed.has(name) || url.searchParams.getAll(name).length !== 1)
@@ -128,10 +129,12 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
         providers: providers.map(({ results: _r, ...p }) => p), took_ms: Date.now() - started }, unavailable ? 503 : 200);
     }
     if (detailPlatform && detail) {
+      const aiMode = url.searchParams.get('ai') ?? 'off';
+      if (!['on', 'off'].includes(aiMode)) return fail('INVALID_AI', 'ai must be on or off.', 400);
       if (!validSeriesId(detailPlatform, detail[2]))
         return fail('INVALID_SERIES_ID', 'Invalid series ID for this platform.', 400);
-      const result = await seriesCatalogue(detailPlatform, detail[2], query, env, fetcher, cache);
-      return reply({ ...result, took_ms: Date.now() - started }, result.ok ? 200 : 503);
+      const result = await seriesCatalogue(detailPlatform, detail[2], query, {...env, AI_ENABLED: aiMode as 'on' | 'off'}, detailPlatform === 'bilibili' ? bilibiliSessionFetcher(env, fetcher) : fetcher, cache);
+      return reply({ ...result, ai_mode: aiMode, took_ms: Date.now() - started }, result.ok ? 200 : 503);
     }
     const selection = url.searchParams.get('platforms') ?? 'all';
     const ids = single
@@ -150,6 +153,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     if (!['official', 'series'].includes(view))
       return fail('INVALID_VIEW', 'view must be official or series.', 400);
     if (view === 'official') {
+      if (url.searchParams.has('ai')) return fail('INVALID_PARAMETER', 'ai is available for series search and detail only.', 400);
       const page = url.searchParams.get('page') ?? '1';
       if (!/^\d+$/.test(page) || Number(page) < 1 || Number(page) > 1000)
         return fail('INVALID_PAGE', 'page must be an integer from 1 to 1000.', 400);
@@ -177,11 +181,13 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     if (url.searchParams.has('page'))
       return fail('INVALID_PARAMETER', 'page is available for official search only.', 400);
     if (view === 'series') {
+      const aiMode = url.searchParams.get('ai') ?? 'off';
+      if (!['on', 'off'].includes(aiMode)) return fail('INVALID_AI', 'ai must be on or off.', 400);
       const limit = url.searchParams.get('limit') ?? '5';
       if (!/^\d+$/.test(limit) || Number(limit) < 1 || Number(limit) > 20)
         return fail('INVALID_LIMIT', 'limit must be an integer from 1 to 20.', 400);
       const providers = await Promise.all(
-        platforms.map((p) => searchSeries(p, query, Number(limit), env, fetcher, cache)),
+        platforms.map((p) => searchSeries(p, query, Number(limit), {...env, AI_ENABLED: aiMode as 'on' | 'off'}, p === 'bilibili' ? bilibiliSessionFetcher(env, fetcher) : fetcher, cache)),
       );
       const results = providers.flatMap((p) => p.results),
         unavailable = providers.every((p) => p.status === 'unavailable');
@@ -190,6 +196,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
           ok: !unavailable,
           query,
           view,
+          ai_mode: aiMode,
           partial: providers.some((p) => ['unavailable', 'degraded'].includes(p.status)),
           total: results.length,
           limit: Number(limit),

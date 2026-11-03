@@ -1,0 +1,1157 @@
+{
+  "data": [
+    {
+      "cid": "753011",
+      "vid": "22869999",
+      "asideData": {
+        "modules": [
+          {
+            "moduleId": "179",
+            "dataType": 201,
+            "displayType": 2,
+            "title": "选集",
+            "isRefresh": 1,
+            "params": "",
+            "url": "http://mobile.api.mgtv.com/vod/video/positives?jumpUrl=imgotv%3A%2F%2Fplayer&previewType=&t_mainClipId=753011&t_mainDisplayType=2&t_positiveVodRework=1&t_relClipIds=756451%2C762683&t_seriesClipIds=867929%2C753011%2C645759%2C334849%2C327378%2C321502%2C308921&t_userIsVip=unknown&t_videoId=22869999&vodAbStrategy=1",
+            "rtitle": "更多",
+            "rtitleSource": "default",
+            "spTitle": "",
+            "loaded": 1,
+            "isMore": 1,
+            "nextModuleId": "180",
+            "watchCalendarUrl": null,
+            "clipInfo": null,
+            "toolInfo": null,
+            "media": {
+              "title": null,
+              "rtitle": null,
+              "tabs": [
+                {
+                  "tabId": "867929",
+                  "name": "2026",
+                  "current": 0
+                },
+                {
+                  "tabId": "753011",
+                  "name": "2025",
+                  "current": 1
+                },
+                {
+                  "tabId": "645759",
+                  "name": "2024",
+                  "current": 0
+                },
+                {
+                  "tabId": "334849",
+                  "name": "当打之年",
+                  "current": 0
+                },
+                {
+                  "tabId": "327378",
+                  "name": "2019",
+                  "current": 0
+                },
+                {
+                  "tabId": "321502",
+                  "name": "2018",
+                  "current": 0
+                },
+                {
+                  "tabId": "308921",
+                  "name": "2017",
+                  "current": 0
+                }
+              ],
+              "page": null,
+              "list": null,
+              "fallback": 0,
+              "filters": [
+                {
+                  "filterType": "contentType",
+                  "contentType": "feature",
+                  "name": "正片",
+                  "displayType": 2,
+                  "current": 1,
+                  "list": [
+                    {
+                      "videoId": "22869999",
+                      "clipId": "753011",
+                      "serialno": "1",
+                      "plId": "0",
+                      "title": "第1期：首轮竞演开启",
+                      "detailTitle": {
+                        "prefix": "1",
+                        "title": "第1期：首轮竞演开启"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-05-16",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": null,
+                      "anchorMarker": null,
+                      "vipMark": 0,
+                      "rcSource": null,
+                      "hImgUrl": "https://0img.hitv.com/preview/sp_images/2025/05/16/202505162010104234877.jpg",
+                      "vImgUrl": "https://0img.hitv.com/preview/sp_images/2025/05/16/202505162010305988813.jpg"
+                    },
+                    {
+                      "videoId": "22911540",
+                      "clipId": "753011",
+                      "serialno": "3",
+                      "plId": "0",
+                      "title": "超前营业：歌手与合伙人初见面",
+                      "detailTitle": {
+                        "prefix": "3",
+                        "title": "超前营业：歌手与合伙人初见面"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-05-22",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://0img.hitv.com/preview/sp_images/2025/05/21/202505212150272006138.jpg",
+                      "vImgUrl": "https://1img.hitv.com/preview/sp_images/2025/05/21/202505212150330321254.jpg"
+                    },
+                    {
+                      "videoId": "22923817",
+                      "clipId": "753011",
+                      "serialno": "4",
+                      "plId": "0",
+                      "title": "第2期：首轮揭榜赛开启",
+                      "detailTitle": {
+                        "prefix": "4",
+                        "title": "第2期：首轮揭榜赛开启"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-05-23",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://0img.hitv.com/preview/sp_images/2025/05/23/202505232009533205553.jpg",
+                      "vImgUrl": "https://3img.hitv.com/preview/sp_images/2025/05/23/202505232010026147229.jpg"
+                    },
+                    {
+                      "videoId": "22964966",
+                      "clipId": "753011",
+                      "serialno": "7",
+                      "plId": "0",
+                      "title": "超前营业：马嘉祺回忆高光时刻",
+                      "detailTitle": {
+                        "prefix": "7",
+                        "title": "超前营业：马嘉祺回忆高光时刻"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-05-29",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://4img.hitv.com/preview/sp_images/2025/05/28/202505282254240527111.jpg",
+                      "vImgUrl": "https://0img.hitv.com/preview/sp_images/2025/05/28/202505282254377743453.jpg"
+                    },
+                    {
+                      "videoId": "22987866",
+                      "clipId": "753011",
+                      "serialno": "8",
+                      "plId": "0",
+                      "title": "第3期：首场袭榜赛开启！",
+                      "detailTitle": {
+                        "prefix": "8",
+                        "title": "第3期：首场袭榜赛开启！"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-05-30",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/05/30/202505302027109923196.jpg",
+                      "vImgUrl": "https://0img.hitv.com/preview/sp_images/2025/05/30/202505302027354616818.jpg"
+                    },
+                    {
+                      "videoId": "23011268",
+                      "clipId": "753011",
+                      "serialno": "10",
+                      "plId": "0",
+                      "title": "超前营业：查理·普斯即兴弹唱",
+                      "detailTitle": {
+                        "prefix": "10",
+                        "title": "超前营业：查理·普斯即兴弹唱"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-05",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/06/04/202506042350560234426.jpg",
+                      "vImgUrl": "https://4img.hitv.com/preview/sp_images/2025/06/04/202506042351106844935.jpg"
+                    },
+                    {
+                      "videoId": "23021106",
+                      "clipId": "753011",
+                      "serialno": "11",
+                      "plId": "0",
+                      "title": "第4期：张榜赛再启新篇",
+                      "detailTitle": {
+                        "prefix": "11",
+                        "title": "第4期：张榜赛再启新篇"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-06",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://1img.hitv.com/preview/sp_images/2025/06/06/202506062012128536101.jpg",
+                      "vImgUrl": "https://2img.hitv.com/preview/sp_images/2025/06/06/202506062012304744669.jpg"
+                    },
+                    {
+                      "videoId": "23044697",
+                      "clipId": "753011",
+                      "serialno": "13",
+                      "plId": "0",
+                      "title": "超前营业：马嘉祺制作捏捏",
+                      "detailTitle": {
+                        "prefix": "13",
+                        "title": "超前营业：马嘉祺制作捏捏"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-12",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://3img.hitv.com/preview/sp_images/2025/06/11/202506112210561687628.jpg",
+                      "vImgUrl": "https://2img.hitv.com/preview/sp_images/2025/06/11/202506112211026783616.jpg"
+                    },
+                    {
+                      "videoId": "23052231",
+                      "clipId": "753011",
+                      "serialno": "14",
+                      "plId": "0",
+                      "title": "第5期：第二轮揭榜赛来袭！",
+                      "detailTitle": {
+                        "prefix": "14",
+                        "title": "第5期：第二轮揭榜赛来袭！"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-13",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://0img.hitv.com/preview/sp_images/2025/06/13/202506132009251396682.jpg",
+                      "vImgUrl": "https://1img.hitv.com/preview/sp_images/2025/06/13/202506132009413638401.jpg"
+                    },
+                    {
+                      "videoId": "23074737",
+                      "clipId": "753011",
+                      "serialno": "17",
+                      "plId": "0",
+                      "title": "超前营业：歌手下班活动大曝光",
+                      "detailTitle": {
+                        "prefix": "17",
+                        "title": "超前营业：歌手下班活动大曝光"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-19",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://3img.hitv.com/preview/sp_images/2025/06/18/202506182214370822008.jpg",
+                      "vImgUrl": "https://3img.hitv.com/preview/sp_images/2025/06/18/202506182214427493669.jpg"
+                    },
+                    {
+                      "videoId": "23088140",
+                      "clipId": "753011",
+                      "serialno": "18",
+                      "plId": "0",
+                      "title": "第6期：麦可·布雷双曲袭榜",
+                      "detailTitle": {
+                        "prefix": "18",
+                        "title": "第6期：麦可·布雷双曲袭榜"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-20",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://0img.hitv.com/preview/sp_images/2025/06/20/202506202004162689414.jpg",
+                      "vImgUrl": "https://3img.hitv.com/preview/sp_images/2025/06/20/202506202004222544702.jpg"
+                    },
+                    {
+                      "videoId": "23107131",
+                      "clipId": "753011",
+                      "serialno": "21",
+                      "plId": "0",
+                      "title": "超前营业：马嘉祺神还原表情包",
+                      "detailTitle": {
+                        "prefix": "21",
+                        "title": "超前营业：马嘉祺神还原表情包"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-26",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/06/26/202506260104559548227.jpg",
+                      "vImgUrl": "https://2img.hitv.com/preview/sp_images/2025/06/26/202506260105215539683.jpg"
+                    },
+                    {
+                      "videoId": "23116453",
+                      "clipId": "753011",
+                      "serialno": "22",
+                      "plId": "0",
+                      "title": "第7期：强音入局再启新篇",
+                      "detailTitle": {
+                        "prefix": "22",
+                        "title": "第7期：强音入局再启新篇"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-27",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/06/27/202506272002545687783.jpg",
+                      "vImgUrl": "https://3img.hitv.com/preview/sp_images/2025/06/27/202506272003005076717.jpg"
+                    },
+                    {
+                      "videoId": "23135882",
+                      "clipId": "753011",
+                      "serialno": "24",
+                      "plId": "0",
+                      "title": "超前营业：米奇搞怪配音",
+                      "detailTitle": {
+                        "prefix": "24",
+                        "title": "超前营业：米奇搞怪配音"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-03",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://4img.hitv.com/preview/sp_images/2025/07/03/202507030043170678371.jpg",
+                      "vImgUrl": "https://2img.hitv.com/preview/sp_images/2025/07/03/202507030045067451844.jpg"
+                    },
+                    {
+                      "videoId": "23150502",
+                      "clipId": "753011",
+                      "serialno": "25",
+                      "plId": "0",
+                      "title": "第8期：国际揭榜赛来袭",
+                      "detailTitle": {
+                        "prefix": "25",
+                        "title": "第8期：国际揭榜赛来袭"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-04",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/07/04/202507041954069147702.jpg",
+                      "vImgUrl": "https://4img.hitv.com/preview/sp_images/2025/07/04/202507041954350812500.jpg"
+                    },
+                    {
+                      "videoId": "23175352",
+                      "clipId": "753011",
+                      "serialno": "27",
+                      "plId": "0",
+                      "title": "超前营业：陈楚生“非酋”再现",
+                      "detailTitle": {
+                        "prefix": "27",
+                        "title": "超前营业：陈楚生“非酋”再现"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-10",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/07/10/202507100018530897230.jpg",
+                      "vImgUrl": "https://1img.hitv.com/preview/sp_images/2025/07/10/202507100019041237917.jpg"
+                    },
+                    {
+                      "videoId": "23188799",
+                      "clipId": "753011",
+                      "serialno": "28",
+                      "plId": "0",
+                      "title": "第9期：乔丹·史密斯强势入局",
+                      "detailTitle": {
+                        "prefix": "28",
+                        "title": "第9期：乔丹·史密斯强势入局"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-11",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://4img.hitv.com/preview/sp_images/2025/07/11/202507112007177006613.jpg",
+                      "vImgUrl": "https://0img.hitv.com/preview/sp_images/2025/07/11/202507112007364987725.jpg"
+                    },
+                    {
+                      "videoId": "23213362",
+                      "clipId": "753011",
+                      "serialno": "30",
+                      "plId": "0",
+                      "title": "超前营业：GAI周延被“套路”",
+                      "detailTitle": {
+                        "prefix": "30",
+                        "title": "超前营业：GAI周延被“套路”"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-17",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://0img.hitv.com/preview/sp_images/2025/07/16/202507162257249919250.jpg",
+                      "vImgUrl": "https://4img.hitv.com/preview/sp_images/2025/07/16/202507162257475897630.jpg"
+                    },
+                    {
+                      "videoId": "23229414",
+                      "clipId": "753011",
+                      "serialno": "31",
+                      "plId": "0",
+                      "title": "第10期：终极张榜赛打响",
+                      "detailTitle": {
+                        "prefix": "31",
+                        "title": "第10期：终极张榜赛打响"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-18",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://0img.hitv.com/preview/sp_images/2025/07/18/202507182002200198762.jpg",
+                      "vImgUrl": "https://1img.hitv.com/preview/sp_images/2025/07/18/202507182002328966714.jpg"
+                    },
+                    {
+                      "videoId": "23266482",
+                      "clipId": "753011",
+                      "serialno": "34",
+                      "plId": "0",
+                      "title": "第11期：终极揭榜赛神仙打架",
+                      "detailTitle": {
+                        "prefix": "34",
+                        "title": "第11期：终极揭榜赛神仙打架"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-25",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://1img.hitv.com/preview/sp_images/2025/07/25/202507252027135014019.jpg",
+                      "vImgUrl": "https://0img.hitv.com/preview/sp_images/2025/07/25/202507252027352762030.jpg"
+                    },
+                    {
+                      "videoId": "23296675",
+                      "clipId": "753011",
+                      "serialno": "36",
+                      "plId": "0",
+                      "title": "第12期：突围之战强势破局",
+                      "detailTitle": {
+                        "prefix": "36",
+                        "title": "第12期：突围之战强势破局"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-08-01",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/08/01/202508011956002511517.jpg",
+                      "vImgUrl": "https://3img.hitv.com/preview/sp_images/2025/08/01/202508011955417942299.jpg"
+                    },
+                    {
+                      "videoId": "23331249",
+                      "clipId": "753011",
+                      "serialno": "37",
+                      "plId": "0",
+                      "title": "第13期：荣耀汇聚终极一战",
+                      "detailTitle": {
+                        "prefix": "37",
+                        "title": "第13期：荣耀汇聚终极一战"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-08-08",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://3img.hitv.com/preview/sp_images/2025/08/08/202508082028401542053.jpg",
+                      "vImgUrl": "https://1img.hitv.com/preview/sp_images/2025/08/08/202508082029125339063.jpg"
+                    },
+                    {
+                      "videoId": "24642107",
+                      "clipId": "900426",
+                      "serialno": "滚烫夜话",
+                      "plId": "0",
+                      "title": "滚烫夜话",
+                      "detailTitle": {
+                        "prefix": "",
+                        "title": "滚烫夜话"
+                      },
+                      "subTitle": "",
+                      "rbTitle": null,
+                      "jumpUrl": "",
+                      "isIntact": 0,
+                      "fdParams": null,
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#1EBB33",
+                        "font": "推荐",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 0,
+                      "rcSource": "vrs",
+                      "hImgUrl": "https://3img.hitv.com/preview/sp_images/2026/09/16/202609161457331585056.jpg",
+                      "vImgUrl": "https://3img.hitv.com/preview/sp_images/2026/09/16/202609161457411252752.jpg"
+                    }
+                  ],
+                  "childFilters": [],
+                  "anchorMarker": null,
+                  "mainClipId": ""
+                },
+                {
+                  "filterType": "contentType",
+                  "contentType": "derivative",
+                  "name": "衍生",
+                  "displayType": 2,
+                  "current": 0,
+                  "list": [
+                    {
+                      "videoId": "22886064",
+                      "clipId": "753011",
+                      "serialno": "2",
+                      "plId": "0",
+                      "title": "加更版：往季歌手走心问答",
+                      "detailTitle": {
+                        "prefix": "2",
+                        "title": "加更版：往季歌手走心问答"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-05-17",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://1img.hitv.com/preview/sp_images/2025/05/17/202505172127014862285.jpg",
+                      "vImgUrl": "https://2img.hitv.com/preview/sp_images/2025/05/17/202505172128284185657.jpg"
+                    },
+                    {
+                      "videoId": "22924248",
+                      "clipId": "753011",
+                      "serialno": "5",
+                      "plId": "0",
+                      "title": "加更版：陈楚生再现陈式幽默",
+                      "detailTitle": {
+                        "prefix": "5",
+                        "title": "加更版：陈楚生再现陈式幽默"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-05-24",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://3img.hitv.com/preview/sp_images/2025/05/23/202505232311155071328.jpg",
+                      "vImgUrl": "https://1img.hitv.com/preview/sp_images/2025/05/23/202505232320255603176.jpg"
+                    },
+                    {
+                      "videoId": "22988126",
+                      "clipId": "753011",
+                      "serialno": "9",
+                      "plId": "0",
+                      "title": "加更版：歌手揭秘舞台小巧思",
+                      "detailTitle": {
+                        "prefix": "9",
+                        "title": "加更版：歌手揭秘舞台小巧思"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-05-31",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://1img.hitv.com/preview/sp_images/2025/05/30/202505302243174872472.jpg",
+                      "vImgUrl": "https://3img.hitv.com/preview/sp_images/2025/05/30/202505302244285819904.jpg"
+                    },
+                    {
+                      "videoId": "23021168",
+                      "clipId": "753011",
+                      "serialno": "12",
+                      "plId": "0",
+                      "title": "加更版：歌手惊喜合唱金曲",
+                      "detailTitle": {
+                        "prefix": "12",
+                        "title": "加更版：歌手惊喜合唱金曲"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-07",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://1img.hitv.com/preview/sp_images/2025/06/06/202506062039041469103.jpg",
+                      "vImgUrl": "https://4img.hitv.com/preview/sp_images/2025/06/06/202506062039207114982.jpg"
+                    },
+                    {
+                      "videoId": "23052587",
+                      "clipId": "753011",
+                      "serialno": "15",
+                      "plId": "0",
+                      "title": "加更版：格瑞丝谈选曲心得",
+                      "detailTitle": {
+                        "prefix": "15",
+                        "title": "加更版：格瑞丝谈选曲心得"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-14",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://3img.hitv.com/preview/sp_images/2025/06/13/202506132313029043134.jpg",
+                      "vImgUrl": "https://0img.hitv.com/preview/sp_images/2025/06/13/202506132313236086022.jpg"
+                    },
+                    {
+                      "videoId": "23069247",
+                      "clipId": "753011",
+                      "serialno": "16",
+                      "plId": "0",
+                      "title": "特别企划：陈楚生火锅局",
+                      "detailTitle": {
+                        "prefix": "16",
+                        "title": "特别企划：陈楚生火锅局"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-18",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://3img.hitv.com/preview/sp_images/2025/06/17/202506172314110049467.jpg",
+                      "vImgUrl": "https://4img.hitv.com/preview/sp_images/2025/06/17/202506172314188594157.jpg"
+                    },
+                    {
+                      "videoId": "23088252",
+                      "clipId": "753011",
+                      "serialno": "19",
+                      "plId": "0",
+                      "title": "加更版：陈楚生聊老歌新玩法",
+                      "detailTitle": {
+                        "prefix": "19",
+                        "title": "加更版：陈楚生聊老歌新玩法"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-21",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://0img.hitv.com/preview/sp_images/2025/06/20/202506202224313463118.jpg",
+                      "vImgUrl": "https://4img.hitv.com/preview/sp_images/2025/06/20/202506202224493845730.jpg"
+                    },
+                    {
+                      "videoId": "23091097",
+                      "clipId": "753011",
+                      "serialno": "20",
+                      "plId": "0",
+                      "title": "特别企划：马嘉祺谈歌手",
+                      "detailTitle": {
+                        "prefix": "20",
+                        "title": "特别企划：马嘉祺谈歌手"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-22",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/06/21/202506212139255447142.jpg",
+                      "vImgUrl": "https://1img.hitv.com/preview/sp_images/2025/06/21/202506212139324351666.jpg"
+                    },
+                    {
+                      "videoId": "23116727",
+                      "clipId": "753011",
+                      "serialno": "23",
+                      "plId": "0",
+                      "title": "加更版：《云与海》空灵感来源",
+                      "detailTitle": {
+                        "prefix": "23",
+                        "title": "加更版：《云与海》空灵感来源"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-06-28",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://4img.hitv.com/preview/sp_images/2025/06/30/202506301419078106187.jpg",
+                      "vImgUrl": "https://1img.hitv.com/preview/sp_images/2025/06/30/202506301419265719793.jpg"
+                    },
+                    {
+                      "videoId": "23151198",
+                      "clipId": "753011",
+                      "serialno": "26",
+                      "plId": "0",
+                      "title": "加更版：陈楚生解读舞台太走心",
+                      "detailTitle": {
+                        "prefix": "26",
+                        "title": "加更版：陈楚生解读舞台太走心"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-05",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/07/05/202507052331093633606.jpg",
+                      "vImgUrl": "https://4img.hitv.com/preview/sp_images/2025/07/05/202507052331226625601.jpg"
+                    },
+                    {
+                      "videoId": "23189196",
+                      "clipId": "753011",
+                      "serialno": "29",
+                      "plId": "0",
+                      "title": "加更版：米奇分享恋爱经历",
+                      "detailTitle": {
+                        "prefix": "29",
+                        "title": "加更版：米奇分享恋爱经历"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-12",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://2img.hitv.com/preview/sp_images/2025/07/20/202507200857541232672.jpg",
+                      "vImgUrl": "https://3img.hitv.com/preview/sp_images/2025/07/20/202507200858092109032.jpg"
+                    },
+                    {
+                      "videoId": "23229768",
+                      "clipId": "753011",
+                      "serialno": "32",
+                      "plId": "0",
+                      "title": "加更版：陈楚生分享热血青春史",
+                      "detailTitle": {
+                        "prefix": "32",
+                        "title": "加更版：陈楚生分享热血青春史"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-19",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://3img.hitv.com/preview/sp_images/2025/07/20/202507200856122886198.jpg",
+                      "vImgUrl": "https://2img.hitv.com/preview/sp_images/2025/07/20/202507200856282118237.jpg"
+                    },
+                    {
+                      "videoId": "23256650",
+                      "clipId": "753011",
+                      "serialno": "33",
+                      "plId": "0",
+                      "title": "特别企划：歌手美食挑战",
+                      "detailTitle": {
+                        "prefix": "33",
+                        "title": "特别企划：歌手美食挑战"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-24",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://4img.hitv.com/preview/sp_images/2025/07/24/202507240143354214256.jpg",
+                      "vImgUrl": "https://3img.hitv.com/preview/sp_images/2025/07/24/202507240144352911991.jpg"
+                    },
+                    {
+                      "videoId": "23287889",
+                      "clipId": "753011",
+                      "serialno": "35",
+                      "plId": "0",
+                      "title": "特别企划：米奇感性落泪",
+                      "detailTitle": {
+                        "prefix": "35",
+                        "title": "特别企划：米奇感性落泪"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-07-31",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://3img.hitv.com/preview/sp_images/2025/07/30/202507302124048924743.jpg",
+                      "vImgUrl": "https://4img.hitv.com/preview/sp_images/2025/07/30/202507302124130247674.jpg"
+                    },
+                    {
+                      "videoId": "23331596",
+                      "clipId": "753011",
+                      "serialno": "38",
+                      "plId": "0",
+                      "title": "特别企划：李佳薇秀肌肉",
+                      "detailTitle": {
+                        "prefix": "38",
+                        "title": "特别企划：李佳薇秀肌肉"
+                      },
+                      "subTitle": null,
+                      "rbTitle": "2025-08-09",
+                      "jumpUrl": "",
+                      "isIntact": 1,
+                      "fdParams": "",
+                      "cornerLabelStyle": {
+                        "img": "",
+                        "color": "#E4B659",
+                        "font": "VIP",
+                        "fontColor": "#FFFFFF"
+                      },
+                      "anchorMarker": null,
+                      "vipMark": 1,
+                      "rcSource": null,
+                      "hImgUrl": "https://1img.hitv.com/preview/sp_images/2025/08/09/202508090131114472001.jpg",
+                      "vImgUrl": "https://1img.hitv.com/preview/sp_images/2025/08/09/202508090131325815682.jpg"
+                    }
+                  ],
+                  "childFilters": [],
+                  "anchorMarker": null,
+                  "mainClipId": ""
+                },
+                {
+                  "filterType": "contentType",
+                  "contentType": "relClip",
+                  "name": "纯享版",
+                  "clipId": "756451",
+                  "url": "http://mobile.api.mgtv.com/vod/videos/pure?jumpUrl=&t_mainClipId=753011&relClipTab=1",
+                  "displayType": 2,
+                  "current": 0,
+                  "childFilters": [],
+                  "anchorMarker": null,
+                  "mainClipId": "753011"
+                },
+                {
+                  "filterType": "contentType",
+                  "contentType": "relClip",
+                  "name": "直拍版",
+                  "clipId": "762683",
+                  "url": "http://mobile.api.mgtv.com/vod/videos/pure?jumpUrl=&t_mainClipId=753011&relClipTab=1",
+                  "displayType": 2,
+                  "current": 0,
+                  "childFilters": [],
+                  "anchorMarker": null,
+                  "mainClipId": "753011"
+                }
+              ]
+            },
+            "reserveInfo": null,
+            "mediaArtistInfo": null,
+            "custom": 0,
+            "ext": {
+              "featureOnly": {
+                "clipIds": []
+              },
+              "vodRework": {
+                "enable": 1
+              },
+              "seriesParam": "&previewType=&t_mainDisplayType=2&t_relClipIds=756451%2C762683&t_requestMode=direct&t_seriesClipIds=867929%2C753011%2C645759%2C334849%2C327378%2C321502%2C308921&t_seriesDisplay=1&t_seriesId=80795&t_userIsVip=unknown&vodAbStrategy=1"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

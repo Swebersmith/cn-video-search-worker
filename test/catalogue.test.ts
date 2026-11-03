@@ -18,15 +18,16 @@ test('Youku nullable chapter labels retain published episodes, exclude previews 
     const response = await handler(request(`/v1/youku/series/${id}?q=${encodeURIComponent(title)}`));
     const d = await response.json() as any;
     assert.equal(response.status, 200);
-    assert.equal(d.total, available);
+    assert.equal(d.main_total, available);
+    assert.equal(d.total, d.episodes.length);
     assert.equal(d.expected_total, released);
     assert.equal(d.series.total_episodes, planned);
     assert.equal(d.update_notice, full.updateNotice);
     assert.equal(d.complete, Number(available) === released);
     assert.deepEqual(d.missing_episode_numbers, []);
     assert.deepEqual(d.unavailable_episode_numbers,[22]);
-    assert.ok(d.previews.some((e:any)=>e.episode_number===22));
-    assert.ok(d.episodes.every((e: any) => e.episode_number && e.episode_number <= available));
+    assert.ok(d.episodes.some((e:any)=>e.episode_number===22 && e.episode_type==='preview'));
+    assert.ok(d.episodes.filter((e: any) => e.episode_type === 'main').every((e: any) => e.episode_number && e.episode_number <= available));
   }
 });
 
@@ -52,7 +53,7 @@ test('Youku nullable chapters still reject wrong shows, extras and gaps in the r
   const h = createHandler(async url => url.includes('so.youku.com') ? new Response('verification')
     : json(new URL(url).searchParams.has('appScene') ? full : {message:'success',originNodes:[{data:{showId:full.showId,tempTitle:'嫁金钗',episodeTotal:30,featureDTO:{text:'电视剧'}}}]}));
   const d = await (await h(request(`/v1/youku/series/${full.showId}?q=嫁金钗`))).json() as any;
-  assert.equal(d.total, 1);
+  assert.equal(d.main_total, 1);
   assert.equal(d.complete, false);
   assert.deepEqual(d.missing_episode_numbers, [2,4]);
   assert.deepEqual(d.unavailable_episode_numbers,[3]);

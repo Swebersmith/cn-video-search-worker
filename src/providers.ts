@@ -33,6 +33,35 @@ export function json(body: string): any {
   try { return JSON.parse(body); } catch { throw new UpstreamError('INVALID_JSON'); }
 }
 
+// Per-request official anonymous session, shared by the player's search/detail requests.
+// Never fabricate cookies, forward application secrets, or retry a challenge indefinitely.
+export function bilibiliSessionFetcher(env: Env, fetcher: Fetcher): Fetcher {
+  let session: Promise<string> | undefined;
+  const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
+  return async (url, init = {}) => {
+    if (!['api.bilibili.com', 'www.bilibili.com', 'search.bilibili.com'].includes(new URL(url).hostname)) return fetcher(url, init);
+    const headers = { ...init.headers, 'User-Agent': userAgent, Referer: 'https://www.bilibili.com/' };
+    if (session) {
+      const cookie = await session;
+      return fetcher(url, {...init, headers: {...headers, ...(cookie ? {Cookie: cookie} : {})}});
+    }
+    const first = await fetcher(url, {...init, headers});
+    if (first.status !== 412) return first;
+    session ??= (async () => {
+      try {
+        const data = json(await request('https://api.bilibili.com/x/frontend/finger/spi', env, fetcher, {headers}));
+        const b3 = data.data?.b_3, b4 = data.data?.b_4;
+        if (data.code !== 0 || typeof b3 !== 'string' || typeof b4 !== 'string' || !/^[a-z\d_-]{8,200}$/i.test(b3) || !/^[a-z\d_-]{8,200}$/i.test(b4)) return '';
+        return `buvid3=${b3}; buvid4=${b4}`;
+      } catch { return ''; }
+    })();
+    const cookie = await session;
+    if (!cookie) return first;
+    await first.body?.cancel();
+    return fetcher(url, {...init, headers: {...headers, Cookie: cookie}});
+  };
+}
+
 export type IqiyiSearchLoader = () => Promise<unknown>;
 export async function iqiyiSearchData(query: string, env: Env, fetcher: Fetcher, page = 1): Promise<unknown> {
   return json(await request(`https://mesh.if.iqiyi.com/portal/lw/search/homePageV3?key=${encodeURIComponent(query)}&version=14.9.0&size=20&pageNum=${page}&source=pcw`, env, fetcher));
