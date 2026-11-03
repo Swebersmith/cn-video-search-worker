@@ -71,15 +71,31 @@ AI 协助核对候选的集序与标题，**只返回候选编号，不输出 UR
 ```text
 GET /v1/resources
 GET /v1/resources/search?q=走马上任&sources=jinchan&page=1
-GET /v1/resources/search?q=三体&sources=jinchan,jianan&page=2
+GET /v1/resources/search?q=三体&sources=jinchan,tw&page=2
 GET /v1/resources/jinchan/items/105662
 ```
 
-`sources=all` 搜索全部登记来源。来源 ID：`jinchan` 金蝉、`caiji789` 789、`xiami` 虾米、`naisi` 奈斯、`caiji8090` 8090、`guanfang` 官方采集、`jianan` 建安。登记不代表当前可用；每次搜索的 `providers` 分别给出状态、警告、上游总数、分页及来源 URL。HTML 占位页、超时、错误分页或忽略关键词的接口不会被当成成功搜索，全部来源不可用时返回 503。
+`sources=all` 搜索 KV 中全部**已启用**来源。默认启用 `jinchan` 金蝉官采、`tw` TW 官采；另预置停用的 `jinying` 金鹰资源、`ruyi` 如意资源，两者主要返回第三方播放页或媒体地址，可在管理页自行启用。2026-11-03 已移除返回 302 / 403 / 526 / 530 的 789、虾米、奈斯、8090、官方采集、建安六个失效默认来源。
+
+每次搜索的 `providers` 分别给出状态、警告、上游总数、分页及来源 URL。HTML 占位页、超时、错误分页或忽略关键词的接口不会被当成成功搜索，全部来源不可用时返回 503。全部停用时返回 200 和空结果，不会恢复默认来源。第三方服务可能随时变更，以本次请求和管理页测试为准。
 
 结果注明 `source=third_party`、`source_id`、`source_name`，不会作为官网搜索的兜底。`detail_url` 读取准确条目的线路。MacCMS JSON 与 RSS XML 的播放来源和分集字段规范化为 `lines[]`，每条线路提供 `episodes` / `previews`；保留 SVIP、抢先看等分集标签。`link_type` 区分 `official_page`、`media`、`external_page`，`playback_verified=false` 表示未验证播放能力。服务不调用第三方解析线路或媒体地址，不将来源名称当成平台授权证明。页面可点击官方播放页，其他地址以文本展示。
 
-仅允许调用预先登记的七个接口，不接受任意 API 地址；启用 `API_KEY` 后搜索与详情沿用同一认证。关键词与页码分别传给上游 `wd` / `pg`，详情使用 `ids`；JSON / XML 字段解析有大小和条数上限。
+仅调用 KV 中启用的来源；公共搜索不接受临时 API 地址。启用 `API_KEY` 后搜索与详情沿用同一认证。关键词与页码分别传给上游 `wd` / `pg`，详情使用 `ids`；JSON / XML 字段解析有大小和条数上限。
+
+### 采集站管理与 KV
+
+打开 `/admin/resources`，使用独立的 `RESOURCE_ADMIN_KEY` 登录，可新增、编辑、删除、启停来源，也可先测试草稿接口再保存。页面从 KV 读取全部来源，搜索页下拉框从 `/v1/resources` 动态读取已启用项。管理密钥仅保留在当前页面内存，不进入 URL、本地存储或第三方请求。它与可选的公共接口 `API_KEY` 分开，管理写入不会因公共接口未设密钥而开放。
+
+- `GET /v1/admin/resource-sources`：读取全部来源、`revision` 与保存时间。
+- `PUT /v1/admin/resource-sources`：JSON `{ "revision": "读取的版本", "sources": [{ "id": "custom1", "name": "自定义站", "endpoint": "https://your-source.com/api.php/provide/vod/", "enabled": true }] }`，整份替换配置；请求头 `X-Admin-Key`。
+- `POST /v1/admin/resource-sources/check`：JSON `{ "source": { ...同上 }, "q": "三体" }`，核对搜索、准确 ID 详情、随机关键词空结果和不同分页，返回 `healthy` / `checks` 和官方页、媒体、外部页计数；不保存配置，不测试播放能力。
+
+`RESOURCE_CONFIG` 绑定 Cloudflare Workers KV，键为 `resource-sources:v1`。最多 20 个来源、请求体 64 KiB，只接受公共 HTTPS 域名下的 MacCMS `provide/vod` 接口（JSON 或 RSS XML），不接受 URL 密钥或内网地址。保存失败会明确报错；KV 配置损坏时不会静默恢复已删除来源。无 KV 或空键时才使用代码预置值，绑定缺失时禁止保存。
+
+KV 是最终一致存储，跨地区通常需 30–60 秒或更久传播。管理页保存后立即使用保存响应中的配置；`revision` 可发现已读取到的版本冲突，但不是强一致锁，请避免同时编辑。推送 GitHub 更新不会覆盖 KV 中已保存的自定义来源。
+
+新部署先在 Cloudflare 创建 KV namespace，在 `wrangler.jsonc` 配置 `RESOURCE_CONFIG` 的 namespace ID，并将至少 32 字符的随机 `RESOURCE_ADMIN_KEY` 添加为 Worker Secret。当前仓库已绑定此项目的生产 namespace，其他账号部署需替换 ID。GitHub 自动构建使用 `--keep-vars` 保留 Secret。
 
 ## 官网来源（原接口）
 

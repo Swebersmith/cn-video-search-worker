@@ -1,6 +1,7 @@
 import { PLATFORMS } from './types';
 import { CAPABILITIES, VERSION } from './aggregate';
-import { RESOURCE_SOURCES } from './resources';
+const sourceId = { type: 'string', pattern: '^[a-z][a-z0-9_-]{1,39}$', description: 'KV 配置中的来源 ID；通过 /v1/resources 获取已启用清单。' };
+const adminSecurity = [{ resourceAdminKey: [] }];
 const platform = { type: 'string', enum: Object.keys(PLATFORMS) };
 const nullableInt = { type: ['integer', 'null'] };
 const numbers = { type: 'array', items: { type: 'integer' } };
@@ -68,15 +69,29 @@ export const openapi = {
     securitySchemes: {
       bearerAuth: { type: 'http', scheme: 'bearer' },
       apiKey: { type: 'apiKey', in: 'header', name: 'X-API-Key' },
+      resourceAdminKey: { type: 'apiKey', in: 'header', name: 'X-Admin-Key', description: '独立 RESOURCE_ADMIN_KEY，不接受查询参数。' },
     },
     schemas: {
+      ResourceSourceConfig: {
+        type: 'object', required: ['id', 'name', 'endpoint', 'enabled'], properties: {
+          id: sourceId, name: { type: 'string', minLength: 1, maxLength: 60 },
+          endpoint: { type: 'string', format: 'uri', description: '公共 HTTPS MacCMS provide/vod JSON / XML 接口，不允许凭据、IP、额外端口或任意路径。' },
+          enabled: { type: 'boolean' },
+        },
+      },
+      ResourceConfig: {
+        type: 'object', properties: {
+          ok: { type: 'boolean' }, version: { const: 1 }, revision: { type: 'string' }, updated_at: { type: 'string' },
+          storage: { enum: ['kv', 'defaults'] }, sources: { type: 'array', maxItems: 20, items: ref('ResourceSourceConfig') },
+        },
+      },
       ResourceEpisode: { type: 'object', properties: {
         title: { type: 'string' }, url: { type: 'string' }, episode_number: nullableInt,
         episode_type: { enum: ['main', 'preview'] }, platform: { type: ['string', 'null'] },
         link_type: { enum: ['official_page', 'media', 'external_page'] }, playback_verified: { const: false },
       } },
       ResourceItem: { type: 'object', properties: {
-        id: { type: 'string' }, title: { type: 'string' }, source_id: { enum: Object.keys(RESOURCE_SOURCES) },
+        id: { type: 'string' }, title: { type: 'string' }, source_id: sourceId,
         source_name: { type: 'string' }, source: { const: 'third_party' }, content_type: { const: 'resource' },
         year: { type: 'string' }, type_name: { type: 'string' }, remarks: { type: 'string' }, updated_at: { type: 'string' },
         detail_url: { type: 'string' }, play_sources: strings,
@@ -89,7 +104,7 @@ export const openapi = {
         ok: { type: 'boolean' }, view: { const: 'resources' }, query: { type: 'string' }, page: { type: 'integer' },
         total: { type: 'integer' }, partial: { type: 'boolean' }, source_policy: { const: 'third_party_resource_sites' },
         results: { type: 'array', items: ref('ResourceItem') }, providers: { type: 'array', items: { type: 'object', properties: {
-          source_id: { enum: Object.keys(RESOURCE_SOURCES) }, source_name: { type: 'string' }, source: { const: 'third_party' },
+          source_id: sourceId, source_name: { type: 'string' }, source: { const: 'third_party' },
           source_url: { type: 'string' }, status: { enum: ['ok', 'empty', 'unavailable'] }, count: { type: 'integer' },
           total: nullableInt, page: { type: 'integer' }, pagecount: nullableInt, has_more: { type: ['boolean', 'null'] }, warnings: strings,
         } } },
@@ -233,17 +248,35 @@ export const openapi = {
     },
   },
   paths: {
-    '/v1/resources': { get: { summary: '第三方官采来源清单；登记不代表当前可用或官方授权', responses: { '200': { description: 'Configured resource sources' } } } },
+    '/v1/admin/resource-sources': {
+      get: { summary: '管理员读取全部来源（含停用项）及 KV 配置版本', security: adminSecurity,
+        responses: { '200': response('ResourceConfig', '配置快照'), '401': response('Error', '管理密钥无效'), '503': response('Error', '未配置管理密钥或 KV 不可用') } },
+      put: { summary: '替换 KV 来源配置，最多 20 站；KV 最终一致，请避免并发编辑', security: adminSecurity,
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['revision', 'sources'], properties: {
+          revision: { type: 'string', description: '读取或上次保存响应中的 revision；可检测已读到的版本冲突，不提供强一致锁。' },
+          sources: { type: 'array', maxItems: 20, items: ref('ResourceSourceConfig') },
+        } } } } }, responses: { '200': response('ResourceConfig', '已保存快照，其他地区通常需 30–60 秒同步'),
+          '400': response('Error', '配置无效'), '401': response('Error', '管理密钥无效'), '409': response('Error', '版本已变更，请重新读取'),
+          '413': response('Error', '请求体超过 64 KiB'), '503': response('Error', '未绑定 KV 或存储不可用') } },
+    },
+    '/v1/admin/resource-sources/check': { post: {
+      summary: '测试草稿来源的搜索、准确详情、随机无结果关键词和分页；不保存配置或访问播放链接', security: adminSecurity,
+      requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['source'], properties: {
+        source: ref('ResourceSourceConfig'), q: { type: 'string', default: '三体', minLength: 1, maxLength: 80 },
+      } } } } }, responses: { '200': { description: 'healthy、checks、各类链接计数和耗时；检查失败仍返回检查报告' },
+        '400': response('Error', '草稿无效'), '401': response('Error', '管理密钥无效') },
+    } },
+    '/v1/resources': { get: { summary: 'KV 中已启用的第三方来源；登记不代表持续可用或官方授权', responses: { '200': { description: 'Configured resource sources' } } } },
     '/v1/resources/search': { get: {
       summary: '独立搜索官采资源站（MacCMS JSON / XML）', security,
       parameters: [searchParameters[0], { name: 'sources', in: 'query', schema: { type: 'string', default: 'all' },
-        description: `all 或逗号分隔：${Object.keys(RESOURCE_SOURCES).join(',')}` }, { ...searchParameters[2], description: '官采来源的上游页码。' }],
+        description: 'all 为全部启用来源；或逗号分隔来源 ID，通过 /v1/resources 读取当前清单。' }, { ...searchParameters[2], description: '官采来源的上游页码。' }],
       responses: { '200': response('ResourceSearch', '第三方条目与各源状态；不代表可以播放'),
         '400': response('Error', '无效参数'), '401': response('Error', '认证失败'), '503': response('ResourceSearch', '所选来源本次均不可用') },
     } },
     '/v1/resources/{source}/items/{id}': { get: {
       summary: '读取指定官采条目与分线路地址，不访问或解析播放链接', security,
-      parameters: [{ name: 'source', in: 'path', required: true, schema: { enum: Object.keys(RESOURCE_SOURCES) } },
+      parameters: [{ name: 'source', in: 'path', required: true, schema: sourceId },
         { name: 'id', in: 'path', required: true, schema: { type: 'string', pattern: '^[a-zA-Z0-9_-]{1,80}$' } }],
       responses: { '200': { description: 'source_id、第三方 item（ResourceItem）与 warnings', content: { 'application/json': { schema: { type: 'object', properties: {
         ok: { type: 'boolean' }, source: { const: 'third_party' }, source_id: { type: 'string' }, item: ref('ResourceItem'), warnings: strings,

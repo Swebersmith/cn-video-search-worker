@@ -4,7 +4,10 @@ import { CAPABILITIES, VERSION } from './aggregate';
 import { DOCS_HTML, DOCS_CSS, DOCS_JS } from './documentation';
 import { searchSeries, seriesCatalogue, validSeriesId } from './catalogue';
 import { officialSearch } from './official';
-import { RESOURCE_SOURCES, resourceSources, searchResource, validResourceId, type ResourceSource } from './resources';
+import { searchResource, validResourceId } from './resources';
+import { loadResourceConfig, publicResourceSources } from './resource-config';
+import { RESOURCE_ADMIN_HTML, RESOURCE_ADMIN_CSS, RESOURCE_ADMIN_JS } from './resource-admin-ui';
+import { handleResourceAdmin } from './resource-admin';
 
 export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
   return async (request: Request, env: Env = {}): Promise<Response> => {
@@ -23,14 +26,16 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       new Response(JSON.stringify(body), { status, headers: { ...headers, ...extra } });
     const fail = (code: string, message: string, status: number) =>
       reply({ ok: false, error: { code, message } }, status);
+    if(path.startsWith('/v1/admin/'))return handleResourceAdmin(request,env,fetcher);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
     if (request.method !== 'GET')
       return reply({ ok: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Use GET.' } }, 405, {
         Allow: 'GET, OPTIONS',
       });
-    if (['/', '/docs', '/assets/docs.css', '/assets/docs.js'].includes(path)) {
-      const html = path === '/' || path === '/docs';
-      return new Response(html ? DOCS_HTML : path.endsWith('.css') ? DOCS_CSS : DOCS_JS, {
+    if (['/', '/docs', '/assets/docs.css', '/assets/docs.js', '/admin/resources', '/assets/resource-admin.css', '/assets/resource-admin.js'].includes(path)) {
+      const html = path === '/' || path === '/docs' || path === '/admin/resources';
+      const admin = path === '/admin/resources' || path.includes('resource-admin');
+      return new Response(admin ? html ? RESOURCE_ADMIN_HTML : path.endsWith('.css') ? RESOURCE_ADMIN_CSS : RESOURCE_ADMIN_JS : html ? DOCS_HTML : path.endsWith('.css') ? DOCS_CSS : DOCS_JS, {
         headers: {
           'Content-Type': html
             ? 'text/html; charset=utf-8'
@@ -49,7 +54,10 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       return reply({ ok: true, service: 'cn-video-search', version: VERSION, upstream_checked: false });
     if (path === '/openapi.json') return reply(openapi);
     if (path === '/v1/platforms') return reply({ ok: true, platforms: Object.values(CAPABILITIES) });
-    if (path === '/v1/resources') return reply({ ok: true, source: 'third_party', sources: resourceSources() });
+    if (path === '/v1/resources') {
+      try{const config=await loadResourceConfig(env);return reply({ok:true,source:'third_party',storage:env.RESOURCE_CONFIG?'kv':'defaults',revision:config.revision,sources:publicResourceSources(config)});}
+      catch(e){return fail('RESOURCE_CONFIG_UNAVAILABLE','采集站配置暂时不可用。',503);}
+    }
     if (path === '/v1')
       return reply({
         version: VERSION,
@@ -68,7 +76,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     const detailPlatform =
       detail && Object.hasOwn(PLATFORMS, detail[1]) ? (detail[1] as Platform) : undefined;
     const resourceSearch = path === '/v1/resources/search';
-    const resourceDetail = path.match(/^\/v1\/resources\/([a-z0-9]+)\/items\/([^/]+)$/);
+    const resourceDetail = path.match(/^\/v1\/resources\/([a-z0-9_-]+)\/items\/([^/]+)$/);
     if (path !== '/v1/search' && !single && !detailPlatform && !resourceSearch && !resourceDetail)
       return fail('NOT_FOUND', 'Endpoint not found.', 404);
     if (env.API_KEY) {
@@ -102,18 +110,20 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
         400,
       );
     if (resourceSearch || resourceDetail) {
-      const selected = resourceDetail ? [resourceDetail[1]] : (url.searchParams.get('sources') ?? 'all') === 'all'
-        ? Object.keys(RESOURCE_SOURCES) : url.searchParams.get('sources')!.split(',').map(s => s.trim());
-      if (!selected.length || selected.some(s => !Object.hasOwn(RESOURCE_SOURCES, s)))
-        return fail('INVALID_SOURCES', 'sources must be all or configured resource source IDs.', 400);
+      let config;
+      try{config=await loadResourceConfig(env);}catch{return fail('RESOURCE_CONFIG_UNAVAILABLE','采集站配置暂时不可用。',503);}
+      const available=config.sources.filter(s=>s.enabled),selection=url.searchParams.get('sources')??'all';
+      const selected = resourceDetail ? [resourceDetail[1]] : selection==='all'?available.map(s=>s.id):selection.split(',').map(s=>s.trim());
+      if ((!selected.length && selection!=='all') || selected.some(s=>!available.some(v=>v.id===s)))
+        return fail('INVALID_SOURCES','来源不存在或已停用，请读取 /v1/resources 获取当前启用来源。',400);
       if (resourceDetail && !validResourceId(resourceDetail[2])) return fail('INVALID_RESOURCE_ID', 'Invalid resource ID.', 400);
       const page = url.searchParams.get('page') ?? '1';
       if (!/^\d+$/.test(page) || Number(page) < 1 || Number(page) > 1000) return fail('INVALID_PAGE', 'page must be 1–1000.', 400);
-      const providers = await Promise.all([...new Set(selected)].map(s => searchResource(s as ResourceSource, query, Number(page), env, fetcher, resourceDetail?.[2])));
-      const results = providers.flatMap(p => p.results), unavailable = providers.every(p => p.status === 'unavailable');
+      const providers = await Promise.all([...new Set(selected)].map(s => searchResource(s, query, Number(page), env, fetcher, resourceDetail?.[2], available.find(v=>v.id===s))));
+      const results = providers.flatMap(p => p.results), unavailable = providers.length>0&&providers.every(p => p.status === 'unavailable');
       if (resourceDetail) return reply({ ok: results.length > 0, source: 'third_party', source_id: selected[0],
         item: results[0] || null, warnings: providers[0].warnings, took_ms: Date.now() - started }, unavailable ? 503 : results.length ? 200 : 404);
-      return reply({ ok: !unavailable, view: 'resources', query, page: Number(page), source_policy: 'third_party_resource_sites',
+      return reply({ ok: !unavailable, view: 'resources', query, page: Number(page), config_revision: config.revision, source_policy: 'third_party_resource_sites',
         partial: providers.some(p => p.status === 'unavailable'), total: results.length, results,
         providers: providers.map(({ results: _r, ...p }) => p), took_ms: Date.now() - started }, unavailable ? 503 : 200);
     }

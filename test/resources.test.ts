@@ -9,6 +9,12 @@ const item = { vod_id: 105662, vod_name: '走马上任', type_name: '电视剧',
 const payload = (items: unknown[] = [item], page = 1) => ({ code: 1, page, pagecount: 3, total: 80, list: items });
 const json = (value: unknown) => new Response(JSON.stringify(value));
 
+test('MacCMS null list means empty only when the API explicitly confirms total zero', () => {
+  assert.equal(parseResourceResponse('{"code":1,"total":0,"list":null}', 'ruyi').results.length, 0);
+  for (const value of ['{"code":1,"list":null}', '{"code":1,"total":2,"list":null}'])
+    assert.throws(() => parseResourceResponse(value, 'ruyi'));
+});
+
 test('MacCMS JSON retains source identity, access-tier links, previews and URL types without calling a player', () => {
   const d = parseResourceResponse(JSON.stringify(payload()), 'jinchan');
   assert.equal(d.results.length, 1);
@@ -40,7 +46,7 @@ test('resource routes validate source IDs, item IDs, auth, pagination and duplic
   let calls = 0;
   const h = createHandler(async () => { calls++; return json(payload()); });
   const metadata = await (await h(new Request('https://test/v1/resources'))).json() as any;
-  assert.equal(metadata.sources.length, 7);
+  assert.equal(metadata.sources.length, 2);
   assert.ok(metadata.sources.every((s: any) => s.source === 'third_party' && s.authorized === null));
   for (const path of ['/v1/resources/search?q=作品&sources=https://evil.test', '/v1/resources/search?q=作品&sources=',
     '/v1/resources/search?q=作品&page=0', '/v1/resources/search?q=作品&q=另一个',
@@ -61,7 +67,7 @@ test('search fans out only to selected fixed sources and reports per-source fail
     assert.equal(u.searchParams.get('pg'), '2');
     return url.startsWith(RESOURCE_SOURCES.jinchan.endpoint) ? json(payload([item], 2)) : new Response('<html>welcome</html>');
   });
-  const r = await h(new Request('https://test/v1/resources/search?q=走马上任&sources=jinchan,caiji789,jinchan&page=2', { headers: { Authorization: 'Bearer server-secret' } }), { API_KEY: 'server-secret' });
+  const r = await h(new Request('https://test/v1/resources/search?q=走马上任&sources=jinchan,tw,jinchan&page=2', { headers: { Authorization: 'Bearer server-secret' } }), { API_KEY: 'server-secret' });
   const d = await r.json() as any;
   assert.equal(r.status, 200);
   assert.equal(d.view, 'resources');
@@ -79,7 +85,7 @@ test('a source ignoring wd retries its list search, then reports failure instead
       calls++;
       return json(payload(new URL(url).searchParams.get('ac') === 'list' && listWorks ? [item] : [{ ...item, vod_name: '奶龙' }]));
     });
-    const r = await h(new Request('https://test/v1/resources/search?q=走马上任&sources=jianan'));
+    const r = await h(new Request('https://test/v1/resources/search?q=走马上任&sources=tw'));
     const d = await r.json() as any;
     assert.equal(calls, 2);
     assert.equal(r.status, listWorks ? 200 : 503);

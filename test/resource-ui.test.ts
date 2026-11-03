@@ -18,6 +18,7 @@ test('resource explorer selects a distinct endpoint, shows provenance and never 
   new Script(DOCS_JS).runInNewContext({ window, document, URL, AbortSignal, navigator: {}, setTimeout: () => 0,
     fetch: async (url: string) => {
       if (url === '/v1/platforms') return new Response(JSON.stringify({ platforms: Object.values(CAPABILITIES) }));
+      if (url === '/v1/resources') return new Response(JSON.stringify({sources:[{id:'jinchan',name:'金蝉官采'},{id:'tw',name:'TW官采'}]}));
       calls.push(url);
       return new Response(JSON.stringify({ view: 'resources', total: 1, providers: [{ source_name: '金蝉官采', status: 'ok', count: 1 }],
         results: [{ id: '1', title: '<img src=x onerror=alert(1)>', source_id: 'jinchan', source_name: '金蝉官采', content_type: 'resource',

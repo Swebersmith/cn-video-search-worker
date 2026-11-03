@@ -8,6 +8,9 @@
   "routes": [
     { "pattern": "videosearch.webber.qzz.io", "custom_domain": true }
   ],
+  "kv_namespaces": [
+    { "binding": "RESOURCE_CONFIG", "id": "2b538796038d4a77bfc2872c03394323" }
+  ],
   "vars": {
     "CORS_ORIGIN": "*",
     "CACHE_TTL_SECONDS": "300",

@@ -6,7 +6,10 @@ export const PLATFORMS = {
   bilibili: { name: '哔哩哔哩', domain: 'www.bilibili.com', search: 'https://search.bilibili.com/all?keyword=' },
 } as const;
 export type Platform = keyof typeof PLATFORMS;
+export interface ResourceConfigStore { get(key: string, options?: {cacheTtl:number}): Promise<string|null>; put(key: string, value: string): Promise<void> }
 export interface Env {
+  RESOURCE_CONFIG?: ResourceConfigStore;
+  RESOURCE_ADMIN_KEY?: string;
   API_KEY?: string;
   DEEPSEEK_API_KEY?: string;
   DEEPSEEK_MODEL?: string;

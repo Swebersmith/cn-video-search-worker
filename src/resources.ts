@@ -3,21 +3,9 @@ import { canonical, text, score } from './normalize';
 import { request, UpstreamError } from './providers';
 import type { Env, Fetcher, Platform } from './types';
 
-// Only these user-selected public endpoints can be fetched. Playback links are data, never fetch targets.
-export const RESOURCE_SOURCES = {
-  jinchan: { name: '金蝉官采', endpoint: 'https://zy.jinchanjiexi.net/api.php/provide/vod/' },
-  caiji789: { name: '789官采', endpoint: 'https://www.caiji.cyou/api.php/provide/vod/at/json/' },
-  xiami: { name: '虾米资源', endpoint: 'https://zy.hls.one/api.php/provide/vod/' },
-  naisi: { name: '奈斯官采', endpoint: 'http://120.3.216.95:1688/api.php/provide/vod/' },
-  caiji8090: { name: '8090官采', endpoint: 'http://zy.yilans.net:8090/api.php/provide/vod/at/xml/' },
-  guanfang: { name: '官方采集', endpoint: 'https://gfzycj.hnmj.vip/api.php/provide/vod/' },
-  jianan: { name: '建安采集', endpoint: 'http://154.219.117.232:9981/jacloudapi.php/provide/vod/' },
-} as const;
-export type ResourceSource = keyof typeof RESOURCE_SOURCES;
-export const resourceSources = () => Object.entries(RESOURCE_SOURCES).map(([id, v]) => ({
-  id, ...v, source: 'third_party', authorized: null, availability: 'unchecked',
-  search_endpoint: `/v1/resources/search?sources=${id}`,
-}));
+import { RESOURCE_SOURCES, type ResourceSource, type ResourceSourceConfig } from './resource-config';
+export { RESOURCE_SOURCES } from './resource-config';
+export type { ResourceSource } from './resource-config';
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj => v && typeof v === 'object' && !Array.isArray(v) ? v as Obj : {};
 const str = (v: unknown) => typeof v === 'string' || typeof v === 'number' ? String(v) : '';
@@ -63,7 +51,7 @@ export interface ResourceItem {
   lines: { name: string; platform: Platform | null; episodes: ResourceEpisode[]; previews: ResourceEpisode[] }[];
 }
 
-function parseItem(raw: unknown, source: ResourceSource): ResourceItem | null {
+function parseItem(raw: unknown, source: ResourceSource, definition?: ResourceSourceConfig): ResourceItem | null {
   const v = obj(raw), id = str(v.vod_id), title = text(v.vod_name);
   if (!validResourceId(id) || !title) return null;
   const names = str(v.vod_play_from).split(/\$\$\$|,/).map(s => s.trim()).filter(Boolean);
@@ -92,20 +80,22 @@ function parseItem(raw: unknown, source: ResourceSource): ResourceItem | null {
     return [{ name, platform: sourcePlatform, episodes: entries.filter(e => e.episode_type === 'main'),
       previews: entries.filter(e => e.episode_type === 'preview') }];
   });
-  return { id, title, source_id: source, source_name: RESOURCE_SOURCES[source].name, source: 'third_party',
+  return { id, title, source_id: source, source_name: definition?.name || (RESOURCE_SOURCES as Record<string,{name:string}>)[source]?.name || source, source: 'third_party',
     content_type: 'resource', year: text(v.vod_year), type_name: text(v.type_name), remarks: text(v.vod_remarks),
     updated_at: text(v.vod_time), detail_url: `/v1/resources/${source}/items/${encodeURIComponent(id)}`,
     play_sources: names, lines };
 }
 
-export function parseResourceResponse(body: string, source: ResourceSource) {
+export function parseResourceResponse(body: string, source: ResourceSource, definition?: ResourceSourceConfig) {
   let rows: unknown[], page: number | null, pagecount: number | null, total: number | null;
   if (body.trimStart().startsWith('{')) {
     let value: unknown;
     try { value = JSON.parse(body); } catch { throw new UpstreamError('RESOURCE_INVALID_JSON'); }
     const v = obj(value);
-    if (Number(v.code) !== 1 || !Array.isArray(v.list)) throw new UpstreamError('RESOURCE_SCHEMA_CHANGED');
-    rows = v.list; page = integer(v.page); pagecount = integer(v.pagecount); total = integer(v.total);
+    // Some MacCMS APIs use null for a confirmed empty result, rather than [].
+    const empty = v.list === null && v.total !== undefined && integer(v.total) === 0;
+    if (Number(v.code) !== 1 || (!Array.isArray(v.list) && !empty)) throw new UpstreamError('RESOURCE_SCHEMA_CHANGED');
+    rows = empty ? [] : v.list as unknown[]; page = integer(v.page); pagecount = integer(v.pagecount); total = integer(v.total);
   } else {
     if (/<!DOCTYPE|<!ENTITY/i.test(body)) throw new UpstreamError('RESOURCE_UNSAFE_XML');
     if (body.length > 512 * 1024) throw new UpstreamError('RESOURCE_XML_TOO_LARGE');
@@ -126,22 +116,24 @@ export function parseResourceResponse(body: string, source: ResourceSource) {
   if (rows.length > 500) throw new UpstreamError('RESOURCE_TOO_MANY_ITEMS');
   const seen = new Set<string>();
   const results = rows.flatMap(raw => {
-    const item = parseItem(raw, source);
+    const item = parseItem(raw, source, definition);
     if (!item || seen.has(item.id)) return [];
     seen.add(item.id); return [item];
   });
   return { results, page, pagecount, total };
 }
 
-export async function searchResource(source: ResourceSource, query: string, page: number, env: Env, fetcher: Fetcher, itemId?: string) {
-  const u = new URL(RESOURCE_SOURCES[source].endpoint);
+export async function searchResource(source: ResourceSource, query: string, page: number, env: Env, fetcher: Fetcher, itemId?: string, definition?: ResourceSourceConfig) {
+  const config = definition || Object.entries(RESOURCE_SOURCES).map(([id,v])=>({id,...v})).find(v=>v.id===source);
+  if(!config)throw new UpstreamError('UNKNOWN_RESOURCE_SOURCE');
+  const u = new URL(config.endpoint);
   u.searchParams.set('ac', 'detail');
   if (itemId) u.searchParams.set('ids', itemId);
   else { u.searchParams.set('wd', query); u.searchParams.set('pg', String(page)); }
-  const base = { source_id: source, source_name: RESOURCE_SOURCES[source].name, source: 'third_party' as const,
+  const base = { source_id: source, source_name: definition?.name || (RESOURCE_SOURCES as Record<string,{name:string}>)[source]?.name || source, source: 'third_party' as const,
     source_url: u.href, cached: false, fetched_at: new Date().toISOString() };
   try {
-    const load = async () => parseResourceResponse(await request(u.href, env, fetcher, { headers: { Accept: 'application/json, application/xml, text/xml' } }), source);
+    const load = async () => parseResourceResponse(await request(u.href, env, fetcher, { headers: { Accept: 'application/json, application/xml, text/xml' } }), source, config);
     let parsed = await load();
     // Some MacCMS variants only honor wd for ac=list. Never present an unfiltered feed as search results.
     if (!itemId && parsed.results.length && !parsed.results.some(x => score(query, x.title) >= 0.18)) {
