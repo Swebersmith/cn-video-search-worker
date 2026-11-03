@@ -38,6 +38,7 @@ GET /v1/youku/series/bcaa87c7834c46f99e7b?q=嫁金钗
 
 - `episodes[]`：正片及附加内容，带 `episode_number`、`title`、官方 `url`、`episode_type`（main / extra）。
 - `previews[]`：预告链接，`episode_type=preview`，不计入正片或目录总条数。
+- `all_episodes[]` / `all_total`：正片、附加内容与预告的完整合并列表及数量，按集号排列。需要一次获取全部链接时读取此字段；不要再次拼接 previews。页面默认展开正片和预告两个栏目。
 - `total` / `main_total` / `extra_total`：实际目录条数。综艺保留上下、加更等原始标题，不将排序号伪装成期数。
 - `expected_total`：官方当前发布范围对应的目录条数；计划全集数仍在 `series.total_episodes`。
 - `missing_episode_numbers`：当前已发布范围内没有找到链接的编号。
@@ -57,7 +58,7 @@ GET /v1/youku/series/bcaa87c7834c46f99e7b?q=嫁金钗
 
 从官方响应提取候选并校验作品归属和官方播放路径，保留原始标题、章节、角标、时长及预告标记（包括腾讯字符串形式的 `is_trailer`）。明确预告直接进入 `previews`；VIP / 抢先看角标不会直接被当成预告。
 
-AI 除了补充未解析候选，还会复核已经解析的同集多链接和电影、电视剧中的异常短时长条目，结合同集候选与已有目录判断正片、预告、附加内容或无关内容。**模型只返回候选编号，不输出 URL。** 程序检查置信度、集序、已播范围及冲突后重新计算完整性；官方明确标为预告的内容不能被 AI 改成正片。AI 不可用或无法消除的正片编号冲突会暂不收录并返回 `CONFLICTING_EPISODE_NUMBERS`，不随意选取某条链接；综艺分段保留。复核不完整返回 `AI_EPISODE_AUDIT_PARTIAL`。
+AI 协助核对候选的集序与标题，**只返回候选编号，不输出 URL**。只有官网明确标为预告的条目才进入 previews，模型不能自行推断“隐藏预告”。VIP、SVIP、提前看、抢先看、超前点映、付费或试看限制不代表预告；不会因时长短、编号重复、搜索总数滞后或 AI 不可用而隐藏官网已编号的正片 URL。同集不同版本的链接全部保留，仅按相同 URL 去重；编号冲突仍返回 `CONFLICTING_EPISODE_NUMBERS` 并将完整性标为待确认。复核不完整返回 `AI_EPISODE_AUDIT_PARTIAL`。
 
 《走马上任》的腾讯官方样本包含 5 条正片与 6 条预告：修复后正片只列第 1—5 集，6 条预告单独返回，第 6、7 集标为正片待确认。腾讯搜索总数包含预告占位；仅在官方返回条目能完整解释该总数时，按实际正片、附加条目及仅有预告的编号校正 `expected_total`。
 

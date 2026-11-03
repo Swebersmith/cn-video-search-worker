@@ -145,7 +145,7 @@ test('AI repair selects a real official candidate and ignores model-invented URL
   );
   assert.equal(rejected.episodes.length, 0);
 });
-test('AI repairs an unstructured official episode 22 and completeness is recomputed from verified links', async () => {
+test('official SVIP orderStage retains episode 22 without requiring AI approval', async () => {
   const full = JSON.parse(await readFile('test/fixtures/youku-bcaa87c7834c46f99e7b.json', 'utf8'));
   full.serisesList = full.serisesList.slice(0, 21);
   full.serisesList.push({
@@ -193,8 +193,8 @@ test('AI repairs an unstructured official episode 22 and completeness is recompu
   assert.equal(d.total, 22);
   assert.equal(d.complete, true);
   assert.deepEqual(d.missing_episode_numbers, []);
-  assert.equal(d.ai.recovered, 1);
-  assert.equal(d.episodes[21].recognition, 'ai');
+  assert.equal(d.ai.recovered, 0);
+  assert.equal(d.episodes[21].recognition, 'structured');
   assert.ok(d.episodes[21].url.includes('Xofficial22'));
 });
 

@@ -117,5 +117,8 @@ test('documentation exposes exactly two modes, no old album selector, and separa
   document.getElementById('query-form')!.dispatchEvent(new window.Event('submit',{cancelable:true}));await tick();await tick();
   document.querySelector('.series-card>button')!.dispatchEvent(new window.Event('click'));await tick();await tick();
   assert.match(document.querySelector('.catalogue-panel')!.textContent||'',/正片待确认/);assert.match(document.querySelector('.catalogue-panel')!.textContent||'',/DeepSeek/);
-  assert.equal(document.querySelectorAll('.catalogue-panel details a').length,1);assert.ok(!document.querySelector('.catalogue-panel')!.textContent?.includes('缺集编号'));
+  assert.equal(document.querySelectorAll('.catalogue-panel details').length,0);
+  assert.equal(document.querySelectorAll('.preview-episodes a').length,1);
+  assert.equal(document.querySelectorAll('.main-episodes').length,1);
+  assert.ok(!document.querySelector('.catalogue-panel')!.textContent?.includes('缺集编号'));
 });

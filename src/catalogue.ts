@@ -119,6 +119,8 @@ export interface CatalogueResult {
   partial: boolean;
   missing_episode_numbers: number[];
   episodes: CatalogueEpisode[];
+  all_episodes: CatalogueEpisode[];
+  all_total: number;
   previews: CatalogueEpisode[];
   unavailable_episode_numbers: number[];
   ai: AIState;
@@ -532,7 +534,7 @@ async function discovery(
   cache?: CacheStore,
 ): Promise<Discovery> {
   const key = new Request(
-      `https://cn-video-search.internal/series/long-ai/v4/${platform}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
+      `https://cn-video-search.internal/series/long-ai/v5/${platform}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -609,7 +611,7 @@ export async function seriesCatalogue(
   cache?: CacheStore,
 ): Promise<CatalogueResult> {
   const key = new Request(
-      `https://cn-video-search.internal/catalogue/long-ai/v7/${platform}/${id}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
+      `https://cn-video-search.internal/catalogue/long-ai/v8/${platform}/${id}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(env.DEEPSEEK_API_KEY ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)
@@ -963,7 +965,7 @@ export async function seriesCatalogue(
     .map((c) => ({
       platform,
       url: c.url,
-      title: c.title,
+      title: /预告/.test(c.title) ? c.title : `${c.title}（预告）`,
       episode_number: c.number_hint,
       episode_type: 'preview' as const,
       recognition: 'structured' as const,
@@ -971,6 +973,16 @@ export async function seriesCatalogue(
   const previewUrls = new Set(previews.map((e) => e.url));
   episodes = episodes.filter((e) => !previewUrls.has(e.url));
   episodes = episodes.map((e) => candidateMap.get(e.url)?.extra ? { ...e, episode_type: 'extra' as const } : e);
+  // Official numbered playback entries are retained regardless of access tier, duration,
+  // duplicate episode numbers or a stale search total. The model cannot hide these URLs.
+  const includedUrls = new Set(episodes.map((e) => e.url));
+  for (const c of candidates) {
+    if (!c.preview && !c.extra && c.number_hint !== null && !includedUrls.has(c.url)) {
+      episodes.push({ platform, episode_number: c.number_hint, title: c.title, url: c.url,
+        episode_type: 'main', recognition: 'structured' });
+      includedUrls.add(c.url);
+    }
+  }
   const counts = new Map<number, Set<string>>();
   for (const e of episodes) if (e.episode_type === 'main' && e.episode_number !== null) {
     const urls = counts.get(e.episode_number) || new Set<string>();
@@ -988,10 +1000,6 @@ export async function seriesCatalogue(
     const oldUrls = new Set([...episodes, ...previews].map((e) => e.url));
     ai.recovered = recognized.episodes.filter((e) => !oldUrls.has(e.url)).length;
     const replaced = new Set(recognized.episodes.map((e) => e.url));
-    for (const ref of recognized.rejected_refs) {
-      const c = review.find((c) => c.ref === ref);
-      if (c) replaced.add(c.url);
-    }
     episodes = episodes.filter((e) => !replaced.has(e.url));
     for (const e of recognized.episodes) {
       if (e.episode_type === 'preview') {
@@ -1002,18 +1010,6 @@ export async function seriesCatalogue(
   const seen = new Map<string, CatalogueEpisode>();
   for (const e of episodes) seen.set(e.url, e);
   episodes = [...seen.values()];
-  // An unresolved collision is not evidence for choosing either URL. Keep it out of the main list.
-  // Variety programmes may legitimately split one issue into multiple parts.
-  let unresolvedConflict = false;
-  if (meta.category !== 'variety' && platform !== 'mango') {
-    const groups = new Map<number, CatalogueEpisode[]>();
-    for (const e of episodes) if (e.episode_type === 'main' && e.episode_number !== null) {
-      const group = groups.get(e.episode_number) || []; group.push(e); groups.set(e.episode_number, group);
-    }
-    const ambiguous = new Set([...groups.values()].filter((g) => g.length > 1).flat().map((e) => e.url));
-    unresolvedConflict = ambiguous.size > 0;
-    episodes = episodes.filter((e) => !ambiguous.has(e.url));
-  }
   episodes.sort(
     (a, b) =>
       Number(a.episode_type === 'extra') - Number(b.episode_type === 'extra') ||
@@ -1023,7 +1019,7 @@ export async function seriesCatalogue(
     numbers = new Set(main.map((e) => e.episode_number).filter((n): n is number => n !== null));
   // Tencent's search count includes preview slots, including previews of already published episodes.
   // Normalize only when the count is fully explained by the verified returned entries.
-  if (platform === 'tencent' && verified && allPages && !unresolvedConflict &&
+  if (platform === 'tencent' && verified && allPages &&
       expected === new Set([...episodes, ...previews].map((e) => e.url)).size) {
     const previewOnly = new Set(previews.map((e) => e.episode_number).filter((n): n is number => n !== null && !numbers.has(n)));
     expected = episodes.length + previewOnly.size;
@@ -1043,7 +1039,7 @@ export async function seriesCatalogue(
       : [];
   const unavailable = gaps.filter((n) => previews.some((e) => e.episode_number === n));
   const missing = gaps.filter((n) => !unavailable.includes(n));
-  const conflicts = unresolvedConflict || (numeric && main.length !== numbers.size);
+  const conflicts = numeric && main.length !== numbers.size;
   if (conflicts) warnings.push('CONFLICTING_EPISODE_NUMBERS');
   const complete =
     verified &&
@@ -1057,8 +1053,11 @@ export async function seriesCatalogue(
     !warnings.includes('UPDATE_TOTAL_MISMATCH');
   if (unavailable.length) warnings.push('EPISODE_MAIN_UNAVAILABLE');
   if (!complete) warnings.push('EPISODE_LIST_INCOMPLETE');
+  const allEpisodes = [...episodes, ...previews].sort((a, b) =>
+    (a.episode_number ?? 100000) - (b.episode_number ?? 100000) ||
+    Number(a.episode_type === 'preview') - Number(b.episode_type === 'preview'));
   const result: CatalogueResult = {
-    ok: episodes.length > 0,
+    ok: allEpisodes.length > 0,
     platform,
     series: meta,
     total: episodes.length,
@@ -1071,6 +1070,8 @@ export async function seriesCatalogue(
     partial: !complete,
     missing_episode_numbers: missing,
     episodes,
+    all_episodes: allEpisodes,
+    all_total: allEpisodes.length,
     previews,
     unavailable_episode_numbers: unavailable,
     ai,

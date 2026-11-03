@@ -59,7 +59,7 @@ const ambiguousData = () => ({ ret: 0, data: { has_next_page: false, module_list
     play_title: '走马上任 第1集', duration: vid === 'realvideo' ? '2000' : '200' } })),
 }] } });
 
-test('AI audits already parsed same-number links with peer durations and can separate a hidden preview', async () => {
+test('AI cannot invent a hidden preview from duration or duplicate episode numbers', async () => {
   let audits = 0;
   const h = createHandler(upstream(ambiguousData(), 2, async (_url, init) => {
     const body = JSON.parse(String(init?.body));
@@ -75,14 +75,40 @@ test('AI audits already parsed same-number links with peer durations and can sep
   }));
   const d = await (await h(new Request('https://test' + path), { DEEPSEEK_API_KEY: 'test' })).json() as any;
   assert.equal(audits, 1);
-  assert.equal(d.main_total, 1);
-  assert.match(d.episodes[0].url, /realvideo/);
-  assert.equal(d.previews.length, 1);
-  assert.equal(d.ai.classified, 2);
+  assert.equal(d.main_total, 2);
+  assert.ok(d.episodes.some((e: any) => /realvideo/.test(e.url)));
+  assert.equal(d.previews.length, 0);
+  assert.equal(d.ai.classified, 1);
   assert.equal(d.ai.recovered, 0);
 });
 
-test('unresolved duplicate mains are withheld on missing, failed or inconclusive AI', async () => {
+test('SVIP, early access, paid premieres and trial access are mains even for short videos or other sections', async () => {
+  const labels = ['VIP', 'SVIP', '提前看', '抢先看', '超前点映', '会员试看'];
+  const items = labels.map((label, i) => ({ item_params: { cid: id, vid: `premium${i}`, title: String(i + 1),
+    play_title: `走马上任 第${i + 1}集`, c_title_output: label, is_trailer: '0',
+    duration: '90', section_type: 1, uni_imgtag: JSON.stringify({ tag_2: { text: label } }) } }));
+  items.push({ item_params: { ...items[0].item_params, vid: 'explicittrailer', is_trailer: '1' } });
+  const data = { ret: 0, data: { has_next_page: false, module_list_datas: [{ items }] } };
+  const d = await (await createHandler(upstream(data, 7))(new Request('https://test' + path))).json() as any;
+  assert.deepEqual(d.episodes.map((e: any) => e.episode_number), [1, 2, 3, 4, 5, 6]);
+  assert.equal(d.previews.length, 1);
+  assert.equal(d.all_total, 7);
+  assert.equal(d.all_episodes.length, 7);
+  assert.equal(new Set(d.all_episodes.map((e: any) => e.url)).size, 7);
+  for (let i = 0; i < 6; i++) assert.ok(d.episodes.some((e: any) => e.url.includes(`premium${i}`)));
+});
+
+test('official numbered URLs beyond AI candidate limits and stale expected totals are never truncated', async () => {
+  const items = Array.from({ length: 70 }, (_, i) => ({ item_params: { cid: id, vid: `vipvideo${i}`, title: String(i + 1),
+    play_title: `第${i + 1}集 SVIP`, is_trailer: '0' } }));
+  const data = { ret: 0, data: { has_next_page: false, module_list_datas: [{ items }] } };
+  const d = await (await createHandler(upstream(data, 5))(new Request('https://test' + path))).json() as any;
+  assert.equal(d.main_total, 70);
+  assert.equal(d.previews.length, 0);
+  assert.equal(d.episodes.at(-1).episode_number, 70);
+});
+
+test('all official main URLs remain available on missing, failed or inconclusive AI', async () => {
   for (const mode of ['disabled', 'failed', 'partial', 'both-main']) {
     const h = createHandler(upstream(ambiguousData(), 2, async (_url, init) => {
       const input = JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
@@ -93,7 +119,7 @@ test('unresolved duplicate mains are withheld on missing, failed or inconclusive
       })) });
     }));
     const d = await (await h(new Request('https://test' + path), mode === 'disabled' ? {} : { DEEPSEEK_API_KEY: 'test' })).json() as any;
-    assert.equal(d.main_total, 0, mode);
+    assert.equal(d.main_total, 2, mode);
     assert.equal(d.complete, false, mode);
     assert.ok(d.warnings.includes('CONFLICTING_EPISODE_NUMBERS'), mode);
   }

@@ -129,7 +129,7 @@ const qq = (id: string, year: string, foreign = false) => ({
             title: '1',
             url: foreign
               ? 'https://v.qq.com/search_redirect.html?url=https%3A%2F%2Fwww.iqiyi.com%2Fv_foreign.html'
-              : `https://v.qq.com/x/cover/${id}/ep1.html`,
+              : `https://v.qq.com/x/cover/${id}/${id}ep1.html`,
           },
         ],
       },

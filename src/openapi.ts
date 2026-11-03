@@ -145,6 +145,8 @@ export const openapi = {
             description: '发现预告链接但正片尚未确认的编号；不计入正片，也不重复列为缺失链接。',
           },
           episodes: { type: 'array', items: ref('Episode'), description: '正片与附加目录。' },
+          all_episodes: { type: 'array', items: ref('Episode'), description: '全部链接，合并 episodes 与 previews 并按集数排列；预告带 episode_type=preview。需要一次取得所有分集及预告时读取此字段。' },
+          all_total: { type: 'integer', description: 'all_episodes 的链接总数，包含预告。' },
           previews: {
             type: 'array',
             items: ref('Episode'),

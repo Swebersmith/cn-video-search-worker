@@ -67,6 +67,10 @@ export function episodeCandidates(
       v.c_title_output,
       v.play_title,
       v.union_title,
+      v.title,
+      v.name,
+      v.long_title,
+      v.share_copy,
       section,
       ...tags,
     ]
@@ -75,14 +79,13 @@ export function episodeCandidates(
       .join(' ')
       .slice(0, 350);
     const preview =
-      /预告|先导片|试看|PV\b/i.test(label + ' ' + ownTitle) ||
+      /预告|\b(?:PV|trailer|teaser)\b/i.test(label + ' ' + ownTitle) ||
       v.isTrailer === true ||
       v.isTrailer === 1 ||
       v.isTrailer === '1' ||
       v.is_trailer === true ||
       v.is_trailer === 1 ||
-      v.is_trailer === '1' ||
-      (v.section_type !== undefined && Number(v.section_type) !== 0);
+      v.is_trailer === '1';
     const extra =
       /番外|彩蛋|花絮|特辑|加更|纯享|陪看|直拍|精讲/.test(label + ' ' + ownTitle) ||
       Number(v.peripheryVideoType || 0) !== 0;
@@ -91,6 +94,7 @@ export function episodeCandidates(
         v.orderId,
         v.order,
         v.orderStage,
+        v.t1,
         v.episode_number,
         v.episodeNo,
         v.number,
@@ -117,6 +121,14 @@ export function episodeCandidates(
       v.web_url,
     ];
     const action = obj(v.action).value;
+    // Reject conflicting playback identities before deriving a URL from videoId.
+    if (platform === 'youku' && typeof action === 'string' && action) {
+      try {
+        const u = new URL(action);
+        if ((u.searchParams.get('showid') && u.searchParams.get('showid') !== id) ||
+            (v.videoId && u.searchParams.get('vid') && u.searchParams.get('vid') !== v.videoId)) return;
+      } catch { return; }
+    }
     if (typeof action === 'string') {
       try {
         const u = new URL(action);

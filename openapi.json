@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "五站官网搜索与 AI 影视目录",
-    "version": "2.0.3",
+    "version": "2.0.4",
     "description": "仅 official、series 两种模式。目录筛选电影、电视剧、综艺、动漫、纪录片，排除短剧及普通短视频。DeepSeek 仅分类和识别官方候选，不生成链接。"
   },
   "servers": [
@@ -271,6 +271,17 @@
               "$ref": "#/components/schemas/Episode"
             },
             "description": "正片与附加目录。"
+          },
+          "all_episodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Episode"
+            },
+            "description": "全部链接，合并 episodes 与 previews 并按集数排列；预告带 episode_type=preview。需要一次取得所有分集及预告时读取此字段。"
+          },
+          "all_total": {
+            "type": "integer",
+            "description": "all_episodes 的链接总数，包含预告。"
           },
           "previews": {
             "type": "array",
