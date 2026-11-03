@@ -95,7 +95,7 @@ GET /v1/resources/jinchan/items/105662
 
 KV 是最终一致存储，跨地区通常需 30–60 秒或更久传播。管理页保存后立即使用保存响应中的配置；`revision` 可发现已读取到的版本冲突，但不是强一致锁，请避免同时编辑。推送 GitHub 更新不会覆盖 KV 中已保存的自定义来源。
 
-新部署先在 Cloudflare 创建 KV namespace，在 `wrangler.jsonc` 配置 `RESOURCE_CONFIG` 的 namespace ID，并将至少 32 字符的随机 `RESOURCE_ADMIN_KEY` 添加为 Worker Secret。当前仓库已绑定此项目的生产 namespace，其他账号部署需替换 ID。GitHub 自动构建使用 `--keep-vars` 保留 Secret。
+新部署先在 Cloudflare 创建 KV namespace，在 `wrangler.jsonc` 配置 `RESOURCE_CONFIG` 的 namespace ID，并将至少 12 字符（建议 32 字符以上随机值）的 `RESOURCE_ADMIN_KEY` 添加为 Worker Secret。当前仓库已绑定此项目的生产 namespace，其他账号部署需替换 ID。GitHub 自动构建使用 `--keep-vars` 保留 Secret。
 
 ## 官网来源（原接口）
 

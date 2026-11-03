@@ -85,6 +85,9 @@ test("admin authentication is independent, fail closed, and never permits cross-
     (await h(req("?key=secret"), { RESOURCE_ADMIN_KEY: adminKey })).status,
     400,
   );
+  const shortKey = "fixture-key..";
+  assert.equal((await h(req("", "GET", undefined, shortKey), { RESOURCE_ADMIN_KEY: shortKey })).status, 200);
+  assert.equal((await h(req("", "GET", undefined, "too-short"), { RESOURCE_ADMIN_KEY: "too-short" })).status, 503);
   const good = await h(req(), { RESOURCE_ADMIN_KEY: adminKey });
   assert.equal(good.status, 200);
   assert.equal(good.headers.get("Cache-Control"), "no-store");

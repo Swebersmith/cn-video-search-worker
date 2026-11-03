@@ -94,7 +94,7 @@ export async function handleResourceAdmin(
     request.headers.get("Origin") !== url.origin
   )
     return fail("ORIGIN_NOT_ALLOWED", "请从当前域名的管理页面访问。", 403);
-  if (!env.RESOURCE_ADMIN_KEY || env.RESOURCE_ADMIN_KEY.length < 32)
+  if (!env.RESOURCE_ADMIN_KEY || env.RESOURCE_ADMIN_KEY.length < 12)
     return fail("ADMIN_NOT_CONFIGURED", "管理员密钥尚未配置。", 503);
   if (!(await authenticated(request, env.RESOURCE_ADMIN_KEY)))
     return fail("UNAUTHORIZED", "管理密钥无效。", 401);
