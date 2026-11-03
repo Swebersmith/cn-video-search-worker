@@ -54,7 +54,7 @@ test('request AI switch defaults to rules, prevents all AI calls when off, propa
 test('invalid or unsupported AI parameters fail before upstream I/O', async () => {
   let calls=0;const h=createHandler(async()=>{calls++;throw Error('unexpected upstream');});
   for(const path of ['/v1/search?q=剧&view=series&ai=true','/v1/iqiyi/series/123?q=剧&ai=no',
-    '/v1/search?q=剧&ai=off','/v1/resources/search?q=剧&ai=on','/v1/search?q=剧&view=series&ai=on&ai=off']) {
+    '/v1/search?q=剧&view=official&ai=off','/v1/resources/search?q=剧&ai=on','/v1/search?q=剧&view=series&ai=on&ai=off']) {
     assert.equal((await h(new Request('https://test'+path))).status,400,path);
   }
   assert.equal(calls,0);

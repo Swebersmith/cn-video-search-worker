@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "五站官网搜索与 AI 影视目录",
-    "version": "2.3.1",
+    "version": "2.3.2",
     "description": "官网接口保留 official、series 两种模式；独立 /v1/resources 搜索第三方官采资源站。DeepSeek 仅分类和识别官方候选，不生成链接。"
   },
   "servers": [
@@ -1186,9 +1186,9 @@
                 "official",
                 "series"
               ],
-              "default": "official"
+              "default": "series"
             },
-            "description": "official 默认保留官网本页卡片；series 返回长影视作品摘要，需再请求所选结果 detail_url 读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
+            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "page",
@@ -1312,9 +1312,9 @@
                 "official",
                 "series"
               ],
-              "default": "official"
+              "default": "series"
             },
-            "description": "official 默认保留官网本页卡片；series 返回长影视作品摘要，需再请求所选结果 detail_url 读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
+            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "page",
@@ -1518,9 +1518,9 @@
                 "official",
                 "series"
               ],
-              "default": "official"
+              "default": "series"
             },
-            "description": "official 默认保留官网本页卡片；series 返回长影视作品摘要，需再请求所选结果 detail_url 读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
+            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "page",
@@ -1724,9 +1724,9 @@
                 "official",
                 "series"
               ],
-              "default": "official"
+              "default": "series"
             },
-            "description": "official 默认保留官网本页卡片；series 返回长影视作品摘要，需再请求所选结果 detail_url 读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
+            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "page",
@@ -1930,9 +1930,9 @@
                 "official",
                 "series"
               ],
-              "default": "official"
+              "default": "series"
             },
-            "description": "official 默认保留官网本页卡片；series 返回长影视作品摘要，需再请求所选结果 detail_url 读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
+            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "page",
@@ -2136,9 +2136,9 @@
                 "official",
                 "series"
               ],
-              "default": "official"
+              "default": "series"
             },
-            "description": "official 默认保留官网本页卡片；series 返回长影视作品摘要，需再请求所选结果 detail_url 读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
+            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "page",

@@ -5,6 +5,22 @@ import { PLATFORMS, type Fetcher } from '../src/types';
 
 const json = (value: unknown) => new Response(JSON.stringify(value));
 const req = (path: string) => new Request('https://example.test' + path);
+test('aggregate and single-site searches default to series and rules; official remains explicit', async () => {
+  const handler=createHandler(async()=>json({data:{templates:[{albumInfo:{qipuId:'123',title:'同名剧',channel:'电视剧,2',totalNumber:2,pageUrl:'https://www.iqiyi.com/v_first.html'}}]}}));
+  for(const path of ['/v1/search?q=同名剧&platforms=iqiyi','/v1/iqiyi/search?q=同名剧']) {
+    const implicit=await(await handler(req(path))).json() as any;
+    const explicit=await(await handler(req(path+'&view=series'))).json() as any;
+    assert.equal(implicit.view,'series');assert.equal(implicit.ai_mode,'off');
+    assert.equal(implicit.results[0].content_type,'series');assert.deepEqual(implicit.results,explicit.results);
+    const official=await(await handler(req(path+'&view=official'))).json() as any;
+    assert.equal(official.view,'official');assert.equal(official.results[0].content_type,'official');
+    assert.equal((await handler(req(path+'&page=1'))).status,400);
+  }
+  const metadata=await(await handler(req('/v1'))).json() as any;
+  assert.equal(metadata.default_view,'series');
+  const spec=await(await handler(req('/openapi.json'))).json() as any;
+  assert.equal(spec.paths['/v1/search'].get.parameters.find((p:any)=>p.name==='view').schema.default,'series');
+});
 test('dedicated routes reject cross-site filters, invalid modes and unauthenticated requests before I/O', async () => {
   let calls = 0; const handler = createHandler(async () => { calls++; throw Error('unexpected'); });
   for (const path of ['/v1/iqiyi/search?q=海市蜃楼&platforms=tencent', '/v1/search?q=海市蜃楼&mode=garbage', '/v1/tencent/search?q=海市蜃楼&album_id=123']) assert.equal((await handler(req(path))).status, 400);

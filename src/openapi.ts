@@ -1,5 +1,5 @@
 import { PLATFORMS } from './types';
-import { CAPABILITIES, VERSION } from './aggregate';
+import { CAPABILITIES, VERSION, DEFAULT_VIEW } from './aggregate';
 const sourceId = { type: 'string', pattern: '^[a-z][a-z0-9_-]{1,39}$', description: 'KV 配置中的来源 ID；通过 /v1/resources 获取已启用清单。' };
 const adminSecurity = [{ resourceAdminKey: [] }];
 const platform = { type: 'string', enum: Object.keys(PLATFORMS) };
@@ -26,8 +26,8 @@ const searchParameters = [
   {
     name: 'view',
     in: 'query',
-    schema: { type: 'string', enum: ['official', 'series'], default: 'official' },
-    description: 'official 默认保留官网本页卡片；series 返回长影视作品摘要，需再请求所选结果 detail_url 读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。',
+    schema: { type: 'string', enum: ['official', 'series'], default: DEFAULT_VIEW },
+    description: '默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。',
   },
   {
     name: 'page',

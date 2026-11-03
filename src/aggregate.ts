@@ -1,6 +1,7 @@
 import { PLATFORMS, type Platform } from './types';
 
-export const VERSION = '2.3.1';
+export const DEFAULT_VIEW = 'series' as const;
+export const VERSION = '2.3.2';
 export const CAPABILITIES = Object.fromEntries(
   Object.entries(PLATFORMS).map(([id, p]) => [
     id,

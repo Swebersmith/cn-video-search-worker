@@ -6,8 +6,8 @@
 
 | 模式 | 请求示例 | 行为 |
 | --- | --- | --- |
-| 官网综合搜索 | `/v1/search?q=嫁金钗&view=official&page=1` | 默认模式，保留官网本页全部卡片和顺序，以及原始响应。 |
-| 影视目录 | `/v1/search?q=嫁金钗&view=series&limit=5` | 先返回电影、长电视剧、综艺、动漫、纪录片摘要，选择后请求 detail_url 读取分集；AI 辅助分类和识别，排除短剧与普通短视频。 |
+| 官网综合搜索 | `/v1/search?q=嫁金钗&view=official&page=1` | 需显式传 view=official，保留官网本页全部卡片和顺序，以及原始响应。 |
+| 影视目录 | `/v1/search?q=嫁金钗&view=series&limit=5` | 默认模式，省略 view 即可。先返回电影、长电视剧、综艺、动漫、纪录片摘要，选择后请求 detail_url 读取分集；AI 辅助分类和识别，排除短剧与普通短视频。 |
 | 官采资源站 | `/v1/resources/search?q=三体&sources=all&page=1` | 独立搜索 KV 中已启用的第三方来源；返回条目与线路，详情使用该结果的 detail_url。 |
 
 单站路径为 `/v1/{platform}/search`，平台标识：`tencent`、`iqiyi`、`youku`、`mango`、`bilibili`。例如：
@@ -41,7 +41,7 @@ curl --get 'https://videosearch.webber.qzz.io/v1/tencent/search' \
 | 参数 | 范围 | 用途 |
 | --- | --- | --- |
 | `q` | 1—80 字符，搜索必填 | 模糊片名；目录请求保留 detail_url 中的关键词提示。 |
-| `view` | `official` / `series` | 默认 official。 |
+| `view` | `official` / `series` | 默认 series（影视目录）。 |
 | `page` | 1—1000，默认 1 | official 及资源站搜索的上游页码；series 搜索携带会返回 400，详情不支持。 |
 | `limit` | 1—20，默认 5 | 仅 series，限制每站作品数，不截断展开的目录。official 忽略此参数。 |
 | `platforms` | all 或逗号分隔平台标识 | 仅官网总接口 /v1/search，单站和资源站不支持。 |

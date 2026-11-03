@@ -6,7 +6,7 @@ export const USAGE_GUIDE_HTML = String.raw`
 <tr><td>先选电影或剧集，再展开分集</td><td><a href="#guide-series">影视目录</a></td><td><code>/v1/search?view=series</code>；返回作品摘要，再请求所选作品的 <code>detail_url</code>。</td></tr>
 <tr><td>查询管理页启用的采集站</td><td><a href="#guide-resources">官采资源站</a></td><td><code>/v1/resources/search</code>；返回第三方条目、播放线路与分集。</td></tr>
 </tbody></table></div><p class="hint">页面下拉框中的 resources 是界面选项。第三方模式使用独立路径，不要向 /v1/search 传 view=resources。官网总接口只聚合官网结果；资源站接口只聚合已启用的第三方来源。</p></section>
-<section id="guide-official"><p class="eyebrow">01 / OFFICIAL</p><h2>官网综合搜索：按页读取官网卡片</h2><p>适合展示网站原有搜索内容，保留卡片类型、顺序与原始数据，不使用 AI 筛选。省略 <code>view</code> 时默认使用此模式。搜索结果条数不是电视剧集数，一张作品卡片也不等于一集。</p>
+<section id="guide-official"><p class="eyebrow">01 / OFFICIAL</p><h2>官网综合搜索：按页读取官网卡片</h2><p>适合展示网站原有搜索内容，保留卡片类型、顺序与原始数据，不使用 AI 筛选。需显式传入 <code>view=official</code>；省略 view 时默认进入影视目录。搜索结果条数不是电视剧集数，一张作品卡片也不等于一集。</p>
 <pre><code># 五站聚合，读取第 1 页
 GET /v1/search?q=三体&amp;view=official&amp;page=1
 
@@ -16,7 +16,7 @@ GET /v1/iqiyi/search?q=三体&amp;view=official&amp;page=2
 # 总接口只查询腾讯、优酷
 GET /v1/search?q=三体&amp;view=official&amp;platforms=tencent,youku&amp;page=1</code></pre>
 <p>读取 <code>results[]</code> 展示卡片；<code>results[].raw</code> 是该卡片原始内容，<code>providers[].upstream</code> 是本次官方响应。部分卡片没有可用链接，<code>url</code> 可为 null；作者、短视频等卡片不代表剧集播放页。</p><p>继续查询时将 <code>page</code> 加一，并检查各站的分页元数据和状态；不同平台的总量、分页能力可能不同。<code>limit</code> 在此模式不生效。需要完整分集目录时，改用下一种模式重新搜索作品。</p></section>
-<section id="guide-series"><p class="eyebrow">02 / SERIES</p><h2>影视目录：搜索作品 → 选择版本 → 读取分集</h2><p>适合电影、长电视剧、综艺、动漫和纪录片目录。默认 ai=off，使用官网字段与规则分类；可选择 ai=on 启用 AI 辅助筛选与复核，排除短剧、陪看、解说、剪辑及普通短视频。AI 只能识别已有候选，不生成或猜测播放链接。</p>
+<section id="guide-series"><p class="eyebrow">02 / SERIES</p><h2>影视目录：搜索作品 → 选择版本 → 读取分集</h2><p>省略 <code>view</code> 时默认使用此模式，适合电影、长电视剧、综艺、动漫和纪录片目录。默认 ai=off，使用官网字段与规则分类；可选择 ai=on 启用 AI 辅助筛选与复核，排除短剧、陪看、解说、剪辑及普通短视频。AI 只能识别已有候选，不生成或猜测播放链接。</p>
 <pre><code># 第一步：搜索作品摘要，每站最多 5 部
 GET /v1/search?q=三体&amp;view=series&amp;limit=5
 

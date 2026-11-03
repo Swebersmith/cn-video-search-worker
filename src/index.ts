@@ -1,6 +1,6 @@
 import { PLATFORMS, type CacheStore, type Env, type Fetcher, type Platform } from './types';
 import { openapi } from './openapi';
-import { CAPABILITIES, VERSION } from './aggregate';
+import { CAPABILITIES, VERSION, DEFAULT_VIEW } from './aggregate';
 import { DOCS_HTML, DOCS_CSS, DOCS_JS } from './documentation';
 import { searchSeries, seriesCatalogue, validSeriesId } from './catalogue';
 import { officialSearch } from './official';
@@ -63,7 +63,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       return reply({
         version: VERSION,
         aggregate: '/v1/search',
-        default_view: 'official',
+        default_view: DEFAULT_VIEW,
         views: ['official', 'series'],
         resource_search: '/v1/resources/search',
         resource_sources: '/v1/resources',
@@ -149,7 +149,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
         400,
       );
     const platforms = [...new Set(ids)] as Platform[];
-    const view = url.searchParams.get('view') ?? 'official';
+    const view = url.searchParams.get('view') ?? DEFAULT_VIEW;
     if (!['official', 'series'].includes(view))
       return fail('INVALID_VIEW', 'view must be official or series.', 400);
     if (view === 'official') {

@@ -44,15 +44,15 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     const usedCalls = outboundCalls;
     assert.equal((await (await mf.dispatchFetch(detailUrl, { headers })).json() as any).cached, true); assert.equal(outboundCalls, usedCalls);
     const beforeRules = aiCalls;
-    const rules = await(await mf.dispatchFetch('https://example.test/v1/iqiyi/search?view=series&ai=off&q=狂飙',{headers})).json() as any;
-    assert.equal(rules.ai_mode,'off');assert.equal(rules.providers[0].ai.status,'disabled');assert.equal(aiCalls,beforeRules);
+    const rules = await(await mf.dispatchFetch('https://example.test/v1/iqiyi/search?ai=off&q=狂飙',{headers})).json() as any;
+    assert.equal(rules.view,'series');assert.equal(rules.ai_mode,'off');assert.equal(rules.providers[0].ai.status,'disabled');assert.equal(aiCalls,beforeRules);
     assert.ok(rules.results[0].detail_url.endsWith('&ai=off'));
     const ruleDetail=await(await mf.dispatchFetch('https://example.test'+rules.results[0].detail_url,{headers})).json() as any;
     assert.equal(ruleDetail.main_total,24);assert.equal(ruleDetail.complete,true);assert.equal(aiCalls,beforeRules);
     const docs = await mf.dispatchFetch('https://example.test/');
     assert.equal(docs.status, 200); assert.match(await docs.text(), /总接口与单站接口/);
     assert.equal((await mf.dispatchFetch('https://example.test/assets/docs.js')).status, 200);
-    const officialUrl='https://example.test/v1/iqiyi/search?q=%E7%8B%82%E9%A3%99';
+    const officialUrl='https://example.test/v1/iqiyi/search?view=official&q=%E7%8B%82%E9%A3%99';
     assert.equal((await mf.dispatchFetch('https://example.test/v1/episodes?q=狂飙')).status,404);
     const beforeOfficial=outboundCalls;
     for(let i=0;i<2;i++) {
@@ -62,7 +62,7 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
       assert.equal(official.providers[0].cached,false);
     }
     assert.equal(outboundCalls,beforeOfficial+2);
-    const bili=await (await mf.dispatchFetch('https://example.test/v1/bilibili/search?q=三体',{headers})).json() as any;
+    const bili=await (await mf.dispatchFetch('https://example.test/v1/bilibili/search?view=official&q=三体',{headers})).json() as any;
     assert.equal(bili.results[0].title,'官网投稿');
     assert.ok(bili.providers[0].source_url.startsWith('https://search.bilibili.com/all?'));
     assert.equal(bili.providers[0].upstream.data.page,1);
