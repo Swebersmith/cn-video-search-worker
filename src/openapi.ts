@@ -1,5 +1,6 @@
 import { PLATFORMS } from './types';
 import { CAPABILITIES, VERSION } from './aggregate';
+import { RESOURCE_SOURCES } from './resources';
 const platform = { type: 'string', enum: Object.keys(PLATFORMS) };
 const nullableInt = { type: ['integer', 'null'] };
 const numbers = { type: 'array', items: { type: 'integer' } };
@@ -60,7 +61,7 @@ export const openapi = {
     title: '五站官网搜索与 AI 影视目录',
     version: VERSION,
     description:
-      '仅 official、series 两种模式。目录筛选电影、电视剧、综艺、动漫、纪录片，排除短剧及普通短视频。DeepSeek 仅分类和识别官方候选，不生成链接。',
+      '官网接口保留 official、series 两种模式；独立 /v1/resources 搜索第三方官采资源站。DeepSeek 仅分类和识别官方候选，不生成链接。',
   },
   servers: [{ url: '/' }],
   components: {
@@ -69,6 +70,30 @@ export const openapi = {
       apiKey: { type: 'apiKey', in: 'header', name: 'X-API-Key' },
     },
     schemas: {
+      ResourceEpisode: { type: 'object', properties: {
+        title: { type: 'string' }, url: { type: 'string' }, episode_number: nullableInt,
+        episode_type: { enum: ['main', 'preview'] }, platform: { type: ['string', 'null'] },
+        link_type: { enum: ['official_page', 'media', 'external_page'] }, playback_verified: { const: false },
+      } },
+      ResourceItem: { type: 'object', properties: {
+        id: { type: 'string' }, title: { type: 'string' }, source_id: { enum: Object.keys(RESOURCE_SOURCES) },
+        source_name: { type: 'string' }, source: { const: 'third_party' }, content_type: { const: 'resource' },
+        year: { type: 'string' }, type_name: { type: 'string' }, remarks: { type: 'string' }, updated_at: { type: 'string' },
+        detail_url: { type: 'string' }, play_sources: strings,
+        lines: { type: 'array', items: { type: 'object', properties: {
+          name: { type: 'string' }, platform: { type: ['string', 'null'] },
+          episodes: { type: 'array', items: ref('ResourceEpisode') }, previews: { type: 'array', items: ref('ResourceEpisode') },
+        } } },
+      } },
+      ResourceSearch: { type: 'object', properties: {
+        ok: { type: 'boolean' }, view: { const: 'resources' }, query: { type: 'string' }, page: { type: 'integer' },
+        total: { type: 'integer' }, partial: { type: 'boolean' }, source_policy: { const: 'third_party_resource_sites' },
+        results: { type: 'array', items: ref('ResourceItem') }, providers: { type: 'array', items: { type: 'object', properties: {
+          source_id: { enum: Object.keys(RESOURCE_SOURCES) }, source_name: { type: 'string' }, source: { const: 'third_party' },
+          source_url: { type: 'string' }, status: { enum: ['ok', 'empty', 'unavailable'] }, count: { type: 'integer' },
+          total: nullableInt, page: { type: 'integer' }, pagecount: nullableInt, has_more: { type: ['boolean', 'null'] }, warnings: strings,
+        } } },
+      } },
       AI: {
         type: 'object',
         properties: {
@@ -208,6 +233,23 @@ export const openapi = {
     },
   },
   paths: {
+    '/v1/resources': { get: { summary: '第三方官采来源清单；登记不代表当前可用或官方授权', responses: { '200': { description: 'Configured resource sources' } } } },
+    '/v1/resources/search': { get: {
+      summary: '独立搜索官采资源站（MacCMS JSON / XML）', security,
+      parameters: [searchParameters[0], { name: 'sources', in: 'query', schema: { type: 'string', default: 'all' },
+        description: `all 或逗号分隔：${Object.keys(RESOURCE_SOURCES).join(',')}` }, { ...searchParameters[2], description: '官采来源的上游页码。' }],
+      responses: { '200': response('ResourceSearch', '第三方条目与各源状态；不代表可以播放'),
+        '400': response('Error', '无效参数'), '401': response('Error', '认证失败'), '503': response('ResourceSearch', '所选来源本次均不可用') },
+    } },
+    '/v1/resources/{source}/items/{id}': { get: {
+      summary: '读取指定官采条目与分线路地址，不访问或解析播放链接', security,
+      parameters: [{ name: 'source', in: 'path', required: true, schema: { enum: Object.keys(RESOURCE_SOURCES) } },
+        { name: 'id', in: 'path', required: true, schema: { type: 'string', pattern: '^[a-zA-Z0-9_-]{1,80}$' } }],
+      responses: { '200': { description: 'source_id、第三方 item（ResourceItem）与 warnings', content: { 'application/json': { schema: { type: 'object', properties: {
+        ok: { type: 'boolean' }, source: { const: 'third_party' }, source_id: { type: 'string' }, item: ref('ResourceItem'), warnings: strings,
+      } } } } }, '400': response('Error', '无效来源或 ID'), '401': response('Error', '认证失败'),
+        '404': { description: '上游未返回指定 ID' }, '503': { description: '来源不可用' } },
+    } },
     '/health': {
       get: {
         summary: '进程健康状态，不代表官网或 AI 可用性',

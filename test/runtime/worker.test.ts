@@ -11,6 +11,11 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     bindings: { API_KEY: 'runtime-test-secret', DEEPSEEK_API_KEY: 'runtime-ai-secret' },
     outboundService: async (request: Request) => {
       outboundCalls++;
+      if(request.url.startsWith('https://zy.jinchanjiexi.net/')){
+        assert.equal(request.headers.get('Authorization'),null);
+        return new Response(JSON.stringify({code:1,page:1,pagecount:1,total:1,list:[{vod_id:105662,vod_name:'走马上任',vod_play_from:'qq',vod_play_url:'第7集 SVIP$https://v.qq.com/x/cover/show/video.html#第8集预告$https://v.qq.com/x/cover/show/trailer.html'}]}));
+      }
+      if(request.url.startsWith('http://zy.yilans.net:8090/'))return new Response('<rss><list page="1" pagecount="1" recordcount="1"><video><id>88</id><name>走马上任</name><dl><dd flag="qq"><![CDATA[第1集$https://v.qq.com/x/cover/show/video.html]]></dd></dl></video></list></rss>');
       if(request.url==='https://api.deepseek.com/chat/completions'){assert.equal(request.headers.get('Authorization'),'Bearer runtime-ai-secret');return new Response(JSON.stringify({choices:[{finish_reason:'stop',message:{content:JSON.stringify({items:[{id:'12345',category:'tv',confidence:1}]})}}]}));}
       if(request.url.startsWith('https://search.bilibili.com/all?'))return new Response('<script>window.__pinia=(function(a){return {searchResponse:{searchAllResponse:{page:1,numPages:2,result:[{result_type:"video",data:[{title:a,arcurl:"https://www.bilibili.com/video/BV123"}]}]}}}}("官网投稿"))</script>');
       assert.ok(request.url.startsWith('https://mesh.if.iqiyi.com/') || request.url.startsWith('https://pcw-api.iqiyi.com/'));
@@ -49,5 +54,13 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     assert.equal(bili.results[0].title,'官网投稿');
     assert.ok(bili.providers[0].source_url.startsWith('https://search.bilibili.com/all?'));
     assert.equal(bili.providers[0].upstream.data.page,1);
+    const resources=await(await mf.dispatchFetch('https://example.test/v1/resources/search?q=走马上任&sources=jinchan,caiji8090',{headers})).json() as any;
+    assert.equal(resources.view,'resources');assert.equal(resources.total,2);assert.equal(resources.partial,false);
+    assert.equal(resources.results[0].lines[0].episodes[0].episode_number,7);
+    assert.equal(resources.results[0].lines[0].previews.length,1);
+    assert.equal(resources.results[1].id,'88');
+    assert.equal((await mf.dispatchFetch('https://example.test/v1/resources/jinchan/items/105662')).status,401);
+    const resourceDetail=await(await mf.dispatchFetch('https://example.test/v1/resources/jinchan/items/105662',{headers})).json() as any;
+    assert.equal(resourceDetail.item.id,'105662');
   } finally { await mf.dispose(); }
 });

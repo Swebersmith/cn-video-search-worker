@@ -4,6 +4,7 @@ import { CAPABILITIES, VERSION } from './aggregate';
 import { DOCS_HTML, DOCS_CSS, DOCS_JS } from './documentation';
 import { searchSeries, seriesCatalogue, validSeriesId } from './catalogue';
 import { officialSearch } from './official';
+import { RESOURCE_SOURCES, resourceSources, searchResource, validResourceId, type ResourceSource } from './resources';
 
 export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
   return async (request: Request, env: Env = {}): Promise<Response> => {
@@ -48,12 +49,15 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       return reply({ ok: true, service: 'cn-video-search', version: VERSION, upstream_checked: false });
     if (path === '/openapi.json') return reply(openapi);
     if (path === '/v1/platforms') return reply({ ok: true, platforms: Object.values(CAPABILITIES) });
+    if (path === '/v1/resources') return reply({ ok: true, source: 'third_party', sources: resourceSources() });
     if (path === '/v1')
       return reply({
         version: VERSION,
         aggregate: '/v1/search',
         default_view: 'official',
         views: ['official', 'series'],
+        resource_search: '/v1/resources/search',
+        resource_sources: '/v1/resources',
         platforms: Object.values(CAPABILITIES),
         docs: '/',
         openapi: '/openapi.json',
@@ -63,7 +67,9 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     const detail = path.match(/^\/v1\/([a-z]+)\/series\/([^/]+)$/);
     const detailPlatform =
       detail && Object.hasOwn(PLATFORMS, detail[1]) ? (detail[1] as Platform) : undefined;
-    if (path !== '/v1/search' && !single && !detailPlatform)
+    const resourceSearch = path === '/v1/resources/search';
+    const resourceDetail = path.match(/^\/v1\/resources\/([a-z0-9]+)\/items\/([^/]+)$/);
+    if (path !== '/v1/search' && !single && !detailPlatform && !resourceSearch && !resourceDetail)
       return fail('NOT_FOUND', 'Endpoint not found.', 404);
     if (env.API_KEY) {
       const supplied =
@@ -72,7 +78,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
         return fail('UNAUTHORIZED', 'Missing or invalid API key.', 401);
     }
     const allowed = new Set(
-      detailPlatform
+      resourceDetail ? [] : resourceSearch ? ['q', 'sources', 'page'] : detailPlatform
         ? ['q']
         : single
           ? ['q', 'view', 'limit', 'page']
@@ -85,7 +91,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     const raw = url.searchParams.get('q') || '',
       query = raw.normalize('NFKC').trim().replace(/\s+/g, ' ');
     if (
-      (!query && !detailPlatform) ||
+      (!query && !detailPlatform && !resourceDetail) ||
       query.length > 80 ||
       /[\u0000-\u001f\u007f]/.test(raw) ||
       (query && !/[\p{L}\p{N}]/u.test(query))
@@ -95,6 +101,22 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
         'q must contain 1–80 characters with letters or numbers, without control characters.',
         400,
       );
+    if (resourceSearch || resourceDetail) {
+      const selected = resourceDetail ? [resourceDetail[1]] : (url.searchParams.get('sources') ?? 'all') === 'all'
+        ? Object.keys(RESOURCE_SOURCES) : url.searchParams.get('sources')!.split(',').map(s => s.trim());
+      if (!selected.length || selected.some(s => !Object.hasOwn(RESOURCE_SOURCES, s)))
+        return fail('INVALID_SOURCES', 'sources must be all or configured resource source IDs.', 400);
+      if (resourceDetail && !validResourceId(resourceDetail[2])) return fail('INVALID_RESOURCE_ID', 'Invalid resource ID.', 400);
+      const page = url.searchParams.get('page') ?? '1';
+      if (!/^\d+$/.test(page) || Number(page) < 1 || Number(page) > 1000) return fail('INVALID_PAGE', 'page must be 1–1000.', 400);
+      const providers = await Promise.all([...new Set(selected)].map(s => searchResource(s as ResourceSource, query, Number(page), env, fetcher, resourceDetail?.[2])));
+      const results = providers.flatMap(p => p.results), unavailable = providers.every(p => p.status === 'unavailable');
+      if (resourceDetail) return reply({ ok: results.length > 0, source: 'third_party', source_id: selected[0],
+        item: results[0] || null, warnings: providers[0].warnings, took_ms: Date.now() - started }, unavailable ? 503 : results.length ? 200 : 404);
+      return reply({ ok: !unavailable, view: 'resources', query, page: Number(page), source_policy: 'third_party_resource_sites',
+        partial: providers.some(p => p.status === 'unavailable'), total: results.length, results,
+        providers: providers.map(({ results: _r, ...p }) => p), took_ms: Date.now() - started }, unavailable ? 503 : 200);
+    }
     if (detailPlatform && detail) {
       if (!validSeriesId(detailPlatform, detail[2]))
         return fail('INVALID_SERIES_ID', 'Invalid series ID for this platform.', 400);

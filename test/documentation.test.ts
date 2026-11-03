@@ -103,9 +103,9 @@ test('series explorer opens the exact selected catalogue, retains auth headers a
   assert.equal(calls.length, 2); assert.match(document.querySelectorAll('.catalogue-panel')[1].textContent || '', /目录地址无效/);
 });
 
-test('documentation exposes exactly two modes, no old album selector, and separate playable previews', async () => {
+test('documentation exposes official, series and independent resource modes, no old album selector, and visible previews', async () => {
   const {window,document}=parseHTML(DOCS_HTML);
-  assert.deepEqual([...document.querySelectorAll('#mode option')].map(o=>o.getAttribute('value')),['official','series']);
+  assert.deepEqual([...document.querySelectorAll('#mode option')].map(o=>o.getAttribute('value')),['official','series','resources']);
   assert.equal(document.getElementById('album-id'),null);assert.ok(!DOCS_HTML.includes('album_id'));
   for(const [id,value] of [['platform','youku'],['mode','series']])Object.defineProperty(document.getElementById(id)!,'value',{value,writable:true});
   Object.assign(window,{location:{origin:'https://test'}});Object.assign(document.getElementById('query-form')!,{reportValidity:()=>true});

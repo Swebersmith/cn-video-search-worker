@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "五站官网搜索与 AI 影视目录",
-    "version": "2.0.4",
-    "description": "仅 official、series 两种模式。目录筛选电影、电视剧、综艺、动漫、纪录片，排除短剧及普通短视频。DeepSeek 仅分类和识别官方候选，不生成链接。"
+    "version": "2.1.0",
+    "description": "官网接口保留 official、series 两种模式；独立 /v1/resources 搜索第三方官采资源站。DeepSeek 仅分类和识别官方候选，不生成链接。"
   },
   "servers": [
     {
@@ -23,6 +23,223 @@
       }
     },
     "schemas": {
+      "ResourceEpisode": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "episode_number": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "episode_type": {
+            "enum": [
+              "main",
+              "preview"
+            ]
+          },
+          "platform": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "link_type": {
+            "enum": [
+              "official_page",
+              "media",
+              "external_page"
+            ]
+          },
+          "playback_verified": {
+            "const": false
+          }
+        }
+      },
+      "ResourceItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "source_id": {
+            "enum": [
+              "jinchan",
+              "caiji789",
+              "xiami",
+              "naisi",
+              "caiji8090",
+              "guanfang",
+              "jianan"
+            ]
+          },
+          "source_name": {
+            "type": "string"
+          },
+          "source": {
+            "const": "third_party"
+          },
+          "content_type": {
+            "const": "resource"
+          },
+          "year": {
+            "type": "string"
+          },
+          "type_name": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "detail_url": {
+            "type": "string"
+          },
+          "play_sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "platform": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "episodes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceEpisode"
+                  }
+                },
+                "previews": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceEpisode"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ResourceSearch": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "view": {
+            "const": "resources"
+          },
+          "query": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "partial": {
+            "type": "boolean"
+          },
+          "source_policy": {
+            "const": "third_party_resource_sites"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceItem"
+            }
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source_id": {
+                  "enum": [
+                    "jinchan",
+                    "caiji789",
+                    "xiami",
+                    "naisi",
+                    "caiji8090",
+                    "guanfang",
+                    "jianan"
+                  ]
+                },
+                "source_name": {
+                  "type": "string"
+                },
+                "source": {
+                  "const": "third_party"
+                },
+                "source_url": {
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "ok",
+                    "empty",
+                    "unavailable"
+                  ]
+                },
+                "count": {
+                  "type": "integer"
+                },
+                "total": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "pagecount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "has_more": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "warnings": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "AI": {
         "type": "object",
         "properties": {
@@ -462,6 +679,204 @@
     }
   },
   "paths": {
+    "/v1/resources": {
+      "get": {
+        "summary": "第三方官采来源清单；登记不代表当前可用或官方授权",
+        "responses": {
+          "200": {
+            "description": "Configured resource sources"
+          }
+        }
+      }
+    },
+    "/v1/resources/search": {
+      "get": {
+        "summary": "独立搜索官采资源站（MacCMS JSON / XML）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "example": "嫁金钗"
+          },
+          {
+            "name": "sources",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "all"
+            },
+            "description": "all 或逗号分隔：jinchan,caiji789,xiami,naisi,caiji8090,guanfang,jianan"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1
+            },
+            "description": "官采来源的上游页码。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "第三方条目与各源状态；不代表可以播放",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceSearch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "无效参数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "所选来源本次均不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceSearch"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/resources/{source}/items/{id}": {
+      "get": {
+        "summary": "读取指定官采条目与分线路地址，不访问或解析播放链接",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKey": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "jinchan",
+                "caiji789",
+                "xiami",
+                "naisi",
+                "caiji8090",
+                "guanfang",
+                "jianan"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "source_id、第三方 item（ResourceItem）与 warnings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "source": {
+                      "const": "third_party"
+                    },
+                    "source_id": {
+                      "type": "string"
+                    },
+                    "item": {
+                      "$ref": "#/components/schemas/ResourceItem"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "无效来源或 ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "上游未返回指定 ID"
+          },
+          "503": {
+            "description": "来源不可用"
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "进程健康状态，不代表官网或 AI 可用性",

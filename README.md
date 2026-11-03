@@ -1,8 +1,8 @@
-# VideoSearch · 五站官网搜索与 AI 影视目录
+# VideoSearch · 五站官网搜索、AI 目录与官采资源站
 
 正式地址：<https://videosearch.webber.qzz.io/> · [OpenAPI](https://videosearch.webber.qzz.io/openapi.json)
 
-**只保留两个模式：官网综合搜索、影视目录。** 总接口聚合五站，单站接口只查询对应官网。
+官网接口保留官网综合搜索、影视目录两种视图。另提供独立官采资源站搜索，来源与官网结果分别展示。
 
 | 模式 | 请求示例 | 行为 |
 | --- | --- | --- |
@@ -64,7 +64,24 @@ AI 协助核对候选的集序与标题，**只返回候选编号，不输出 UR
 
 作品摘要和分类默认缓存 5 分钟；完整目录单独缓存。AI 请求有超时、响应大小和候选数量上限。使用已有 `API_KEY` 认证可控制共享接口访问；AI 调用使用你自己的 DeepSeek 配额。
 
-## 官网来源
+## 官采资源站搜索
+
+页面“功能模式”选择“官采资源站”，可指定来源并分页搜索。API 示例：
+
+```text
+GET /v1/resources
+GET /v1/resources/search?q=走马上任&sources=jinchan&page=1
+GET /v1/resources/search?q=三体&sources=jinchan,jianan&page=2
+GET /v1/resources/jinchan/items/105662
+```
+
+`sources=all` 搜索全部登记来源。来源 ID：`jinchan` 金蝉、`caiji789` 789、`xiami` 虾米、`naisi` 奈斯、`caiji8090` 8090、`guanfang` 官方采集、`jianan` 建安。登记不代表当前可用；每次搜索的 `providers` 分别给出状态、警告、上游总数、分页及来源 URL。HTML 占位页、超时、错误分页或忽略关键词的接口不会被当成成功搜索，全部来源不可用时返回 503。
+
+结果注明 `source=third_party`、`source_id`、`source_name`，不会作为官网搜索的兜底。`detail_url` 读取准确条目的线路。MacCMS JSON 与 RSS XML 的播放来源和分集字段规范化为 `lines[]`，每条线路提供 `episodes` / `previews`；保留 SVIP、抢先看等分集标签。`link_type` 区分 `official_page`、`media`、`external_page`，`playback_verified=false` 表示未验证播放能力。服务不调用第三方解析线路或媒体地址，不将来源名称当成平台授权证明。页面可点击官方播放页，其他地址以文本展示。
+
+仅允许调用预先登记的七个接口，不接受任意 API 地址；启用 `API_KEY` 后搜索与详情沿用同一认证。关键词与页码分别传给上游 `wd` / `pg`，详情使用 `ids`；JSON / XML 字段解析有大小和条数上限。
+
+## 官网来源（原接口）
 
 腾讯使用官方 MultiTerminalSearch；爱奇艺使用 mesh 搜索和专辑目录；优酷使用官方搜索与 show_episode API；芒果使用官网 search/v2 和 episode/list；B站使用官网 SSR、综合搜索和 season / section 目录。
 
