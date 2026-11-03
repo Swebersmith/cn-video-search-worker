@@ -32,9 +32,9 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       return reply({ ok: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Use GET.' } }, 405, {
         Allow: 'GET, OPTIONS',
       });
-    if (['/', '/docs', '/assets/docs.css', '/assets/docs.js', '/admin/resources', '/assets/resource-admin.css', '/assets/resource-admin.js'].includes(path)) {
-      const html = path === '/' || path === '/docs' || path === '/admin/resources';
-      const admin = path === '/admin/resources' || path.includes('resource-admin');
+    if (['/', '/docs', '/assets/docs.css', '/assets/docs.js', '/admin', '/assets/resource-admin.css', '/assets/resource-admin.js'].includes(path)) {
+      const html = path === '/' || path === '/docs' || path === '/admin';
+      const admin = path === '/admin' || path.includes('resource-admin');
       return new Response(admin ? html ? RESOURCE_ADMIN_HTML : path.endsWith('.css') ? RESOURCE_ADMIN_CSS : RESOURCE_ADMIN_JS : html ? DOCS_HTML : path.endsWith('.css') ? DOCS_CSS : DOCS_JS, {
         headers: {
           'Content-Type': html

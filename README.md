@@ -85,7 +85,7 @@ GET /v1/resources/jinchan/items/105662
 
 ### 采集站管理与 KV
 
-打开 `/admin/resources`，使用独立的 `RESOURCE_ADMIN_KEY` 登录，可新增、编辑、删除、启停来源，也可先测试草稿接口再保存。页面从 KV 读取全部来源，搜索页下拉框从 `/v1/resources` 动态读取已启用项。管理密钥仅保留在当前页面内存，不进入 URL、本地存储或第三方请求。它与可选的公共接口 `API_KEY` 分开，管理写入不会因公共接口未设密钥而开放。
+打开 `/admin`，使用独立的 `RESOURCE_ADMIN_KEY` 登录，可新增、编辑、删除、启停来源，也可先测试草稿接口再保存。页面从 KV 读取全部来源，搜索页下拉框从 `/v1/resources` 动态读取已启用项。管理密钥仅保留在当前页面内存，不进入 URL、本地存储或第三方请求。它与可选的公共接口 `API_KEY` 分开，管理写入不会因公共接口未设密钥而开放。
 
 - `GET /v1/admin/resource-sources`：读取全部来源、`revision` 与保存时间。
 - `PUT /v1/admin/resource-sources`：JSON `{ "revision": "读取的版本", "sources": [{ "id": "custom1", "name": "自定义站", "endpoint": "https://your-source.com/api.php/provide/vod/", "enabled": true }] }`，整份替换配置；请求头 `X-Admin-Key`。

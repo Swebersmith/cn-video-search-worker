@@ -63,7 +63,7 @@ test('workerd handles upstream fetch, response streams, auth and real Cache API'
     assert.equal((await mf.dispatchFetch('https://example.test/v1/resources/jinchan/items/105662')).status,401);
     const resourceDetail=await(await mf.dispatchFetch('https://example.test/v1/resources/jinchan/items/105662',{headers})).json() as any;
     assert.equal(resourceDetail.item.id,'105662');
-    assert.equal((await mf.dispatchFetch('https://example.test/admin/resources')).status,200);
+    assert.equal((await mf.dispatchFetch('https://example.test/admin')).status,200);
     const adminHeaders={'X-Admin-Key':'runtime-admin-key-32-characters-long','Content-Type':'application/json'};
     const config=await(await mf.dispatchFetch('https://example.test/v1/admin/resource-sources',{headers:adminHeaders})).json() as any;
     assert.equal(config.storage,'kv');
