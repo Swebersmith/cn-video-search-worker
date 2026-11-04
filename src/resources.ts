@@ -1,3 +1,4 @@
+import type { EpisodeMetadata, MediaMetadata } from './tmdb';
 import { DOMParser } from 'linkedom';
 import { canonical, text, score } from './normalize';
 import { request, UpstreamError } from './providers';
@@ -26,7 +27,7 @@ export function resourceLink(value: unknown): string | null {
   } catch { return null; }
 }
 
-interface ResourceEpisode {
+interface ResourceEpisode extends EpisodeMetadata {
   title: string;
   url: string;
   episode_number: number | null;
@@ -35,7 +36,7 @@ interface ResourceEpisode {
   link_type: 'official_page' | 'media' | 'external_page';
   playback_verified: false;
 }
-export interface ResourceItem {
+export interface ResourceItem extends MediaMetadata {
   id: string;
   title: string;
   source_id: ResourceSource;

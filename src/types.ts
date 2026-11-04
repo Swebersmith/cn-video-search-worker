@@ -8,6 +8,10 @@ export const PLATFORMS = {
 export type Platform = keyof typeof PLATFORMS;
 export interface ResourceConfigStore { get(key: string, options?: {cacheTtl:number}): Promise<string|null>; put(key: string, value: string): Promise<void> }
 export interface Env {
+  TMDB_READ_ACCESS_TOKEN?: string;
+  TMDB_API_KEY?: string;
+  TMDB_ENABLED?: string;
+  TMDB_TIMEOUT_MS?: string;
   RESOURCE_CONFIG?: ResourceConfigStore;
   RESOURCE_ADMIN_KEY?: string;
   API_KEY?: string;

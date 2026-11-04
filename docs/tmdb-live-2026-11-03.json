@@ -1,0 +1,89 @@
+{
+  "base_url": "https://videosearch.webber.qzz.io",
+  "version_id": "043954ad-b788-48db-b59e-1b450cd23ebb",
+  "checked_at": "2026-11-03T10:21:06.259952+00:00",
+  "checks": [
+    {
+      "path": "/health",
+      "http": 200,
+      "ok": true,
+      "total": null,
+      "samples": []
+    },
+    {
+      "path": "/v1/iqiyi/search?q=%E7%8B%82%E9%A3%99&limit=1&ai=off",
+      "http": 200,
+      "ok": true,
+      "total": 1,
+      "samples": [
+        {
+          "title": "狂飙",
+          "poster": true,
+          "overview": true,
+          "tmdb": {
+            "source": "tmdb",
+            "status": "matched",
+            "id": 210757,
+            "media_type": "tv",
+            "url": "https://www.themoviedb.org/tv/210757"
+          }
+        }
+      ]
+    },
+    {
+      "path": "/v1/iqiyi/series/5328486914190101?q=%E7%8B%82%E9%A3%99&ai=off",
+      "http": 200,
+      "ok": true,
+      "title": "狂飙",
+      "tmdb": {
+        "source": "tmdb",
+        "status": "matched",
+        "id": 210757,
+        "media_type": "tv",
+        "url": "https://www.themoviedb.org/tv/210757",
+        "episode_status": "matched",
+        "season_number": 1
+      },
+      "episodes": 39,
+      "episodes_with_overview": 39
+    },
+    {
+      "path": "/v1/resources/search?q=%E7%8B%82%E9%A3%99&sources=jinchan",
+      "http": 200,
+      "ok": true,
+      "total": 21,
+      "samples": [
+        {
+          "title": "弹速狂飙",
+          "poster": true,
+          "overview": true,
+          "tmdb": {
+            "source": "tmdb",
+            "status": "matched",
+            "id": 215401,
+            "media_type": "tv",
+            "url": "https://www.themoviedb.org/tv/215401"
+          }
+        },
+        {
+          "title": "我的世界极速狂飙",
+          "poster": false,
+          "overview": false,
+          "tmdb": {
+            "source": "tmdb",
+            "status": "not_found"
+          }
+        },
+        {
+          "title": "街头狂飙第一季",
+          "poster": false,
+          "overview": false,
+          "tmdb": {
+            "source": "tmdb",
+            "status": "not_found"
+          }
+        }
+      ]
+    }
+  ]
+}

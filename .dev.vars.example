@@ -5,5 +5,11 @@ DEEPSEEK_API_KEY=""
 DEEPSEEK_MODEL="deepseek-flash"
 AI_TIMEOUT_MS="18000"
 
+# TMDB 服务端凭据，任选一种；优先使用 Read Access Token。生产使用 Cloudflare Secrets。
+TMDB_READ_ACCESS_TOKEN=""
+TMDB_API_KEY=""
+TMDB_ENABLED="on"
+TMDB_TIMEOUT_MS="5000"
+
 # 采集站管理：独立密钥，至少 12 字符，建议使用 32 字符以上随机值。生产使用 Cloudflare Secret。
 RESOURCE_ADMIN_KEY=""

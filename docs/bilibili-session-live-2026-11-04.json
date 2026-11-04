@@ -1,0 +1,93 @@
+{
+  "checked_at": "2026-11-04T11:00:21.996Z",
+  "execution": "local_node_using_production_handler",
+  "requests": [
+    {
+      "path": "/",
+      "type": null,
+      "http": 200
+    },
+    {
+      "path": "/x/web-interface/nav",
+      "type": null,
+      "http": 200
+    },
+    {
+      "path": "/x/web-interface/wbi/search/type",
+      "type": "media_ft",
+      "http": 200
+    },
+    {
+      "path": "/x/web-interface/wbi/search/type",
+      "type": "media_bangumi",
+      "http": 200
+    },
+    {
+      "path": "/",
+      "type": null,
+      "http": 200
+    },
+    {
+      "path": "/x/web-interface/nav",
+      "type": null,
+      "http": 200
+    },
+    {
+      "path": "/x/web-interface/wbi/search/type",
+      "type": "media_bangumi",
+      "http": 200
+    },
+    {
+      "path": "/x/web-interface/wbi/search/type",
+      "type": "media_ft",
+      "http": 200
+    }
+  ],
+  "results": [
+    {
+      "query": "三体",
+      "http": 200,
+      "total": 5,
+      "warnings": [],
+      "results": [
+        {
+          "id": "ss26257",
+          "title": "三体",
+          "type_name": "国创",
+          "url": "https://www.bilibili.com/bangumi/play/ss26257"
+        },
+        {
+          "id": "ss1704",
+          "title": "我的三体",
+          "type_name": "国创",
+          "url": "https://www.bilibili.com/bangumi/play/ss1704"
+        },
+        {
+          "id": "ss45975",
+          "title": "我的三体 第四季",
+          "type_name": "国创",
+          "url": "https://www.bilibili.com/bangumi/play/ss45975"
+        },
+        {
+          "id": "ss4657",
+          "title": "我的三体之罗辑传",
+          "type_name": "国创",
+          "url": "https://www.bilibili.com/bangumi/play/ss4657"
+        },
+        {
+          "id": "ss28770",
+          "title": "我的三体之章北海传",
+          "type_name": "国创",
+          "url": "https://www.bilibili.com/bangumi/play/ss28770"
+        }
+      ]
+    },
+    {
+      "query": "甄嬛传",
+      "http": 200,
+      "total": 0,
+      "warnings": [],
+      "results": []
+    }
+  ]
+}

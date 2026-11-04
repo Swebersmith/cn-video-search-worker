@@ -1,0 +1,78 @@
+{
+  "version": "2.1.0",
+  "source_count": 7,
+  "ok": true,
+  "partial": true,
+  "total": 1,
+  "providers": [
+    {
+      "source_id": "jinchan",
+      "status": "ok",
+      "count": 1,
+      "warnings": []
+    },
+    {
+      "source_id": "caiji789",
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "HTTP_302"
+      ]
+    },
+    {
+      "source_id": "xiami",
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "HTTP_530"
+      ]
+    },
+    {
+      "source_id": "naisi",
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "HTTP_403"
+      ]
+    },
+    {
+      "source_id": "caiji8090",
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "HTTP_530"
+      ]
+    },
+    {
+      "source_id": "guanfang",
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "HTTP_526"
+      ]
+    },
+    {
+      "source_id": "jianan",
+      "status": "unavailable",
+      "count": 0,
+      "warnings": [
+        "HTTP_403"
+      ]
+    }
+  ],
+  "jinchan_title": "走马上任",
+  "jinchan_id": "105662",
+  "detail_id": "105662",
+  "lines": [
+    {
+      "name": "qq",
+      "main_count": 7,
+      "preview_count": 0,
+      "types": [
+        "official_page"
+      ]
+    }
+  ],
+  "page_support": true,
+  "observed_at": "2026-11-03T05:18:38.9411292Z"
+}

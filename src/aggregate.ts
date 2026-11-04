@@ -14,7 +14,9 @@ export const CAPABILITIES = Object.fromEntries(
       series: true,
       episodes: true,
       detail_endpoint: `/v1/${id}/series/{id}`,
-      note: '官网综合搜索保留原始卡片；影视目录仅收录电影、电视剧、综艺、动漫、纪录片等长内容，AI 辅助分类及分集识别。',
+      note: id === 'bilibili'
+        ? '仅查询影视（media_ft）和番剧（media_bangumi），不收录普通投稿、用户或直播。'
+        : '影视目录仅收录电影、电视剧、综艺、动漫、纪录片等长内容，AI 辅助分类及分集识别。',
     },
   ]),
 ) as Record<

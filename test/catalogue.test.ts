@@ -160,6 +160,9 @@ const yk = (id: string, prefix: string, year: string) => ({
 });
 // Shapes reflect public payloads, trimmed to the fields used by each adapter.
 const upstream: Fetcher = async (url, init) => {
+  if (url === 'https://www.bilibili.com/') return new Response('', {headers:{'Set-Cookie':'buvid3=test-issued-device; Domain=.bilibili.com; Path=/'}});
+  if (url.endsWith('/x/web-interface/nav')) return json({code:-101,data:{wbi_img:{img_url:'https://i0.hdslb.com/bfs/wbi/7cd084941338484aae1ad9425b84077c.png',sub_url:'https://i0.hdslb.com/bfs/wbi/4932caff0ff746eab6f01bf08b70ac45.png'}}});
+
   if (url.includes('mesh.if')) return json({ data: { templates: [iq('101', '2020'), iq('102', '2025')] } });
   if (url.includes('pcw-api')) {
     const id = new URL(url).searchParams.get('aid')!;
@@ -434,6 +437,8 @@ test('Bilibili public all-search and section fallbacks retain exact season and c
   const all = await readFile('test/fixtures/bilibili-all-search.json', 'utf8');
   const section = await readFile('test/fixtures/bilibili-section.json', 'utf8');
   const handler = createHandler(async (url) => {
+    if (url === 'https://www.bilibili.com/') return new Response('', {headers:{'Set-Cookie':'buvid3=test-issued-device; Domain=.bilibili.com; Path=/'}});
+    if (url.endsWith('/x/web-interface/nav')) return json({code:-101,data:{wbi_img:{img_url:'https://i0.hdslb.com/bfs/wbi/7cd084941338484aae1ad9425b84077c.png',sub_url:'https://i0.hdslb.com/bfs/wbi/4932caff0ff746eab6f01bf08b70ac45.png'}}});
     if (url.includes('/search/all/v2')) return new Response(all);
     if (url.includes('/season/section?')) return new Response(section);
     return new Response('', { status: 412 });

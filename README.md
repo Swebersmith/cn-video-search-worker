@@ -2,11 +2,10 @@
 
 正式地址：<https://videosearch.webber.qzz.io/> · [OpenAPI](https://videosearch.webber.qzz.io/openapi.json)
 
-共有三种使用方式：官网综合搜索、影视目录、第三方官采资源站。官网前两种使用 view 参数；第三方使用独立路径。在线文档的[模式使用指南](https://videosearch.webber.qzz.io/#modes)分别说明调用步骤、参数与结果读取方式。
+共有两种使用方式：影视目录、第三方官采资源站。影视目录可省略 view 参数；第三方使用独立路径。在线文档的[模式使用指南](https://videosearch.webber.qzz.io/#modes)分别说明调用步骤、参数与结果读取方式。
 
 | 模式 | 请求示例 | 行为 |
 | --- | --- | --- |
-| 官网综合搜索 | `/v1/search?q=嫁金钗&view=official&page=1` | 需显式传 view=official，保留官网本页全部卡片和顺序，以及原始响应。 |
 | 影视目录 | `/v1/search?q=嫁金钗&view=series&limit=5` | 默认模式，省略 view 即可。先返回电影、长电视剧、综艺、动漫、纪录片摘要，选择后请求 detail_url 读取分集；AI 辅助分类和识别，排除短剧与普通短视频。 |
 | 官采资源站 | `/v1/resources/search?q=三体&sources=all&page=1` | 独立搜索 KV 中已启用的第三方来源；返回条目与线路，详情使用该结果的 detail_url。 |
 
@@ -19,9 +18,9 @@ GET /v1/youku/search?q=嫁金钗&view=series&limit=5
 → 详情读取 all_episodes 获取正片、附加内容和预告的完整合并列表
 ```
 
-`results[]` 中搜索到 6 个条目不表示电视剧只有 6 集。官网综合搜索返回本页卡片，影视目录搜索返回作品摘要，都不是完整分集。需要分集时先用 `view=series` 选作品，再请求 `detail_url`。第三方搜索条目可已有 `lines[]`，详情条目位于 `item`，分集在 `item.lines[].episodes`，预告在 `item.lines[].previews`。
+`results[]` 中搜索到 6 个条目不表示电视剧只有 6 集。影视目录搜索返回作品摘要，不是完整分集。需要分集时先用 `view=series` 选作品，再请求 `detail_url`。第三方搜索条目可已有 `lines[]`，详情条目位于 `item`，分集在 `item.lines[].episodes`，预告在 `item.lines[].previews`。
 
-例如，只查看爱奇艺官网第 2 页可请求 `/v1/iqiyi/search?q=三体&view=official&page=2`；只查腾讯与优酷可请求 `/v1/search?q=三体&view=official&platforms=tencent,youku&page=1`。第三方只查金蝉使用 `/v1/resources/search?q=三体&sources=jinchan&page=1`，来源 ID 通过 `/v1/resources` 获取。
+例如，只查腾讯与优酷可请求 `/v1/search?q=三体&platforms=tencent,youku`。第三方只查金蝉使用 `/v1/resources/search?q=三体&sources=jinchan&page=1`，来源 ID 通过 `/v1/resources` 获取。
 
 以下命令可直接调用；片名由 curl 编码，后续更换关键词不需要手工拼接中文 URL：
 
@@ -34,20 +33,22 @@ curl --get 'https://videosearch.webber.qzz.io/v1/tencent/search' \
 
 如已配置公共接口 API_KEY，追加 `-H 'Authorization: Bearer YOUR_API_KEY'`；不要使用管理密钥，也不要把密钥放进 URL。同一请求头也应传给详情请求。
 
-官网接口的 `view` 只允许 `official` / `series`；不要传 `view=resources`，请改用 `/v1/resources/search`。旧版链接模式和专辑选择接口已移除，旧参数返回 400，移除的路径返回 404。
+平台接口的 `view` 只允许 `series`；不要传 `view=resources`，请改用 `/v1/resources/search`。旧版链接模式和专辑选择接口已移除，旧参数返回 400，移除的路径返回 404。
 
 ## 参数与返回
 
 | 参数 | 范围 | 用途 |
 | --- | --- | --- |
 | `q` | 1—80 字符，搜索必填 | 模糊片名；目录请求保留 detail_url 中的关键词提示。 |
-| `view` | `official` / `series` | 默认 series（影视目录）。 |
-| `page` | 1—1000，默认 1 | official 及资源站搜索的上游页码；series 搜索携带会返回 400，详情不支持。 |
-| `limit` | 1—20，默认 5 | 仅 series，限制每站作品数，不截断展开的目录。official 忽略此参数。 |
+| `view` | `series` | 默认 series（影视目录）。 |
+| `page` | 1—1000，默认 1 | 仅资源站搜索的上游页码；series 搜索携带会返回 400，详情不支持。 |
+| `limit` | 1—20，默认 5 | 仅 series，限制每站作品数，不截断展开的目录。 |
 | `platforms` | all 或逗号分隔平台标识 | 仅官网总接口 /v1/search，单站和资源站不支持。 |
 | `sources` | all 或逗号分隔来源 ID | 仅 /v1/resources/search，默认为 KV 中全部启用来源。 |
 
-官网模式每次读取本页真实官网响应，不进行 AI 改写、相关度重排、去重或目录类型过滤。`results[].raw` 保留完整卡片，`providers[].upstream` 保留官方原始响应。官网自己收录的外站卡片仍保留为原始数据；本服务不会调用别站搜索代替该站。
+平台搜索仅保留影视目录模式；`view=official` 已移除，传入返回 400。每站只读取本站官方数据。
+
+B站仅搜索影视（`media_ft`）和番剧（`media_bangumi`），不返回普通投稿、用户或直播。云端请求先访问 B站首页获取匿名 Cookie，再获取公开 WBI 参数并签名查询；综合接口兜底也只保留上述两类。HTTP 412 与 HTTP 200 响应中的 `code=-412` / `-352` 均识别为拦截，更新匿名会话后最多重试一次。无需本机服务或浏览器登录 Cookie；生产可用性仍须以云端实测为准。
 
 目录模式的摘要包含 `id`、`title`、`year`、`category`、`type_name`、`total_episodes`、`detail_url`。分类只允许 `movie`、`tv`、`variety`、`anime`、`documentary`；作品长短依据内容类型，不凭集数多就把短剧当成长电视剧。芒果只将官网 program 等作品卡片作为候选，不把标了“电视剧”的几十秒路透视频当成正剧。
 
@@ -70,7 +71,7 @@ curl --get 'https://videosearch.webber.qzz.io/v1/tencent/search' \
 
 ## DeepSeek 辅助处理
 
-目录默认 `ai=off`，完全不调用 AI；`ai=on` 启用辅助分类与复核。两者缓存隔离，搜索结果的 `detail_url` 保留选择。官网综合搜索和资源站模式不使用 AI，不接受 `ai` 参数。
+目录默认 `ai=off`，完全不调用 AI；`ai=on` 启用辅助分类与复核。两者缓存隔离，搜索结果的 `detail_url` 保留选择。资源站模式不使用 AI，不接受 `ai` 参数。
 
 示例：`/v1/youku/search?q=嫁金钗&view=series&ai=off`；启用时将 off 改为 on。
 
@@ -153,6 +154,17 @@ npm run docs
 
 Worker 已连接 GitHub main 的 Cloudflare Workers Builds。推送后自动检查、测试、部署到现有 Worker，保留 `videosearch.webber.qzz.io` 与 Secrets。详见 [持续部署说明](docs/continuous-deployment.md)。
 
-真实验收：`API_BASE_URL=https://videosearch.webber.qzz.io npm run smoke:official` 或 `npm run smoke`；任一站失败时非零退出，记录实际限制。受控代理环境可加 `NODE_USE_ENV_PROXY=1`。历史记录见 [validation.md](docs/validation.md)，旧版行为不代表当前版本。
+真实验收：`API_BASE_URL=https://videosearch.webber.qzz.io npm run smoke`；任一站失败时非零退出，记录实际限制。受控代理环境可加 `NODE_USE_ENV_PROXY=1`。历史记录见 [validation.md](docs/validation.md)，旧版行为不代表当前版本。
 
 MIT License.
+
+
+### TMDB 封面与剧情资料
+
+配置服务端 `TMDB_READ_ACCESS_TOKEN` 或 `TMDB_API_KEY` 后，影视目录搜索、详情以及资源站搜索、详情自动补充 `poster_url`、`overview`、`tmdb` 来源信息。凭据仅用于服务端请求，不返回给浏览器；本地使用被 Git 忽略的 `.dev.vars`，线上使用同名 Cloudflare Secret。`TMDB_ENABLED=off` 可关闭；未配置凭据时保持原有响应。
+
+优先获取 `zh-CN` 资料，标题规范化后严格匹配，并在存在年份时校验首播/上映年份。同名多条结果返回 `tmdb.status=ambiguous`，无结果为 `not_found`，故障为 `unavailable`，超过每请求 12 个条目的部分为 `skipped`。TMDB 故障不改变原站结果、播放地址及目录完整性。缓存 6 小时，请求内去重，最多并发 3 个作品，总请求预算默认 5 秒（`TMDB_TIMEOUT_MS`，250–15000）。
+
+详情中的现有正片只有在 TMDB 为单个常规季、集数和编号完全一致时，才补充 `overview`、`still_url`、`tmdb_episode_name` 和 `tmdb_episode_id`。多季、拆分版本、预告及附加内容不自动套用分集剧情。匹配成功的作品保留 `tmdb.url`，分集补充状态见 `tmdb.episode_status`。缺少中文简介时保留为空，不生成剧情。
+
+文档调试页可直接展示补充后的封面和剧情。TMDB 图片按其[图片地址规范](https://developer.themoviedb.org/docs/image-basics)生成；鉴权遵循[官方应用鉴权文档](https://developer.themoviedb.org/docs/authentication-application)。This product uses the TMDB API but is not endorsed or certified by TMDB.

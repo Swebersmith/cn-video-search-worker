@@ -1,9 +1,9 @@
+import { createTmdbEnricher } from './tmdb';
 import { PLATFORMS, type CacheStore, type Env, type Fetcher, type Platform } from './types';
 import { openapi } from './openapi';
 import { CAPABILITIES, VERSION, DEFAULT_VIEW } from './aggregate';
 import { DOCS_HTML, DOCS_CSS, DOCS_JS } from './documentation';
 import { searchSeries, seriesCatalogue, validSeriesId } from './catalogue';
-import { officialSearch } from './official';
 import { searchResource, validResourceId } from './resources';
 import { loadResourceConfig, publicResourceSources } from './resource-config';
 import { RESOURCE_ADMIN_HTML, RESOURCE_ADMIN_CSS, RESOURCE_ADMIN_JS } from './resource-admin-ui';
@@ -15,6 +15,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
     const started = Date.now(),
       url = new URL(request.url),
       path = url.pathname.replace(/\/+$/, '') || '/';
+    const tmdb = createTmdbEnricher(env, fetcher, cache);
     const headers = {
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
@@ -47,7 +48,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
           'X-Content-Type-Options': 'nosniff',
           'Referrer-Policy': 'no-referrer',
           'Content-Security-Policy':
-            "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+            "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: https://image.tmdb.org; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
         },
       });
     }
@@ -64,7 +65,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
         version: VERSION,
         aggregate: '/v1/search',
         default_view: DEFAULT_VIEW,
-        views: ['official', 'series'],
+        views: ['series'],
         resource_search: '/v1/resources/search',
         resource_sources: '/v1/resources',
         platforms: Object.values(CAPABILITIES),
@@ -90,8 +91,8 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       resourceDetail ? [] : resourceSearch ? ['q', 'sources', 'page'] : detailPlatform
         ? ['q', 'ai']
         : single
-          ? ['q', 'view', 'limit', 'page', 'ai']
-          : ['q', 'view', 'platforms', 'limit', 'page', 'ai'],
+          ? ['q', 'view', 'limit', 'ai']
+          : ['q', 'view', 'platforms', 'limit', 'ai'],
     );
     for (const name of url.searchParams.keys()) {
       if (!allowed.has(name) || url.searchParams.getAll(name).length !== 1)
@@ -122,6 +123,11 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       if (!/^\d+$/.test(page) || Number(page) < 1 || Number(page) > 1000) return fail('INVALID_PAGE', 'page must be 1–1000.', 400);
       const providers = await Promise.all([...new Set(selected)].map(s => searchResource(s, query, Number(page), env, fetcher, resourceDetail?.[2], available.find(v=>v.id===s))));
       const results = providers.flatMap(p => p.results), unavailable = providers.length>0&&providers.every(p => p.status === 'unavailable');
+      if (resourceDetail && results[0]) {
+        const item = results[0];
+        if (item.lines.length) { for (const line of item.lines) await tmdb.detail(item, line.episodes); }
+        else await tmdb.detail(item, []);
+      } else await tmdb.items(results);
       if (resourceDetail) return reply({ ok: results.length > 0, source: 'third_party', source_id: selected[0],
         item: results[0] || null, warnings: providers[0].warnings, took_ms: Date.now() - started }, unavailable ? 503 : results.length ? 200 : 404);
       return reply({ ok: !unavailable, view: 'resources', query, page: Number(page), config_revision: config.revision, source_policy: 'third_party_resource_sites',
@@ -134,6 +140,7 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       if (!validSeriesId(detailPlatform, detail[2]))
         return fail('INVALID_SERIES_ID', 'Invalid series ID for this platform.', 400);
       const result = await seriesCatalogue(detailPlatform, detail[2], query, {...env, AI_ENABLED: aiMode as 'on' | 'off'}, detailPlatform === 'bilibili' ? bilibiliSessionFetcher(env, fetcher) : fetcher, cache);
+      if (result.ok) await tmdb.detail(result.series, result.episodes);
       return reply({ ...result, ai_mode: aiMode, took_ms: Date.now() - started }, result.ok ? 200 : 503);
     }
     const selection = url.searchParams.get('platforms') ?? 'all';
@@ -150,64 +157,34 @@ export function createHandler(fetcher: Fetcher = fetch, cache?: CacheStore) {
       );
     const platforms = [...new Set(ids)] as Platform[];
     const view = url.searchParams.get('view') ?? DEFAULT_VIEW;
-    if (!['official', 'series'].includes(view))
-      return fail('INVALID_VIEW', 'view must be official or series.', 400);
-    if (view === 'official') {
-      if (url.searchParams.has('ai')) return fail('INVALID_PARAMETER', 'ai is available for series search and detail only.', 400);
-      const page = url.searchParams.get('page') ?? '1';
-      if (!/^\d+$/.test(page) || Number(page) < 1 || Number(page) > 1000)
-        return fail('INVALID_PAGE', 'page must be an integer from 1 to 1000.', 400);
-      const providers = await Promise.all(
-        platforms.map((p) => officialSearch(p, query, Number(page), env, fetcher)),
-      );
-      const results = providers.flatMap((p) => p.results),
-        unavailable = providers.every((p) => p.status === 'unavailable');
-      return reply(
-        {
-          ok: !unavailable,
-          query,
-          view,
-          page: Number(page),
-          source_policy: 'same_platform_official_only',
-          partial: providers.some((p) => ['unavailable', 'degraded'].includes(p.status)),
-          total: results.length,
-          took_ms: Date.now() - started,
-          results,
-          providers: providers.map(({ results: _r, ...p }) => p),
-        },
-        unavailable ? 503 : 200,
-      );
-    }
-    if (url.searchParams.has('page'))
-      return fail('INVALID_PARAMETER', 'page is available for official search only.', 400);
-    if (view === 'series') {
-      const aiMode = url.searchParams.get('ai') ?? 'off';
-      if (!['on', 'off'].includes(aiMode)) return fail('INVALID_AI', 'ai must be on or off.', 400);
-      const limit = url.searchParams.get('limit') ?? '5';
-      if (!/^\d+$/.test(limit) || Number(limit) < 1 || Number(limit) > 20)
-        return fail('INVALID_LIMIT', 'limit must be an integer from 1 to 20.', 400);
-      const providers = await Promise.all(
-        platforms.map((p) => searchSeries(p, query, Number(limit), {...env, AI_ENABLED: aiMode as 'on' | 'off'}, p === 'bilibili' ? bilibiliSessionFetcher(env, fetcher) : fetcher, cache)),
-      );
-      const results = providers.flatMap((p) => p.results),
-        unavailable = providers.every((p) => p.status === 'unavailable');
-      return reply(
-        {
-          ok: !unavailable,
-          query,
-          view,
-          ai_mode: aiMode,
-          partial: providers.some((p) => ['unavailable', 'degraded'].includes(p.status)),
-          total: results.length,
-          limit: Number(limit),
-          took_ms: Date.now() - started,
-          results,
-          providers: providers.map(({ results: _r, ...metadata }) => metadata),
-        },
-        unavailable ? 503 : 200,
-      );
-    }
-    return fail('INVALID_VIEW', 'view must be official or series.', 400);
+    if (view !== 'series')
+      return fail('INVALID_VIEW', 'view must be series.', 400);
+    const aiMode = url.searchParams.get('ai') ?? 'off';
+    if (!['on', 'off'].includes(aiMode)) return fail('INVALID_AI', 'ai must be on or off.', 400);
+    const limit = url.searchParams.get('limit') ?? '5';
+    if (!/^\d+$/.test(limit) || Number(limit) < 1 || Number(limit) > 20)
+      return fail('INVALID_LIMIT', 'limit must be an integer from 1 to 20.', 400);
+    const providers = await Promise.all(
+      platforms.map((p) => searchSeries(p, query, Number(limit), {...env, AI_ENABLED: aiMode as 'on' | 'off'}, p === 'bilibili' ? bilibiliSessionFetcher(env, fetcher) : fetcher, cache)),
+    );
+    const results = providers.flatMap((p) => p.results),
+      unavailable = providers.every((p) => p.status === 'unavailable');
+    await tmdb.items(results);
+    return reply(
+      {
+        ok: !unavailable,
+        query,
+        view,
+        ai_mode: aiMode,
+        partial: providers.some((p) => ['unavailable', 'degraded'].includes(p.status)),
+        total: results.length,
+        limit: Number(limit),
+        took_ms: Date.now() - started,
+        results,
+        providers: providers.map(({ results: _r, ...metadata }) => metadata),
+      },
+      unavailable ? 503 : 200,
+    );
   };
 }
 export default {

@@ -26,14 +26,8 @@ const searchParameters = [
   {
     name: 'view',
     in: 'query',
-    schema: { type: 'string', enum: ['official', 'series'], default: DEFAULT_VIEW },
-    description: '默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。',
-  },
-  {
-    name: 'page',
-    in: 'query',
-    schema: { type: 'integer', minimum: 1, maximum: 1000, default: 1 },
-    description: '仅 official，读取官网一页。',
+    schema: { type: 'string', enum: ['series'], default: DEFAULT_VIEW },
+    description: '默认 series 返回长影视作品摘要；请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。',
   },
   {
     name: 'platforms',
@@ -45,12 +39,12 @@ const searchParameters = [
     name: 'limit',
     in: 'query',
     schema: { type: 'integer', minimum: 1, maximum: 20, default: 5 },
-    description: '仅 series 的每站作品数，不限制详情目录；official 忽略。',
+    description: '每站作品数，不限制详情目录。',
   },
   aiParameter,
 ];
 const searchContract = {
-  summary: '聚合五站官网搜索或长影视目录',
+  summary: '聚合五站影视目录搜索',
   security,
   parameters: searchParameters,
   responses: {
@@ -66,7 +60,7 @@ export const openapi = {
     title: '五站官网搜索与 AI 影视目录',
     version: VERSION,
     description:
-      '官网接口保留 official、series 两种模式；独立 /v1/resources 搜索第三方官采资源站。DeepSeek 仅分类和识别官方候选，不生成链接。',
+      '平台接口仅保留 series 影视目录；独立 /v1/resources 搜索第三方官采资源站。DeepSeek 仅分类和识别官方候选，不生成链接。',
   },
   servers: [{ url: '/' }],
   components: {
@@ -90,11 +84,16 @@ export const openapi = {
         },
       },
       ResourceEpisode: { type: 'object', properties: {
+          overview: { type: 'string', description: 'TMDB 分集简介，仅安全对齐的正片补充。' },
+          still_url: { type: ['string', 'null'] }, tmdb_episode_name: { type: 'string' }, tmdb_episode_id: { type: 'integer' },
         title: { type: 'string' }, url: { type: 'string' }, episode_number: nullableInt,
         episode_type: { enum: ['main', 'preview'] }, platform: { type: ['string', 'null'] },
         link_type: { enum: ['official_page', 'media', 'external_page'] }, playback_verified: { const: false },
       } },
       ResourceItem: { type: 'object', properties: {
+          poster_url: { type: ['string', 'null'], description: 'TMDB 封面地址；匹配成功时补充。' },
+          overview: { type: 'string', description: 'TMDB 剧情简介，zh-CN；缺失时为空字符串。' },
+          tmdb: ref('TmdbMetadata'),
         id: { type: 'string' }, title: { type: 'string' }, source_id: sourceId,
         source_name: { type: 'string' }, source: { const: 'third_party' }, content_type: { const: 'resource' },
         year: { type: 'string' }, type_name: { type: 'string' }, remarks: { type: 'string' }, updated_at: { type: 'string' },
@@ -113,6 +112,11 @@ export const openapi = {
           total: nullableInt, page: { type: 'integer' }, pagecount: nullableInt, has_more: { type: ['boolean', 'null'] }, warnings: strings,
         } } },
       } },
+      TmdbMetadata: { type: 'object', properties: {
+        source: { const: 'tmdb' }, status: { enum: ['matched', 'not_found', 'ambiguous', 'unavailable', 'skipped'] },
+        id: { type: 'integer' }, media_type: { enum: ['tv', 'movie'] }, url: { type: 'string', format: 'uri' },
+        season_number: { type: 'integer' }, episode_status: { enum: ['matched', 'skipped', 'unavailable'] },
+      } },
       AI: {
         type: 'object',
         properties: {
@@ -127,6 +131,9 @@ export const openapi = {
         type: 'object',
         required: ['platform', 'id', 'title', 'detail_url', 'content_type'],
         properties: {
+          poster_url: { type: ['string', 'null'], description: 'TMDB 封面地址；匹配成功时补充。' },
+          overview: { type: 'string', description: 'TMDB 剧情简介，zh-CN；缺失时为空字符串。' },
+          tmdb: ref('TmdbMetadata'),
           platform,
           platform_name: { type: 'string' },
           id: { type: 'string' },
@@ -145,6 +152,8 @@ export const openapi = {
       Episode: {
         type: 'object',
         properties: {
+          overview: { type: 'string', description: 'TMDB 分集简介，仅安全对齐的正片补充。' },
+          still_url: { type: ['string', 'null'] }, tmdb_episode_name: { type: 'string' }, tmdb_episode_id: { type: 'integer' },
           platform,
           episode_number: nullableInt,
           title: { type: 'string' },
@@ -152,19 +161,6 @@ export const openapi = {
           episode_type: { enum: ['main', 'extra', 'preview'] },
           recognition: { enum: ['structured', 'ai'] },
           badges: { ...strings, description: '官网分集角标原文，例如 VIP、SVIP、预告、收官礼、超前点映；空数组表示没有文本角标。' },
-        },
-      },
-      OfficialResult: {
-        type: 'object',
-        properties: {
-          platform,
-          platform_name: { type: 'string' },
-          rank: { type: 'integer' },
-          content_type: { const: 'official' },
-          title: { type: 'string' },
-          url: { type: ['string', 'null'] },
-          type_name: { type: 'string' },
-          raw: { description: '官网原始卡片，保留全部类型和原始顺序。' },
         },
       },
       Catalogue: {
@@ -204,15 +200,13 @@ export const openapi = {
         properties: {
           ok: { type: 'boolean' },
           query: { type: 'string' },
-          view: { enum: ['official', 'series'] },
+          view: { enum: ['series'] },
           ai_mode: {type:'string',enum:['on','off']},
-          page: { type: 'integer' },
           limit: { type: 'integer' },
           partial: { type: 'boolean' },
-          total: { type: 'integer', description: '本页返回卡片或作品数量，不是某部剧总集数。' },
-          source_policy: { const: 'same_platform_official_only' },
+          total: { type: 'integer', description: '本次返回作品数量，不是某部剧总集数。' },
           took_ms: { type: 'integer' },
-          results: { type: 'array', items: { oneOf: [ref('Series'), ref('OfficialResult')] } },
+          results: { type: 'array', items: ref('Series') },
           providers: {
             type: 'array',
             items: {
@@ -228,12 +222,6 @@ export const openapi = {
           ai: ref('AI'),
                 cached: { type: 'boolean' },
                 fetched_at: { type: 'string' },
-                page: { type: 'integer' },
-                has_more: { type: ['boolean', 'null'] },
-                source: { type: 'string' },
-                execution: { type: 'string' },
-                source_url: { type: ['string', 'null'] },
-                upstream: { description: 'official 模式完整官网响应。' },
               },
             },
           },
@@ -271,7 +259,7 @@ export const openapi = {
     '/v1/resources/search': { get: {
       summary: '搜索已启用的第三方来源；results 为条目，detail_url 读取该条线路详情', security,
       parameters: [searchParameters[0], { name: 'sources', in: 'query', schema: { type: 'string', default: 'all' },
-        description: 'all 为全部启用来源；或逗号分隔来源 ID，通过 /v1/resources 读取当前清单。' }, { ...searchParameters[2], description: '官采来源的上游页码。' }],
+        description: 'all 为全部启用来源；或逗号分隔来源 ID，通过 /v1/resources 读取当前清单。' }, { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 1000, default: 1 }, description: '官采来源的上游页码。' }],
       responses: { '200': response('ResourceSearch', '第三方条目与各源状态；不代表可以播放'),
         '400': response('Error', '无效参数'), '401': response('Error', '认证失败'), '503': response('ResourceSearch', '所选来源本次均不可用') },
     } },

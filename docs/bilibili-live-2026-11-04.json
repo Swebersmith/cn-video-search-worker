@@ -1,0 +1,59 @@
+{
+  "checked_at": "2026-11-04T10:47:28.595Z",
+  "execution": "local_node_network",
+  "keyword": "三体",
+  "report": [
+    {
+      "label": "anonymous_homepage",
+      "http": 200,
+      "api_ok": false
+    },
+    {
+      "label": "anonymous_spi",
+      "http": 200,
+      "code": 0,
+      "api_ok": true
+    },
+    {
+      "label": "wbi_keys",
+      "http": 200,
+      "code": -101,
+      "api_ok": false
+    },
+    {
+      "label": "legacy_bangumi",
+      "http": 200,
+      "code": 0,
+      "count": 5,
+      "api_ok": true
+    },
+    {
+      "label": "wbi_media_bangumi",
+      "http": 200,
+      "code": 0,
+      "count": 5,
+      "api_ok": true
+    },
+    {
+      "label": "wbi_media_ft",
+      "http": 200,
+      "code": 0,
+      "api_ok": true
+    },
+    {
+      "label": "wbi_video",
+      "http": 200,
+      "code": 0,
+      "count": 20,
+      "api_ok": true
+    },
+    {
+      "label": "deployed_worker_series",
+      "http": 503,
+      "api_ok": false,
+      "warnings": [
+        "HTTP_412"
+      ]
+    }
+  ]
+}

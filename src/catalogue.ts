@@ -1,3 +1,4 @@
+import type { EpisodeMetadata, MediaMetadata } from './tmdb';
 import { canonical, score, text } from './normalize';
 import {
   classifySeries,
@@ -15,6 +16,7 @@ import { loadPlaybackCatalogue } from './playback';
 import { bounded, PLATFORMS, type CacheStore, type Env, type Fetcher, type Platform } from './types';
 import {
   iqiyiSearchData,
+  bilibiliSearchLoader,
   json,
   request,
   tencentSearchData,
@@ -70,7 +72,7 @@ export function embeddedJson(html: string, name: string): unknown {
   }
   throw new UpstreamError('INVALID_EMBEDDED_JSON');
 }
-export interface SeriesSummary {
+export interface SeriesSummary extends MediaMetadata {
   platform: Platform;
   platform_name: string;
   id: string;
@@ -85,7 +87,7 @@ export interface SeriesSummary {
   score: number;
   content_type: 'series';
 }
-export interface CatalogueEpisode {
+export interface CatalogueEpisode extends EpisodeMetadata {
   badges?: string[];
   episode_number: number | null;
   title: string;
@@ -330,7 +332,7 @@ function fromBilibili(rows: unknown, query: string): Seed[] {
   return arr(rows).flatMap((raw) => {
     const v = obj(raw),
       id = `ss${string(v.season_id)}`;
-    if (!validSeriesId('bilibili', id)) return [];
+    if (!validSeriesId('bilibili', id) || (v.type && !['media_bangumi','media_ft'].includes(string(v.type)))) return [];
     return [
       {
         series: summary(
@@ -412,20 +414,10 @@ async function freshDiscovery(
       warnings.push('DISCOVERY_FROM_YOUKU_API');
     }
   } else if (platform === 'bilibili') {
+    const search = bilibiliSearchLoader(env, fetcher);
     const pages = await Promise.allSettled(
-      ['media_bangumi', 'media_ft'].map(async (type) => {
-        const d = obj(
-          json(
-            await request(
-              `https://api.bilibili.com/x/web-interface/search/type?search_type=${type}&keyword=${q}&page=1`,
-              env,
-              fetcher,
-              { headers: { Referer: 'https://www.bilibili.com/' } },
-            ),
-          ),
-        );
-        if (d.code !== 0) throw new UpstreamError(`API_${Number(d.code) || 'ERROR'}`);
-        const data = obj(d.data);
+      (['media_bangumi', 'media_ft'] as const).map(async (type) => {
+        const d = await search(query, type), data = obj(d.data);
         if (!Array.isArray(data.result) && Number(data.numResults) !== 0)
           throw new UpstreamError('SCHEMA_CHANGED');
         return fromBilibili(data.result, query);
@@ -436,16 +428,7 @@ async function freshDiscovery(
       else warnings.push(p.reason instanceof UpstreamError ? p.reason.message : 'UPSTREAM_ERROR');
     if (!records.length && warnings.length) {
       // The public all-search route can remain available when category endpoints are restricted.
-      const r = obj(
-        json(
-          await request(
-            `https://api.bilibili.com/x/web-interface/search/all/v2?keyword=${q}&page=1`,
-            env,
-            fetcher,
-            { headers: { Referer: 'https://www.bilibili.com/' } },
-          ),
-        ),
-      );
+      const r = obj(await search(query));
       if (r.code !== 0 || !Array.isArray(obj(r.data).result)) throw new UpstreamError(warnings[0]);
       for (const raw of arr(obj(r.data).result)) {
         const group = obj(raw);
@@ -534,7 +517,7 @@ async function discovery(
   cache?: CacheStore,
 ): Promise<Discovery> {
   const key = new Request(
-      `https://cn-video-search.internal/series/long-ai/v6/${platform}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(aiEnabled(env) ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}&mode=${env.AI_ENABLED === 'off' ? 'off' : 'on'}`,
+      `https://cn-video-search.internal/series/long-ai/v7/${platform}?q=${encodeURIComponent(query)}&ai=${encodeURIComponent(aiEnabled(env) ? env.DEEPSEEK_MODEL || 'deepseek-flash' : 'off')}&mode=${env.AI_ENABLED === 'off' ? 'off' : 'on'}`,
     ),
     ttl = bounded(env.CACHE_TTL_SECONDS, 300, 30, 3600);
   if (cache)

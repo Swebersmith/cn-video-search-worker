@@ -5,6 +5,26 @@ import { parseHTML } from 'linkedom';
 import { DOCS_HTML, DOCS_JS } from '../src/documentation';
 import { CAPABILITIES } from '../src/aggregate';
 
+test('TMDB UI renders trusted poster and inert plot text and rejects untrusted images', async () => {
+  const { window, document } = parseHTML(DOCS_HTML);
+  for (const [id, value] of [['platform', 'all'], ['mode', 'series']]) Object.defineProperty(document.getElementById(id)!, 'value', { value, writable: true });
+  Object.assign(window, { location: { origin: 'https://example.test' } });
+  Object.assign(document.getElementById('query-form')!, { reportValidity: () => true });
+  new Script(DOCS_JS).runInNewContext({ window, document, URL, AbortSignal, navigator: {}, setTimeout: () => 0,
+    fetch: async (url: string) => Response.json(url === '/v1/platforms' ? { platforms: Object.values(CAPABILITIES) } : { results: [
+      { content_type: 'series', title: '测试剧', poster_url: 'https://image.tmdb.org/t/p/w500/poster.jpg', overview: '<script>plot</script>', tmdb: { status: 'matched' } },
+      { content_type: 'series', title: '测试剧2', poster_url: 'https://evil.example/poster.jpg', overview: '剧情2' },
+    ] }),
+  });
+  document.getElementById('query-form')!.dispatchEvent(new window.Event('submit', { cancelable: true }));
+  await tick(); await tick();
+  assert.equal(document.querySelectorAll('#result-list img').length, 1);
+  assert.equal(document.querySelector('#result-list img')!.getAttribute('src'), 'https://image.tmdb.org/t/p/w500/poster.jpg');
+  assert.equal(document.querySelectorAll('#result-list script').length, 0);
+  assert.match(document.getElementById('result-list')!.textContent!, /<script>plot<\/script>/);
+  assert.match(document.getElementById('result-list')!.textContent!, /资料来源：TMDB/);
+});
+
 const tick = () => new Promise<void>(resolve => setImmediate(resolve));
 
 test('AI selector defaults to rules, sends selected mode and follows detail URLs from that search', async () => {
@@ -26,39 +46,11 @@ test('AI selector defaults to rules, sends selected mode and follows detail URLs
     document.querySelector('.series-card>button')!.dispatchEvent(new window.Event('click'));await tick();await tick();
     assert.equal(new URL(calls.at(-1)!).searchParams.get('ai'),value);
   }
-  (document.getElementById('mode') as any).value='official';document.getElementById('mode')!.dispatchEvent(new window.Event('change'));
+  (document.getElementById('mode') as any).value='resources';document.getElementById('mode')!.dispatchEvent(new window.Event('change'));
   assert.equal((document.getElementById('ai-mode') as any).disabled,true);
   assert.equal(new URL(document.getElementById('request-url')!.textContent!).searchParams.has('ai'),false);
 });
 
-test('official explorer sends native page without local result limit and renders raw cards as inert text', async () => {
-  const {window,document}=parseHTML(DOCS_HTML);
-  for (const [id,value] of [['platform','all'],['mode','official']])Object.defineProperty(document.getElementById(id)!,'value',{value,writable:true});
-  Object.assign(window,{location:{origin:'https://example.test'}});
-  Object.assign(document.getElementById('query-form')!,{reportValidity:()=>true});
-  document.getElementById('search-page')!.setAttribute('value','2');
-  const calls: string[]=[];
-  const fetcher=async(url:string)=>{
-    if(url==='/v1/platforms')return new Response(JSON.stringify({platforms:Object.values(CAPABILITIES)}));
-    calls.push(url);
-    return new Response(JSON.stringify({view:'official',total:2,results:[
-      {platform:'bilibili',title:'作者',url:'https://space.bilibili.com/123',raw:{title:'<img src=x onerror=alert(1)>'}},
-      {platform:'bilibili',title:'未知模板',url:null,raw:{custom:'全部保留'}},
-    ]}));
-  };
-  new Script(DOCS_JS).runInNewContext({window,document,fetch:fetcher,URL,AbortSignal,navigator:{},setTimeout:()=>0});
-  document.getElementById('query-form')!.dispatchEvent(new window.Event('submit',{cancelable:true}));
-  await tick();await tick();
-  const u=new URL(calls[0]);
-  assert.equal(u.searchParams.get('view'),'official');
-  assert.equal(u.searchParams.get('page'),'2');
-  assert.equal(u.searchParams.has('mode'),false);
-  assert.equal(u.searchParams.has('limit'),false);
-  assert.equal(document.querySelectorAll('.result-row').length,2);
-  assert.equal(document.querySelectorAll('#result-list details').length,2);
-  assert.equal(document.querySelectorAll('#result-list img').length,0);
-  assert.match(document.getElementById('result-list')!.textContent||'',/<img/);
-});
 
 test('documentation explorer sends the chosen single-site query, renders safe links and keeps secrets out of copied commands', async () => {
   const { window, document } = parseHTML(DOCS_HTML);
@@ -127,9 +119,11 @@ test('series explorer opens the exact selected catalogue, retains auth headers a
   assert.equal(calls.length, 2); assert.match(document.querySelectorAll('.catalogue-panel')[1].textContent || '', /目录地址无效/);
 });
 
-test('documentation exposes official, series and independent resource modes, no old album selector, and visible previews', async () => {
+test('documentation exposes only series and independent resource modes, no old album selector, and visible previews', async () => {
   const {window,document}=parseHTML(DOCS_HTML);
-  assert.deepEqual([...document.querySelectorAll('#mode option')].map(o=>o.getAttribute('value')),['series','official','resources']);
+  assert.deepEqual([...document.querySelectorAll('#mode option')].map(o=>o.getAttribute('value')),['series','resources']);
+  assert.equal(document.getElementById('guide-official'),null);
+  assert.ok(!DOCS_HTML.includes('view=official'));
   assert.equal(document.querySelector('#mode option[selected]')?.getAttribute('value'),'series');
   assert.equal(document.getElementById('album-id'),null);assert.ok(!DOCS_HTML.includes('album_id'));
   for(const [id,value] of [['platform','youku'],['mode','series']])Object.defineProperty(document.getElementById(id)!,'value',{value,writable:true});

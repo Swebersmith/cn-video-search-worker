@@ -3,7 +3,7 @@
   "info": {
     "title": "五站官网搜索与 AI 影视目录",
     "version": "2.3.2",
-    "description": "官网接口保留 official、series 两种模式；独立 /v1/resources 搜索第三方官采资源站。DeepSeek 仅分类和识别官方候选，不生成链接。"
+    "description": "平台接口仅保留 series 影视目录；独立 /v1/resources 搜索第三方官采资源站。DeepSeek 仅分类和识别官方候选，不生成链接。"
   },
   "servers": [
     {
@@ -91,6 +91,22 @@
       "ResourceEpisode": {
         "type": "object",
         "properties": {
+          "overview": {
+            "type": "string",
+            "description": "TMDB 分集简介，仅安全对齐的正片补充。"
+          },
+          "still_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tmdb_episode_name": {
+            "type": "string"
+          },
+          "tmdb_episode_id": {
+            "type": "integer"
+          },
           "title": {
             "type": "string"
           },
@@ -130,6 +146,20 @@
       "ResourceItem": {
         "type": "object",
         "properties": {
+          "poster_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "TMDB 封面地址；匹配成功时补充。"
+          },
+          "overview": {
+            "type": "string",
+            "description": "TMDB 剧情简介，zh-CN；缺失时为空字符串。"
+          },
+          "tmdb": {
+            "$ref": "#/components/schemas/TmdbMetadata"
+          },
           "id": {
             "type": "string"
           },
@@ -294,6 +324,46 @@
           }
         }
       },
+      "TmdbMetadata": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "const": "tmdb"
+          },
+          "status": {
+            "enum": [
+              "matched",
+              "not_found",
+              "ambiguous",
+              "unavailable",
+              "skipped"
+            ]
+          },
+          "id": {
+            "type": "integer"
+          },
+          "media_type": {
+            "enum": [
+              "tv",
+              "movie"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "season_number": {
+            "type": "integer"
+          },
+          "episode_status": {
+            "enum": [
+              "matched",
+              "skipped",
+              "unavailable"
+            ]
+          }
+        }
+      },
       "AI": {
         "type": "object",
         "properties": {
@@ -332,6 +402,20 @@
           "content_type"
         ],
         "properties": {
+          "poster_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "TMDB 封面地址；匹配成功时补充。"
+          },
+          "overview": {
+            "type": "string",
+            "description": "TMDB 剧情简介，zh-CN；缺失时为空字符串。"
+          },
+          "tmdb": {
+            "$ref": "#/components/schemas/TmdbMetadata"
+          },
           "platform": {
             "type": "string",
             "enum": [
@@ -397,6 +481,22 @@
       "Episode": {
         "type": "object",
         "properties": {
+          "overview": {
+            "type": "string",
+            "description": "TMDB 分集简介，仅安全对齐的正片补充。"
+          },
+          "still_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tmdb_episode_name": {
+            "type": "string"
+          },
+          "tmdb_episode_id": {
+            "type": "integer"
+          },
           "platform": {
             "type": "string",
             "enum": [
@@ -439,45 +539,6 @@
               "type": "string"
             },
             "description": "官网分集角标原文，例如 VIP、SVIP、预告、收官礼、超前点映；空数组表示没有文本角标。"
-          }
-        }
-      },
-      "OfficialResult": {
-        "type": "object",
-        "properties": {
-          "platform": {
-            "type": "string",
-            "enum": [
-              "tencent",
-              "iqiyi",
-              "youku",
-              "mango",
-              "bilibili"
-            ]
-          },
-          "platform_name": {
-            "type": "string"
-          },
-          "rank": {
-            "type": "integer"
-          },
-          "content_type": {
-            "const": "official"
-          },
-          "title": {
-            "type": "string"
-          },
-          "url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type_name": {
-            "type": "string"
-          },
-          "raw": {
-            "description": "官网原始卡片，保留全部类型和原始顺序。"
           }
         }
       },
@@ -592,7 +653,6 @@
           },
           "view": {
             "enum": [
-              "official",
               "series"
             ]
           },
@@ -603,9 +663,6 @@
               "off"
             ]
           },
-          "page": {
-            "type": "integer"
-          },
           "limit": {
             "type": "integer"
           },
@@ -614,10 +671,7 @@
           },
           "total": {
             "type": "integer",
-            "description": "本页返回卡片或作品数量，不是某部剧总集数。"
-          },
-          "source_policy": {
-            "const": "same_platform_official_only"
+            "description": "本次返回作品数量，不是某部剧总集数。"
           },
           "took_ms": {
             "type": "integer"
@@ -625,14 +679,7 @@
           "results": {
             "type": "array",
             "items": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/Series"
-                },
-                {
-                  "$ref": "#/components/schemas/OfficialResult"
-                }
-              ]
+              "$ref": "#/components/schemas/Series"
             }
           },
           "providers": {
@@ -691,30 +738,6 @@
                 },
                 "fetched_at": {
                   "type": "string"
-                },
-                "page": {
-                  "type": "integer"
-                },
-                "has_more": {
-                  "type": [
-                    "boolean",
-                    "null"
-                  ]
-                },
-                "source": {
-                  "type": "string"
-                },
-                "execution": {
-                  "type": "string"
-                },
-                "source_url": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "upstream": {
-                  "description": "official 模式完整官网响应。"
                 }
               }
             }
@@ -1155,7 +1178,7 @@
     },
     "/v1/search": {
       "get": {
-        "summary": "聚合五站官网搜索或长影视目录",
+        "summary": "聚合五站影视目录搜索",
         "security": [
           {
             "bearerAuth": []
@@ -1183,23 +1206,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "official",
                 "series"
               ],
               "default": "series"
             },
-            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000,
-              "default": 1
-            },
-            "description": "仅 official，读取官网一页。"
+            "description": "默认 series 返回长影视作品摘要；请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "platforms",
@@ -1219,7 +1230,7 @@
               "maximum": 20,
               "default": 5
             },
-            "description": "仅 series 的每站作品数，不限制详情目录；official 忽略。"
+            "description": "每站作品数，不限制详情目录。"
           },
           {
             "name": "ai",
@@ -1309,23 +1320,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "official",
                 "series"
               ],
               "default": "series"
             },
-            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000,
-              "default": 1
-            },
-            "description": "仅 official，读取官网一页。"
+            "description": "默认 series 返回长影视作品摘要；请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "limit",
@@ -1336,7 +1335,7 @@
               "maximum": 20,
               "default": 5
             },
-            "description": "仅 series 的每站作品数，不限制详情目录；official 忽略。"
+            "description": "每站作品数，不限制详情目录。"
           },
           {
             "name": "ai",
@@ -1515,23 +1514,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "official",
                 "series"
               ],
               "default": "series"
             },
-            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000,
-              "default": 1
-            },
-            "description": "仅 official，读取官网一页。"
+            "description": "默认 series 返回长影视作品摘要；请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "limit",
@@ -1542,7 +1529,7 @@
               "maximum": 20,
               "default": 5
             },
-            "description": "仅 series 的每站作品数，不限制详情目录；official 忽略。"
+            "description": "每站作品数，不限制详情目录。"
           },
           {
             "name": "ai",
@@ -1721,23 +1708,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "official",
                 "series"
               ],
               "default": "series"
             },
-            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000,
-              "default": 1
-            },
-            "description": "仅 official，读取官网一页。"
+            "description": "默认 series 返回长影视作品摘要；请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "limit",
@@ -1748,7 +1723,7 @@
               "maximum": 20,
               "default": 5
             },
-            "description": "仅 series 的每站作品数，不限制详情目录；official 忽略。"
+            "description": "每站作品数，不限制详情目录。"
           },
           {
             "name": "ai",
@@ -1927,23 +1902,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "official",
                 "series"
               ],
               "default": "series"
             },
-            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000,
-              "default": 1
-            },
-            "description": "仅 official，读取官网一页。"
+            "description": "默认 series 返回长影视作品摘要；请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "limit",
@@ -1954,7 +1917,7 @@
               "maximum": 20,
               "default": 5
             },
-            "description": "仅 series 的每站作品数，不限制详情目录；official 忽略。"
+            "description": "每站作品数，不限制详情目录。"
           },
           {
             "name": "ai",
@@ -2133,23 +2096,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "official",
                 "series"
               ],
               "default": "series"
             },
-            "description": "默认 series 返回长影视作品摘要；显式 view=official 保留官网本页卡片。请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000,
-              "default": 1
-            },
-            "description": "仅 official，读取官网一页。"
+            "description": "默认 series 返回长影视作品摘要；请求所选目录结果的 detail_url 可读取完整分集。第三方搜索使用 /v1/resources/search，不支持 view=resources。"
           },
           {
             "name": "limit",
@@ -2160,7 +2111,7 @@
               "maximum": 20,
               "default": 5
             },
-            "description": "仅 series 的每站作品数，不限制详情目录；official 忽略。"
+            "description": "每站作品数，不限制详情目录。"
           },
           {
             "name": "ai",

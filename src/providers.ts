@@ -33,32 +33,87 @@ export function json(body: string): any {
   try { return JSON.parse(body); } catch { throw new UpstreamError('INVALID_JSON'); }
 }
 
-// Per-request official anonymous session, shared by the player's search/detail requests.
-// Never fabricate cookies, forward application secrets, or retry a challenge indefinitely.
+const BILIBILI_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+  Referer: 'https://www.bilibili.com/',
+};
+
+// One anonymous session per incoming request, shared by parallel category queries.
+// Bootstrap before searching, as documented by bilibili-api-collect/search/search_request.md.
 export function bilibiliSessionFetcher(env: Env, fetcher: Fetcher): Fetcher {
-  let session: Promise<string> | undefined;
-  const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
+  let session: Promise<string> | undefined, refreshed: Promise<string> | undefined;
+  async function bootstrap(): Promise<string> {
+    const cookies = new Map<string, string>();
+    try {
+      await request('https://www.bilibili.com/', env, async (url, init) => {
+        const response = await fetcher(url, init);
+        for (const raw of response.headers.getSetCookie()) {
+          const [pair, ...attributes] = raw.split(';'), index = pair.indexOf('=');
+          const domain = attributes.find(a => /^\s*domain=/i.test(a))?.split('=')[1]?.trim().replace(/^\./,'').toLowerCase();
+          const path = attributes.find(a => /^\s*path=/i.test(a))?.split('=')[1]?.trim();
+          if ((domain && !['bilibili.com','www.bilibili.com'].includes(domain)) || (path && path !== '/')) continue;
+          const name = pair.slice(0,index).trim(), value = pair.slice(index+1).trim();
+          if (index > 0 && /^[\w-]{1,80}$/.test(name) && /^[\x21-\x3A\x3C-\x7E]{1,4096}$/.test(value)) cookies.set(name,value);
+        }
+        return response;
+      }, { headers: BILIBILI_HEADERS });
+    } catch { /* The public SPI endpoint can still issue device cookies. */ }
+    if (!cookies.has('buvid3')) try {
+      const data = json(await request('https://api.bilibili.com/x/frontend/finger/spi', env, fetcher, { headers: BILIBILI_HEADERS }));
+      if (data.code === 0) for (const [name,value] of [['buvid3',data.data?.b_3],['buvid4',data.data?.b_4]])
+        if (typeof value === 'string' && /^[a-z\d_-]{8,200}$/i.test(value)) cookies.set(name,value);
+    } catch { /* Surface the actual search/detail response, never fabricate cookies. */ }
+    return [...cookies].map(([name,value]) => `${name}=${value}`).join('; ');
+  }
   return async (url, init = {}) => {
-    if (!['api.bilibili.com', 'www.bilibili.com', 'search.bilibili.com'].includes(new URL(url).hostname)) return fetcher(url, init);
-    const headers = { ...init.headers, 'User-Agent': userAgent, Referer: 'https://www.bilibili.com/' };
-    if (session) {
-      const cookie = await session;
-      return fetcher(url, {...init, headers: {...headers, ...(cookie ? {Cookie: cookie} : {})}});
-    }
-    const first = await fetcher(url, {...init, headers});
-    if (first.status !== 412) return first;
-    session ??= (async () => {
-      try {
-        const data = json(await request('https://api.bilibili.com/x/frontend/finger/spi', env, fetcher, {headers}));
-        const b3 = data.data?.b_3, b4 = data.data?.b_4;
-        if (data.code !== 0 || typeof b3 !== 'string' || typeof b4 !== 'string' || !/^[a-z\d_-]{8,200}$/i.test(b3) || !/^[a-z\d_-]{8,200}$/i.test(b4)) return '';
-        return `buvid3=${b3}; buvid4=${b4}`;
-      } catch { return ''; }
-    })();
+    const target = new URL(url);
+    if (!['api.bilibili.com', 'www.bilibili.com', 'search.bilibili.com'].includes(target.hostname)) return fetcher(url, init);
+    session ??= bootstrap();
     const cookie = await session;
-    if (!cookie) return first;
+    const incoming = new Headers(init.headers);
+    incoming.delete('Cookie');
+    const headers = { ...Object.fromEntries(incoming), ...BILIBILI_HEADERS, ...(cookie ? { Cookie: cookie } : {}) };
+    const first = await fetcher(url, { ...init, headers });
+    let rejected = first.status === 412;
+    if (!rejected && first.ok && target.pathname.includes('/search/')) try {
+      // Inspect a bounded clone: HTTP 200 with JSON code=-412 is also rejection.
+      const payload = json(await request(url, env, async () => first.clone()));
+      rejected = [-412, -352].includes(payload.code);
+    } catch { /* Let the caller validate malformed/oversized payloads. */ }
+    if (!rejected) return first;
+    refreshed ??= bootstrap();
+    session = refreshed;
+    const nextCookie = await refreshed;
+    if (!nextCookie) return first;
     await first.body?.cancel();
-    return fetcher(url, {...init, headers: {...headers, Cookie: cookie}});
+    return fetcher(url, { ...init, headers: { ...headers, Cookie: nextCookie } });
+  };
+}
+
+const WBI_PERMUTATION = [46,47,18,2,53,8,23,32,15,50,10,31,58,3,45,35,27,43,5,49,33,9,42,19,29,28,14,39,12,38,41,13,37,48,7,16,24,55,40,61,26,17,0,1,60,51,30,4,22,25,54,21,56,59,6,63,57,62,11,36,20,34,44,52];
+export function bilibiliWbiQuery(params: Record<string,string>, imgKey: string, subKey: string, now = Date.now()): string {
+  if (!/^[a-f\d]{32}$/i.test(imgKey) || !/^[a-f\d]{32}$/i.test(subKey)) throw new UpstreamError('WBI_KEYS_UNAVAILABLE');
+  const lookup = imgKey + subKey, mixin = WBI_PERMUTATION.map(i => lookup[i]).join('').slice(0,32);
+  const values: Record<string,string> = { ...params, wts: String(Math.round(now / 1000)) };
+  const query = Object.keys(values).sort().map(k => `${encodeURIComponent(k)}=${encodeURIComponent(values[k].replace(/[!'()*]/g,''))}`).join('&');
+  return query + '&w_rid=' + bytesToHex(md5(new TextEncoder().encode(query + mixin)));
+}
+export type BilibiliMediaType = 'media_bangumi' | 'media_ft';
+export function bilibiliSearchLoader(env: Env, fetcher: Fetcher) {
+  let keys: Promise<[string,string]> | undefined;
+  return async (query: string, type?: BilibiliMediaType): Promise<any> => {
+    keys ??= (async () => {
+      const nav = json(await request('https://api.bilibili.com/x/web-interface/nav', env, fetcher, { headers: BILIBILI_HEADERS }));
+      // Anonymous nav may return -101 while still providing valid public WBI keys.
+      const key = (url: unknown) => typeof url === 'string' ? url.match(/\/([a-f\d]{32})\.[a-z]+(?:\?.*)?$/i)?.[1] || '' : '';
+      return [key(nav.data?.wbi_img?.img_url), key(nav.data?.wbi_img?.sub_url)];
+    })();
+    const [img,sub] = await keys;
+    const params: Record<string,string> = { keyword: query, page: '1', ...(type ? { search_type: type } : {}) };
+    const signed = bilibiliWbiQuery(params,img,sub);
+    const payload = json(await request(`https://api.bilibili.com/x/web-interface/wbi/search/${type ? 'type' : 'all/v2'}?${signed}`, env, fetcher, { headers: BILIBILI_HEADERS }));
+    if (payload.code !== 0) throw new UpstreamError(`API_${Number(payload.code) || 'ERROR'}`);
+    return payload;
   };
 }
 
